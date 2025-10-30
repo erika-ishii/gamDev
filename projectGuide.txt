@@ -1,0 +1,44 @@
+Project Guide
+==============
+
+1. Install CMake
+----------------
+CMake is required to generate Visual Studio solutions.
+
+- Download the latest version here:
+  https://cmake.org/download/
+
+- During installation:
+  - Choose "Add CMake to system PATH".
+  - Verify installation:
+    ```powershell
+    cmake --version
+    ```
+
+2. Regenerating the Visual Studio 2022 Solution
+-----------------------------------------------
+1. Open **Developer PowerShell for VS 2022** (or normal PowerShell).
+2. Navigate to the project root folder (where `CMakeLists.txt` is located):
+   ```powershell
+   cd path\to\project
+   ```
+3. Create a `build` directory (if not already present):
+   ```powershell
+   mkdir build
+   cd build
+   ```
+4. Run CMake to generate a Visual Studio 2022 solution:
+   ```powershell
+   cmake -G "Visual Studio 17 2022" ..
+   ```
+   - `..` tells CMake to look at the parent folder for `CMakeLists.txt`.
+   - This will generate `giraphics.sln` inside the `build` folder.
+
+5. Open the solution in Visual Studio:
+   ```powershell
+   start giraphics..sln
+   ```
+
+
+
+That's it — the project is ready to build and run in Visual Studio 2022.

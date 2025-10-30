@@ -1,0 +1,61 @@
+﻿#pragma once
+#include "LogicSystem.h"
+#include "Component/CircleRenderComponent.h"
+#include "Component/RenderComponent.h"
+#include "Component/SpriteComponent.h"
+#include "Component/TransformComponent.h"
+#include "Config/WindowConfig.h"
+#include "Debug/ImGuiLayer.h"
+#include "Debug/Perf.h"
+#include "Debug/Spawn.h"
+#include "Debug/HierarchyPanel.h"
+#include "Factory/Factory.h"
+#include "Graphics/Graphics.hpp"
+#include "Graphics/Window.hpp"
+#include "Graphics/GraphicsText.hpp"
+#include "Resource_Manager/Resource_Manager.h"
+
+namespace Framework {
+
+    class RenderSystem : public Framework::ISystem {
+    public:
+        RenderSystem(gfx::Window& window, LogicSystem& logic);
+        void Initialize() override;
+        void Update(float dt) override { (void)dt; }
+        std::string GetName() override { return "RenderSystem"; }
+        void Shutdown() override;
+        void draw() override;
+
+        // Menu helpers (do NOT draw the engine default background here)
+        void BeginMenuFrame();
+        void EndMenuFrame();
+
+        // Text accessors
+        bool IsTextReadyHint()  const { return textReadyHint; }
+        bool IsTextReadyTitle() const { return textReadyTitle; }
+        gfx::TextRenderer& GetTextHint() { return textHint; }
+        gfx::TextRenderer& GetTextTitle() { return textTitle; }
+
+        int ScreenWidth()  const { return screenW; }
+        int ScreenHeight() const { return screenH; }
+
+    private:
+        std::filesystem::path GetExeDir() const;
+        std::string           FindRoboto() const;
+
+        unsigned CurrentPlayerTexture() const;
+        int      CurrentColumns() const;
+        int      CurrentRows() const;
+
+        gfx::Window* window = nullptr;
+        LogicSystem& logic;
+
+        int screenW = 1280, screenH = 720;
+
+        gfx::TextRenderer textTitle, textHint;
+        bool textReadyTitle = false, textReadyHint = false;
+
+        unsigned playerTex = 0, idleTex = 0, runTex = 0;
+    };
+
+} // namespace Framework

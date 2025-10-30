@@ -1,0 +1,251 @@
+
+#include "Systems/LogicSystem.h"
+
+namespace Framework {
+    LogicSystem::LogicSystem(gfx::Window& window, InputSystem& input)
+        : window(&window), input(input) {
+    }
+
+    LogicSystem::~LogicSystem() = default;
+
+    const LogicSystem::AnimConfig& LogicSystem::CurrentConfig() const
+    {
+        return animState == AnimState::Run ? runConfig : idleConfig;
+    }
+
+
+    bool LogicSystem::IsAlive(GOC* obj) const
+    {
+        if (!obj || !factory)
+            return false;
+        for (auto& [id, ptr] : factory->Objects())
+        {
+            (void)id;
+            if (ptr.get() == obj)
+                return true;
+        }
+        return false;
+    }
+    void LogicSystem::CachePlayerSize()
+    {
+        if (!player)
+            return;
+
+        if (auto* rc = player->GetComponentType<Framework::RenderComponent>(
+            Framework::ComponentTypeId::CT_RenderComponent))
+        {
+            rectBaseW = rc->w;
+            rectBaseH = rc->h;
+            rectScale = 1.f;
+            captured = true;
+        }
+    }
+
+    void LogicSystem::RefreshLevelReferences()
+    {
+        if (!factory)
+            return;
+
+        if (!IsAlive(player))
+            player = nullptr;
+        if (!player)
+        {
+            for (auto* obj : levelObjects)
+            {
+                if (obj && obj->GetObjectName() == "Player")
+                {
+                    player = obj;
+                    break;
+                }
+            }
+        }
+
+        if (!IsAlive(collisionTarget))
+            collisionTarget = nullptr;
+        if (!collisionTarget)
+        {
+            for (auto* obj : levelObjects)
+            {
+                if (obj && obj->GetObjectName() == "rect")
+                {
+                    collisionTarget = obj;
+                    break;
+                }
+            }
+        }
+
+        if (player && !captured)
+        {
+            CachePlayerSize();
+        }
+    }
+
+    void LogicSystem::UpdateAnimation(float dt, bool wantRun)
+    {
+        AnimState desired = wantRun ? AnimState::Run : AnimState::Idle;
+        if (desired != animState)
+        {
+            animState = desired;
+            frame = 0;
+            frameClock = 0.f;
+        }
+
+        const AnimConfig& cfg = CurrentConfig();
+        frameClock += dt * cfg.fps;
+        while (frameClock >= 1.f)
+        {
+            frameClock -= 1.f;
+            frame = (frame + 1) % cfg.frames;
+        }
+
+        animInfo.frame = frame;
+        animInfo.columns = cfg.cols;
+        animInfo.rows = cfg.rows;
+        animInfo.running = (animState == AnimState::Run);
+    }
+    void LogicSystem::Initialize()
+    {
+        crashLogger = std::make_unique<CrashLogger>(std::string("../../logs"),
+            std::string("crash.log"),
+            std::string("ENGINE/CRASH"));
+        g_crashLogger = crashLogger.get();
+        std::cout << "[CrashLog] " << g_crashLogger->LogPath() << "\n";
+
+        InstallTerminateHandler();
+        InstallSignalHandlers();
+
+        factory = std::make_unique<GameObjectFactory>();
+        RegisterComponent(TransformComponent);
+        RegisterComponent(RenderComponent);
+        RegisterComponent(CircleRenderComponent);
+        RegisterComponent(SpriteComponent);
+        RegisterComponent(RigidBodyComponent);
+        FACTORY = factory.get();
+        LoadPrefabs();
+
+        auto playerPrefab = std::string("../../Data_Files/player.json");
+        std::cout << "[Prefab] Player path = " << std::filesystem::absolute(playerPrefab)
+            << "  exists=" << std::filesystem::exists(playerPrefab) << "\n";
+
+        levelObjects = factory->CreateLevel("../../Data_Files/level.json");
+
+        RefreshLevelReferences();
+
+        WindowConfig cfg = LoadWindowConfig("../../Data_Files/window.json");
+        screenW = cfg.width;
+        screenH = cfg.height;
+
+        std::cout << "\n=== Controls ===\n"
+            << "WASD: Move | Q/E: Rotate | Z/X: Scale | R: Reset\n"
+            << "A/D held => Run animation, otherwise Idle\n"
+            << "F1: Toggle Performance Overlay (FPS & timings)\n"
+            << "=======================================\n";
+    }
+
+    void LogicSystem::Update(float dt)
+    {
+        TryGuard::Run([&] {
+            if (factory)
+                factory->Update(dt);
+
+            RefreshLevelReferences();
+
+            if (!player)
+                return;
+
+            auto* tr = player->GetComponentType<Framework::TransformComponent>(
+                Framework::ComponentTypeId::CT_TransformComponent);
+            auto* rc = player->GetComponentType<Framework::RenderComponent>(
+                Framework::ComponentTypeId::CT_RenderComponent);
+            auto* rb = player->GetComponentType<Framework::RigidBodyComponent>(
+                Framework::ComponentTypeId::CT_RigidBodyComponent);
+
+            const float rotSpeed = DegToRad(90.f);
+            const float scaleRate = 1.5f;
+            const bool shift = input.IsWindowKeyPressed(GLFW_KEY_LEFT_SHIFT) ||
+                input.IsWindowKeyPressed(GLFW_KEY_RIGHT_SHIFT);
+            const float accel = shift ? 3.f : 1.f;
+
+            if (tr)
+            {
+                if (input.IsWindowKeyPressed(GLFW_KEY_Q)) tr->rot += rotSpeed * dt * accel;
+                if (input.IsWindowKeyPressed(GLFW_KEY_E)) tr->rot -= rotSpeed * dt * accel;
+                if (tr->rot > 3.14159265f)  tr->rot -= 6.28318530f;
+                if (tr->rot < -3.14159265f) tr->rot += 6.28318530f;
+                if (input.IsWindowKeyPressed(GLFW_KEY_R)) tr->rot = 0.f;
+            }
+
+            if (rc)
+            {
+                if (input.IsWindowKeyPressed(GLFW_KEY_X)) rectScale *= (1.f + scaleRate * dt * accel);
+                if (input.IsWindowKeyPressed(GLFW_KEY_Z)) rectScale *= (1.f - scaleRate * dt * accel);
+                rectScale = std::clamp(rectScale, 0.25f, 4.0f);
+                if (input.IsWindowKeyPressed(GLFW_KEY_R)) rectScale = 1.f;
+                rc->w = rectBaseW * rectScale;
+                rc->h = rectBaseH * rectScale;
+            }
+
+            if (rb && tr)
+            {
+                if (input.IsWindowKeyPressed(GLFW_KEY_D)) tr->x += rb->velX * dt;
+                if (input.IsWindowKeyPressed(GLFW_KEY_A)) tr->x -= rb->velX * dt;
+                if (input.IsWindowKeyPressed(GLFW_KEY_W)) tr->y += rb->velY * dt;
+                if (input.IsWindowKeyPressed(GLFW_KEY_S)) tr->y -= rb->velY * dt;
+            }
+
+            const bool wantRun = input.IsWindowKeyPressed(GLFW_KEY_A) ||
+                input.IsWindowKeyPressed(GLFW_KEY_D) ||
+                input.IsWindowKeyPressed(GLFW_KEY_W) ||
+                input.IsWindowKeyPressed(GLFW_KEY_S) ||
+                input.IsWindowKeyPressed(GLFW_KEY_LEFT) ||
+                input.IsWindowKeyPressed(GLFW_KEY_RIGHT) ||
+                input.IsWindowKeyPressed(GLFW_KEY_UP) ||
+                input.IsWindowKeyPressed(GLFW_KEY_DOWN);
+
+            UpdateAnimation(dt, wantRun);
+
+            collisionInfo.playerValid = false;
+            collisionInfo.targetValid = false;
+
+            if (tr && rb)
+            {
+                collisionInfo.player = AABB(tr->x, tr->y, rb->width, rb->height);
+                collisionInfo.playerValid = true;
+            }
+
+            if (collisionTarget)
+            {
+                auto* tr2 = collisionTarget->GetComponentType<Framework::TransformComponent>(
+                    Framework::ComponentTypeId::CT_TransformComponent);
+                auto* rb2 = collisionTarget->GetComponentType<Framework::RigidBodyComponent>(
+                    Framework::ComponentTypeId::CT_RigidBodyComponent);
+                if (tr2 && rb2)
+                {
+                    collisionInfo.target = AABB(tr2->x, tr2->y, rb2->width, rb2->height);
+                    collisionInfo.targetValid = true;
+                }
+            }
+            }, "LogicSystem::Update");
+    }
+
+    void LogicSystem::Shutdown()
+    {
+        levelObjects.clear();
+        collisionTarget = nullptr;
+        player = nullptr;
+
+        if (factory) {
+            factory->Update(0.0f);
+            if (FACTORY == factory.get())      
+                FACTORY = nullptr;
+            factory.reset();
+        }
+        UnloadPrefabs();
+
+        if (crashLogger)
+        {
+            g_crashLogger = nullptr;
+            crashLogger.reset();
+        }
+    }
+}

@@ -1,0 +1,21 @@
+{
+  "GameObject": {
+    
+"Components": {
+    "TransformComponent": {
+      "x": 0.0,
+      "y": 0.6,
+      "rot": 0.0
+     },
+    "CircleRenderComponent": {
+      "radius": 0.20,
+      "r": 0.9,
+      "g": 0.2,
+      "b": 0.3,
+      "a": 1.0
+     }
+    }
+  }
+  
+  
+}

@@ -1,0 +1,11 @@
+{
+  "GameObject":{
+  "Components": {
+    "TransformComponent": { "x": 200, "y": 100, "rot": 0 },
+    "RenderComponent": { "w": 64, "h": 64, "r": 1, "g": 1, "b": 1, "a": 1 },
+    "SpriteComponent": { "texture_key": "player_png" },
+    "RigidBodyComponent": { "velocity_x": 10, "velocity_y": 10, "width": 0.1, "height": 0.1 },
+    "PlayerComponent": {}
+  }
+}
+}

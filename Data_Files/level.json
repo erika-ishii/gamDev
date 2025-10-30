@@ -1,0 +1,39 @@
+{
+  "Level": {
+    "name": "level01",
+    "GameObjects": [
+      {
+        "name": "Circle",
+        "Components": {
+          "TransformComponent": { "x": 0.5, "y": 0.6, "rot": 0.0 },
+          "CircleRenderComponent": { "radius": 0.20, "r": 0.9, "g": 0.2, "b": 0.3, "a": 1.0 }
+        }
+      },
+      {
+        "name": "Rect",
+        "Components": {
+          "TransformComponent": { "x": 0.0, "y": 0.0, "rot": 0.0 },
+          "RenderComponent":    { "w": 0.5, "h": 0.5, "r": 0.95, "g": 0.75, "b": 0.25, "a": 1.0 },
+          "RigidBodyComponent": { "velocity_x": 0.6, "velocity_y": 0.6, "width": 0.5, "height": 0.5 }
+        }
+      },
+      {
+     "name": "Player",
+    "Components": {
+    "TransformComponent": { "x": -0.5, "y": -0.5, "rot": 0.0 },
+    "RenderComponent": { "w": 0.25, "h": 0.25, "r": 1, "g": 1, "b": 1, "a": 1 },
+    "SpriteComponent": { "texture_key": "player" },
+    "RigidBodyComponent": { "velocity_x": 0.6, "velocity_y": 0.6, "width": 0.25, "height": 0.25}
+  }
+      },
+          {
+     "name": "Boss",
+    "Components": {
+    "TransformComponent": { "x": -0.5, "y": 0.5, "rot": 0.0 },
+    "RenderComponent": { "w": 0.5, "h": 0.5, "r": 1, "g": 1, "b": 1, "a": 1 },
+    "SpriteComponent": { "texture_key": "boss" }
+  }
+      }
+    ]
+  }
+}
