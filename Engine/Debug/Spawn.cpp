@@ -62,7 +62,80 @@
 namespace mygame {
     /// Currently selected sprite texture key (shared across panel sessions).
     static std::string sSpriteTexKey;
+    static bool gLevelFilesInitialized = false;
+    static std::vector<std::string> gLevelFiles;
+    static int gSelectedLevelIndex = 0;
+    static char gLevelNameBuffer[128] = "level";
+    static std::string gLevelStatusMessage;
+    static bool gLevelStatusIsError = false;
+    static const std::filesystem::path kLevelDirectory("../../Data_Files");
     using namespace Framework;
+    namespace {
+        std::string TrimCopy(std::string value) {
+            auto isSpace = [](unsigned char c) { return std::isspace(c) != 0; };
+            value.erase(value.begin(), std::find_if(value.begin(), value.end(),
+                [&](unsigned char c) { return !isSpace(c); }));
+            value.erase(std::find_if(value.rbegin(), value.rend(),
+                [&](unsigned char c) { return !isSpace(c); }).base(), value.end());
+            return value;
+        }
+
+        bool ContainsLevelKeyword(const std::string& name) {
+            std::string lower;
+            lower.resize(name.size());
+            std::transform(name.begin(), name.end(), lower.begin(),
+                [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+            return lower.find("level") != std::string::npos;
+        }
+
+        void RefreshLevelFileList() {
+            gLevelFiles.clear();
+            std::error_code ec;
+            if (!std::filesystem::exists(kLevelDirectory, ec))
+                return;
+
+            for (auto const& entry : std::filesystem::directory_iterator(kLevelDirectory, ec)) {
+                if (ec) break;
+                if (!entry.is_regular_file()) continue;
+                const auto& path = entry.path();
+                if (path.extension() != ".json") continue;
+                const std::string filename = path.filename().string();
+                if (!ContainsLevelKeyword(filename)) continue;
+                gLevelFiles.push_back(filename);
+            }
+            std::sort(gLevelFiles.begin(), gLevelFiles.end());
+            if (gSelectedLevelIndex >= static_cast<int>(gLevelFiles.size()))
+                gSelectedLevelIndex = gLevelFiles.empty() ? 0 : static_cast<int>(gLevelFiles.size() - 1);
+        }
+
+        std::filesystem::path LevelFilePath(const std::string& filename) {
+            return kLevelDirectory / filename;
+        }
+
+        bool IsMasterObject(GOC* obj) {
+            for (auto const& kv : master_copies) {
+                if (kv.second.get() == obj)
+                    return true;
+            }
+            return false;
+        }
+
+        std::vector<GOC*> CollectNonMasterObjects() {
+            std::vector<GOC*> result;
+            if (!FACTORY)
+                return result;
+            result.reserve(FACTORY->Objects().size());
+            for (auto& [id, objPtr] : FACTORY->Objects()) {
+                (void)id;
+                auto* obj = objPtr.get();
+                if (!obj) continue;
+                if (IsMasterObject(obj)) continue;
+                result.push_back(obj);
+            }
+            return result;
+        }
+    }
+
 
     /*************************************************************************************
       \brief Helper to spawn a single prefab and apply current SpawnSettings.
@@ -114,12 +187,12 @@ namespace mygame {
         if (auto* attack = obj->GetComponentType<EnemyAttackComponent>(ComponentTypeId::CT_EnemyAttackComponent)) 
         {attack->damage = s.attackDamage; attack->attack_speed = s.attack_speed;}
         
-        // if (auto* ai = obj->GetComponentType<EnemyDecisionTreeComponent>(ComponentTypeId::CT_EnemyDecisionTreeComponent))
-        // {
-        //     if (!ai->tree) ai->tree = CreateDefaultEnemyTree(obj);
-        // }
-        // if (auto* ai = obj->GetComponentType<EnemyDecisionTreeComponent>(ComponentTypeId::CT_EnemyDecisionTreeComponent)) 
-        // {if(!ai->tree){std::make_unique<DecisionTree>(Create)}}
+        if (auto* type = obj->GetComponentType<EnemyTypeComponent>(ComponentTypeId::CT_EnemyTypeComponent))
+        {type->Etype = Framework::EnemyTypeComponent::EnemyType::physical;}
+        
+        if (auto* ai = obj->GetComponentType<EnemyDecisionTreeComponent>(ComponentTypeId::CT_EnemyDecisionTreeComponent))
+        {if (!ai->tree) ai->tree = CreateDefaultEnemyTree(obj);}
+  
 
     }
 
@@ -139,6 +212,14 @@ namespace mygame {
         ImGui::SetNextWindowSize(ImVec2(x/4, y/4), ImGuiCond_Once);
    
         ImGui::Begin("Spawn", &opened);   // Opens the "Spawn" debug window
+        if (!gLevelFilesInitialized) {
+            RefreshLevelFileList();
+            gLevelFilesInitialized = true;
+            if (FACTORY && !FACTORY->LastLevelName().empty()) {
+                std::snprintf(gLevelNameBuffer, IM_ARRAYSIZE(gLevelNameBuffer), "%s",
+                    FACTORY->LastLevelName().c_str());
+            }
+        }
 
         // === Prefab Dropdown ===
         {
@@ -223,6 +304,89 @@ namespace mygame {
         ImGui::DragFloat("stepX", &gS.stepX, 0.005f);         // Step offset in X between prefabs
         ImGui::DragFloat("stepY", &gS.stepY, 0.005f);         // Step offset in Y between prefabs
 
+
+        // === Level Save / Load ===
+        ImGui::SeparatorText("Levels");
+        if (ImGui::InputText("Level Name", gLevelNameBuffer, IM_ARRAYSIZE(gLevelNameBuffer))) {
+            // strip trailing whitespace in buffer interactions will be handled by TrimCopy when saving
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("Save Level")) {
+            std::string levelName = TrimCopy(gLevelNameBuffer);
+            if (levelName.empty()) {
+                gLevelStatusMessage = "Level name cannot be empty";
+                gLevelStatusIsError = true;
+            }
+            else {
+                std::string filename = levelName;
+                if (filename.find('.') == std::string::npos)
+                    filename += ".json";
+                std::filesystem::path levelPath = LevelFilePath(filename);
+                std::string levelLabel = std::filesystem::path(filename).stem().string();
+                bool saved = FACTORY->SaveLevel(levelPath.string(), levelLabel);
+                if (saved) {
+                    gLevelStatusMessage = "Saved level to " + levelPath.string();
+                    gLevelStatusIsError = false;
+                    RefreshLevelFileList();
+                }
+                else {
+                    gLevelStatusMessage = "Failed to save level to " + levelPath.string();
+                    gLevelStatusIsError = true;
+                }
+            }
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("Refresh Level List")) {
+            RefreshLevelFileList();
+        }
+
+        if (!gLevelFiles.empty()) {
+            const char* preview = gLevelFiles[gSelectedLevelIndex].c_str();
+            if (ImGui::BeginCombo("Available Levels", preview)) {
+                for (size_t i = 0; i < gLevelFiles.size(); ++i) {
+                    bool selected = (static_cast<int>(i) == gSelectedLevelIndex);
+                    if (ImGui::Selectable(gLevelFiles[i].c_str(), selected))
+                        gSelectedLevelIndex = static_cast<int>(i);
+                    if (selected)
+                        ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndCombo();
+            }
+
+            if (ImGui::Button("Load Selected Level")) {
+                const std::string selected = gLevelFiles[gSelectedLevelIndex];
+                std::filesystem::path levelPath = LevelFilePath(selected);
+                std::error_code ec;
+                if (!std::filesystem::exists(levelPath, ec)) {
+                    gLevelStatusMessage = "Level file not found: " + levelPath.string();
+                    gLevelStatusIsError = true;
+                }
+                else {
+                    auto toKill = CollectNonMasterObjects();
+                    for (auto* obj : toKill)
+                        obj->Destroy();
+                    FACTORY->Update(0.0f);
+
+                    FACTORY->CreateLevel(levelPath.string());
+                    size_t count = FACTORY->LastLevelObjects().size();
+                    gLevelStatusMessage = "Loaded level from " + levelPath.string() +
+                        " (" + std::to_string(count) + " objects)";
+                    gLevelStatusIsError = false;
+                }
+            }
+        }
+        else {
+            ImGui::TextDisabled("No level files found in %s", kLevelDirectory.string().c_str());
+        }
+
+        if (!gLevelStatusMessage.empty()) {
+            ImVec4 color = gLevelStatusIsError ? ImVec4(0.9f, 0.3f, 0.3f, 1.0f)
+                : ImVec4(0.3f, 0.8f, 0.3f, 1.0f);
+            ImGui::TextColored(color, "%s", gLevelStatusMessage.c_str());
+        }
+
         // Keep the clear selection in sync if it references a prefab that no longer exists.
         if (!master_copies.empty()) {
             if (master_copies.find(gSelectedPrefabToClear) == master_copies.end())
@@ -257,20 +421,9 @@ namespace mygame {
 
         ImGui::SameLine();
         if (ImGui::Button("Clear Selected Prefab") && !gSelectedPrefabToClear.empty()) {         // Button to clear spawned objects of the selected prefab
-            std::vector<GOC*> toKill;
-            toKill.reserve(FACTORY->Objects().size());
-
-            for (auto& [id, objPtr] : FACTORY->Objects()) {
-                auto* obj = objPtr.get();
-                if (!obj) continue;
-                bool isMaster = std::any_of(master_copies.begin(), master_copies.end(),
-                    [&](auto const& kv) { return kv.second.get() == obj; });
-                if (isMaster) continue;
-           
-
-                if (obj->GetObjectName() == gSelectedPrefabToClear)
-                    toKill.push_back(obj);
-            }
+            auto toKill = CollectNonMasterObjects();
+            toKill.erase(std::remove_if(toKill.begin(), toKill.end(),
+                [](GOC* obj) { return obj->GetObjectName() != gSelectedPrefabToClear; }), toKill.end());
 
             for (auto* o : toKill) o->Destroy();              // Destroy selected prefab instances
             FACTORY->Update(0.0f);                            // Apply destruction immediately
@@ -280,14 +433,7 @@ namespace mygame {
         ImGui::SameLine();
 
         if (ImGui::Button("Clear All (keep masters)")) {      // Button to clear spawned objects (but keep master prefabs)
-            std::vector<GOC*> toKill;
-            toKill.reserve(FACTORY->Objects().size());
-            for (auto& [id, objPtr] : FACTORY->Objects()) {
-                auto* obj = objPtr.get();
-                bool isMaster = false;
-                for (auto const& kv : master_copies) { if (kv.second.get() == obj) { isMaster = true; break; } }
-                if (!isMaster) toKill.push_back(obj);
-            }
+            auto toKill = CollectNonMasterObjects();
             for (auto* o : toKill) o->Destroy();              // Destroy non-master prefabs
             FACTORY->Update(0.0f);                            // Apply destruction
         }

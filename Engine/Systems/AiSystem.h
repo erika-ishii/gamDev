@@ -1,6 +1,7 @@
 #pragma once
 #include "Common/System.h"
 #include "Factory/Factory.h"
+#include "Component/EnemyComponent.h"
 #include "Component/EnemyDecisionTreeComponent.h"
 #include "../../Engine/Graphics/Window.hpp"
 namespace Framework {

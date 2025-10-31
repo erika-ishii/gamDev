@@ -34,7 +34,21 @@
 
 #include "Factory.h"
 #include <stdexcept>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
 
+#include "Component/TransformComponent.h"
+#include "Component/RenderComponent.h"
+#include "Component/CircleRenderComponent.h"
+#include "Component/SpriteComponent.h"
+#include "Component/EnemyComponent.h"
+#include "Component/EnemyAttackComponent.h"
+#include "Component/EnemyDecisionTreeComponent.h"
+#include "Component/EnemyHealthComponent.h"
+#include "Component/EnemyTypeComponent.h"
+#include "Component/PlayerComponent.h"
+#include "Physics/Dynamics/RigidBodyComponent.h"
 // Summary of responsibilities:
 // - Create empty game objects (GOCs)
 // - Assign each a unique integer ID and keep an ownership table (id -> std::unique_ptr<GOC>)
@@ -68,10 +82,7 @@ namespace Framework {
         - Resets global FACTORY pointer to nullptr.
     *************************************************************************************/
     GameObjectFactory::~GameObjectFactory() {
-        GameObjectIdMap.clear();
-        ObjectsToBeDeleted.clear();
-        ComponentMap.clear();
-        FACTORY = nullptr;
+        Shutdown();
     }
 
     /*************************************************************************************
@@ -226,9 +237,19 @@ namespace Framework {
     {
         JsonSerializer s;
         std::vector<GOC*> out;
+        LastLevelCache.clear();
+        LastLevelNameCache.clear();
+        LastLevelPathCache = filename;
+
         if (!s.Open(filename) || !s.IsGood()) return out;
 
         if (!s.EnterObject("Level")) return out;
+
+        if (s.HasKey("name")) {
+            std::string levelName;
+            s.ReadString("name", levelName);
+            LastLevelNameCache = levelName;
+        }
 
         if (s.EnterArray("GameObjects")) {
             size_t n = s.ArraySize();
@@ -243,8 +264,159 @@ namespace Framework {
             s.ExitArray();
         }
         s.ExitObject();
+        LastLevelCache = out;
         return out;
     }
+
+    std::string GameObjectFactory::ComponentNameFromId(ComponentTypeId id) const
+    {
+        for (auto const& [name, creator] : ComponentMap) {
+            if (creator && creator->TypeId == id)
+                return name;
+        }
+        return {};
+    }
+
+    json GameObjectFactory::SerializeComponentToJson(const GameComponent& component) const
+    {
+        switch (component.GetTypeId()) {
+        case ComponentTypeId::CT_TransformComponent: {
+            auto const& tr = static_cast<TransformComponent const&>(component);
+            return json{ {"x", tr.x}, {"y", tr.y}, {"rot", tr.rot} };
+        }
+        case ComponentTypeId::CT_RenderComponent: {
+            auto const& rc = static_cast<RenderComponent const&>(component);
+            return json{ {"w", rc.w}, {"h", rc.h}, {"r", rc.r}, {"g", rc.g}, {"b", rc.b}, {"a", rc.a} };
+        }
+        case ComponentTypeId::CT_CircleRenderComponent: {
+            auto const& cc = static_cast<CircleRenderComponent const&>(component);
+            return json{ {"radius", cc.radius}, {"r", cc.r}, {"g", cc.g}, {"b", cc.b}, {"a", cc.a} };
+        }
+        case ComponentTypeId::CT_SpriteComponent: {
+            auto const& sp = static_cast<SpriteComponent const&>(component);
+            json out = json::object();
+            if (!sp.texture_key.empty()) out["texture_key"] = sp.texture_key;
+            if (!sp.path.empty()) out["path"] = sp.path;
+            return out;
+        }
+        case ComponentTypeId::CT_RigidBodyComponent: {
+            auto const& rb = static_cast<RigidBodyComponent const&>(component);
+            return json{
+                {"velocity_x", rb.velX},
+                {"velocity_y", rb.velY},
+                {"width", rb.width},
+                {"height", rb.height}
+            };
+        }
+        case ComponentTypeId::CT_InputComponents:
+        case ComponentTypeId::CT_PlayerComponent:
+        case ComponentTypeId::CT_EnemyComponent:
+        case ComponentTypeId::CT_EnemyDecisionTreeComponent:
+            return json::object();
+        case ComponentTypeId::CT_EnemyAttackComponent: {
+            auto const& atk = static_cast<EnemyAttackComponent const&>(component);
+            return json{ {"damage", atk.damage}, {"attack_speed", atk.attack_speed} };
+        }
+        case ComponentTypeId::CT_EnemyHealthComponent: {
+            auto const& hp = static_cast<EnemyHealthComponent const&>(component);
+            return json{ {"health", hp.health}, {"maxhealth", hp.maxhealth} };
+        }
+        case ComponentTypeId::CT_EnemyTypeComponent: {
+            auto const& type = static_cast<EnemyTypeComponent const&>(component);
+            std::string typeStr = "physical";
+            if (type.Etype == EnemyTypeComponent::EnemyType::ranged)
+                typeStr = "ranged";
+            return json{ {"type", typeStr} };
+        }
+        default:
+            break;
+        }
+        return json::object();
+    }
+
+    bool GameObjectFactory::SaveLevelInternal(const std::string& filename, const std::vector<GOC*>& objects,
+        const std::string& levelName)
+    {
+        json root = json::object();
+        auto& level = root["Level"];
+        level = json::object();
+
+        std::string finalName = levelName;
+        if (finalName.empty()) {
+            std::filesystem::path p(filename);
+            finalName = p.stem().string();
+        }
+        if (!finalName.empty())
+            level["name"] = finalName;
+
+        auto& array = level["GameObjects"];
+        array = json::array();
+
+        for (GOC* obj : objects) {
+            if (!obj) continue;
+
+            auto it = GameObjectIdMap.find(obj->ObjectId);
+            if (it == GameObjectIdMap.end() || it->second.get() != obj)
+                continue; // not tracked by factory anymore
+            if (ObjectsToBeDeleted.count(obj->ObjectId))
+                continue; // skip objects pending deletion
+
+            json objJson = json::object();
+            if (!obj->ObjectName.empty())
+                objJson["name"] = obj->ObjectName;
+
+            json comps = json::object();
+            for (auto const& up : obj->Components) {
+                if (!up) continue;
+                const GameComponent& comp = *up;
+                std::string compName = ComponentNameFromId(comp.GetTypeId());
+                if (compName.empty())
+                    continue;
+                comps[compName] = SerializeComponentToJson(comp);
+            }
+
+            objJson["Components"] = std::move(comps);
+            array.push_back(std::move(objJson));
+        }
+
+        std::filesystem::path outputPath(filename);
+        std::error_code ec;
+        if (outputPath.has_parent_path())
+            std::filesystem::create_directories(outputPath.parent_path(), ec);
+
+        std::ofstream out(outputPath);
+        if (!out.is_open())
+            return false;
+
+        out << std::setw(2) << root;
+        if (!out.good())
+            return false;
+
+        LastLevelCache = objects;
+        LastLevelNameCache = finalName;
+        LastLevelPathCache = outputPath;
+        return true;
+    }
+
+    bool GameObjectFactory::SaveLevel(const std::string& filename, const std::vector<GOC*>& objects,
+        const std::string& levelName)
+    {
+        return SaveLevelInternal(filename, objects, levelName);
+    }
+
+    bool GameObjectFactory::SaveLevel(const std::string& filename, const std::string& levelName)
+    {
+        std::vector<GOC*> active;
+        active.reserve(GameObjectIdMap.size());
+        for (auto const& [id, ptr] : GameObjectIdMap) {
+            (void)id;
+            if (!ptr) continue;
+            if (ObjectsToBeDeleted.count(ptr->ObjectId)) continue;
+            active.push_back(ptr.get());
+        }
+        return SaveLevelInternal(filename, active, levelName);
+    }
+
 
     /*************************************************************************************
       \brief Assigns a unique ID to the GOC and registers it in the id→object map.
@@ -327,6 +499,20 @@ namespace Framework {
             }
         }
         ObjectsToBeDeleted.clear();
+        // Destroy any remaining tracked game objects and release their components
+        GameObjectIdMap.clear();
+
+        // Component creators are owned by the factory; release them to avoid leak reports
+        ComponentMap.clear();
+
+        LastLevelCache.clear();
+        LastLevelNameCache.clear();
+        LastLevelPathCache.clear();
+
+        LastGameObjectId = 0;
+
+        if (FACTORY == this)
+            FACTORY = nullptr;
     }
 
     /*************************************************************************************

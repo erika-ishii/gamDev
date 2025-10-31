@@ -1,0 +1,71 @@
+{
+  "Level": {
+    "GameObjects": [
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.5,
+            "r": 1.0,
+            "w": 0.5
+          },
+          "RigidBodyComponent": {
+            "height": 0.10000000149011612,
+            "velocity_x": 10.0,
+            "velocity_y": 10.0,
+            "width": 0.10000000149011612
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": 0.5,
+            "y": 0.5
+          }
+        },
+        "name": "Rect"
+      },
+      {
+        "Components": {
+          "EnemyAttackComponent": {
+            "attack_speed": 1.0,
+            "damage": 10
+          },
+          "EnemyComponent": {},
+          "EnemyDecisionTreeComponent": {},
+          "EnemyHealthComponent": {
+            "health": 100,
+            "maxhealth": 100
+          },
+          "EnemyTypeComponent": {
+            "type": "physical"
+          },
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 0.5880430340766907,
+            "g": 0.5880430340766907,
+            "h": 0.5,
+            "r": 0.7892156839370728,
+            "w": 0.5
+          },
+          "RigidBodyComponent": {
+            "height": 0.10000000149011612,
+            "velocity_x": -0.5,
+            "velocity_y": 0.0,
+            "width": 0.10000000149011612
+          },
+          "SpriteComponent": {
+            "texture_key": "boss"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": 0.8609036803245544,
+            "y": 0.5
+          }
+        },
+        "name": "Enemy"
+      }
+    ],
+    "name": "level01"
+  }
+}

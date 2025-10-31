@@ -2,9 +2,9 @@
   "GameObject": {
     "Components": {
       "TransformComponent": { "x": 0, "y": 0, "rot": 0 },
-      "RenderComponent": { "w": 64, "h": 64, "r": 1, "g": 0, "b": 0, "a": 1 },
-      "SpriteComponent": { "texture_key": "enemy_png" },
-      "RigidBodyComponent": { "velocity_x": 0, "velocity_y": 0, "width": 0.1, "height": 0.1 },
+      "RenderComponent": { "w": 0.2, "h": 0.2, "r": 1, "g": 0, "b": 0, "a": 1 },
+      "SpriteComponent": { "texture_key": "boss" },
+      "RigidBodyComponent": { "velocity_x": 10, "velocity_y": 0, "width": 0.1, "height": 0.1 },
 
       "EnemyComponent": {},
       
@@ -21,7 +21,7 @@
       "EnemyDecisionTreeComponent": {},
 
       "EnemyTypeComponent": {
-        "type": "ranged"
+        "type": "physical"
       }
     }
   }

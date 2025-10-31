@@ -6,6 +6,13 @@
 #include "Component/RenderComponent.h"
 #include "Component/CircleRenderComponent.h"
 #include "Component/SpriteComponent.h"
+
+#include "Component/EnemyComponent.h"
+#include "Component/EnemyAttackComponent.h"
+#include "Component/EnemyDecisionTreeComponent.h"
+#include "Component/EnemyHealthComponent.h"
+#include "Component/EnemyTypeComponent.h"
+
 #include "Physics/Dynamics/RigidBodyComponent.h"
 #include <Serialization/JsonSerialization.h>
 #include "InputSystem.h"

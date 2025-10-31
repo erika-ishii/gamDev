@@ -41,7 +41,7 @@ namespace Framework
     {
         std::ifstream stream(file);
         if (!stream.is_open()) return false;
-
+        root = json::object();
         stream >> root;            // Parse the entire file into the root JSON object
         objectStack = {};          // Clear any previous state
         objectStack.push(&root);   // Push root pointer onto stack (top of stack = current scope)

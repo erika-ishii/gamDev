@@ -10,22 +10,17 @@ void Framework::AiSystem::Initialize()
 
 void Framework::AiSystem::Update(float dt)
 {
-    (void)dt;
     auto& objects = FACTORY->Objects();
-    for (auto& kv : objects)
+
+    for (auto& [id, gocPtr] : objects)
     {
-        GOC* goc = kv.second.get();
-        if (!goc) continue;
+        if (!gocPtr) continue;
+        GOC* goc = gocPtr.get();
 
-        auto* base = goc->GetComponent(ComponentTypeId::CT_EnemyDecisionTreeComponent);
-        if (!base) continue; // skip, don’t return
-
-        auto* ai = static_cast<EnemyDecisionTreeComponent*>(base);
-        if (ai && ai->tree)
-        {
-            ai->tree->run();
-        }
+        // Run AI tree safely with dt
+        UpdateDefaultEnemyTree(goc, dt);
     }
+
 }
 
 

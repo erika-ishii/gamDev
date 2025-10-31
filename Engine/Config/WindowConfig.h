@@ -24,8 +24,8 @@
 *********************************************************************************************/
 struct WindowConfig
 {
-    int width;  ///Width of the window in pixels
-    int height; ///Height of the window in pixels
-    std::string title;///Window title text
+    int width{};  ///Width of the window in pixels
+    int height{}; ///Height of the window in pixels
+    std::string title{};///Window title text
 };
 WindowConfig LoadWindowConfig(const std::string& filename);

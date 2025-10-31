@@ -46,6 +46,8 @@ namespace Framework {
         if (!factory)
             return;
 
+        levelObjects = factory->LastLevelObjects();
+
         if (!IsAlive(player))
             player = nullptr;
         if (!player)
@@ -120,6 +122,11 @@ namespace Framework {
         RegisterComponent(CircleRenderComponent);
         RegisterComponent(SpriteComponent);
         RegisterComponent(RigidBodyComponent);
+        RegisterComponent(EnemyComponent);
+        RegisterComponent(EnemyAttackComponent);
+        RegisterComponent(EnemyDecisionTreeComponent);
+        RegisterComponent(EnemyHealthComponent);
+        RegisterComponent(EnemyTypeComponent);
         FACTORY = factory.get();
         LoadPrefabs();
 
@@ -162,45 +169,45 @@ namespace Framework {
 
             const float rotSpeed = DegToRad(90.f);
             const float scaleRate = 1.5f;
-            const bool shift = input.IsWindowKeyPressed(GLFW_KEY_LEFT_SHIFT) ||
-                input.IsWindowKeyPressed(GLFW_KEY_RIGHT_SHIFT);
+            const bool shift = input.IsKeyPressed(GLFW_KEY_LEFT_SHIFT) ||
+                input.IsKeyPressed(GLFW_KEY_RIGHT_SHIFT);
             const float accel = shift ? 3.f : 1.f;
 
             if (tr)
             {
-                if (input.IsWindowKeyPressed(GLFW_KEY_Q)) tr->rot += rotSpeed * dt * accel;
-                if (input.IsWindowKeyPressed(GLFW_KEY_E)) tr->rot -= rotSpeed * dt * accel;
+                if (input.IsKeyPressed(GLFW_KEY_Q)) tr->rot += rotSpeed * dt * accel;
+                if (input.IsKeyPressed(GLFW_KEY_E)) tr->rot -= rotSpeed * dt * accel;
                 if (tr->rot > 3.14159265f)  tr->rot -= 6.28318530f;
                 if (tr->rot < -3.14159265f) tr->rot += 6.28318530f;
-                if (input.IsWindowKeyPressed(GLFW_KEY_R)) tr->rot = 0.f;
+                if (input.IsKeyPressed(GLFW_KEY_R)) tr->rot = 0.f;
             }
 
             if (rc)
             {
-                if (input.IsWindowKeyPressed(GLFW_KEY_X)) rectScale *= (1.f + scaleRate * dt * accel);
-                if (input.IsWindowKeyPressed(GLFW_KEY_Z)) rectScale *= (1.f - scaleRate * dt * accel);
+                if (input.IsKeyPressed(GLFW_KEY_X)) rectScale *= (1.f + scaleRate * dt * accel);
+                if (input.IsKeyPressed(GLFW_KEY_Z)) rectScale *= (1.f - scaleRate * dt * accel);
                 rectScale = std::clamp(rectScale, 0.25f, 4.0f);
-                if (input.IsWindowKeyPressed(GLFW_KEY_R)) rectScale = 1.f;
+                if (input.IsKeyPressed(GLFW_KEY_R)) rectScale = 1.f;
                 rc->w = rectBaseW * rectScale;
                 rc->h = rectBaseH * rectScale;
             }
 
             if (rb && tr)
             {
-                if (input.IsWindowKeyPressed(GLFW_KEY_D)) tr->x += rb->velX * dt;
-                if (input.IsWindowKeyPressed(GLFW_KEY_A)) tr->x -= rb->velX * dt;
-                if (input.IsWindowKeyPressed(GLFW_KEY_W)) tr->y += rb->velY * dt;
-                if (input.IsWindowKeyPressed(GLFW_KEY_S)) tr->y -= rb->velY * dt;
+                if (input.IsKeyHeld(GLFW_KEY_D)) tr->x += rb->velX * dt;
+                if (input.IsKeyHeld(GLFW_KEY_A)) tr->x -= rb->velX * dt;
+                if (input.IsKeyHeld(GLFW_KEY_W)) tr->y += rb->velY * dt;
+                if (input.IsKeyHeld(GLFW_KEY_S)) tr->y -= rb->velY * dt;
             }
 
-            const bool wantRun = input.IsWindowKeyPressed(GLFW_KEY_A) ||
-                input.IsWindowKeyPressed(GLFW_KEY_D) ||
-                input.IsWindowKeyPressed(GLFW_KEY_W) ||
-                input.IsWindowKeyPressed(GLFW_KEY_S) ||
-                input.IsWindowKeyPressed(GLFW_KEY_LEFT) ||
-                input.IsWindowKeyPressed(GLFW_KEY_RIGHT) ||
-                input.IsWindowKeyPressed(GLFW_KEY_UP) ||
-                input.IsWindowKeyPressed(GLFW_KEY_DOWN);
+            const bool wantRun = input.IsKeyHeld(GLFW_KEY_A) ||
+                input.IsKeyHeld(GLFW_KEY_D) ||
+                input.IsKeyHeld(GLFW_KEY_W) ||
+                input.IsKeyHeld(GLFW_KEY_S) ||
+                input.IsKeyHeld(GLFW_KEY_LEFT) ||
+                input.IsKeyHeld(GLFW_KEY_RIGHT) ||
+                input.IsKeyHeld(GLFW_KEY_UP) ||
+                input.IsKeyHeld(GLFW_KEY_DOWN);
 
             UpdateAnimation(dt, wantRun);
 
@@ -235,9 +242,7 @@ namespace Framework {
         player = nullptr;
 
         if (factory) {
-            factory->Update(0.0f);
-            if (FACTORY == factory.get())      
-                FACTORY = nullptr;
+            factory->Shutdown();
             factory.reset();
         }
         UnloadPrefabs();

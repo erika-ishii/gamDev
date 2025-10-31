@@ -35,10 +35,14 @@
             All rights reserved.
 *********************************************************************************************/
 #pragma once
+
+
 #include <map>
 #include <set>
 #include <memory>
 #include <string>
+#include <vector>
+#include <filesystem>
 #include "Common/System.h"
 #include "Composition/Component.h"
 #include "Composition/ComponentCreator.h"
@@ -103,6 +107,13 @@ namespace Framework {
         /// Load an entire level (multiple objects) from a JSON file. Returns non-owning pointers.
         std::vector<GOC*> CreateLevel(const std::string& filename);
 
+        /// Save the specified objects into a JSON level file compatible with CreateLevel.
+        bool SaveLevel(const std::string& filename, const std::vector<GOC*>& objects,
+            const std::string& levelName = "");
+
+        /// Convenience overload that saves all currently active objects tracked by the factory.
+        bool SaveLevel(const std::string& filename, const std::string& levelName = "");
+
         // --- Object ID & Lookup ---
         /// Assigns a unique ID and **transfers ownership** of the GOC into the factory’s id map.
         /// Returns a **non-owning** pointer to the registered object.
@@ -145,10 +156,27 @@ namespace Framework {
         ComponentMapType     ComponentMap;     ///< Map: component name → owning ComponentCreator
         GameObjectIdMapType  GameObjectIdMap;  ///< Map: GOC ID → owning pointer (unique_ptr<GOC>)
         std::set<GOCId>      ObjectsToBeDeleted; ///< Set of GOC IDs scheduled for deferred deletion
+        std::vector<GOC*>     LastLevelCache;      ///< Snapshot of last saved/loaded level objects (non-owning)
+        std::string           LastLevelNameCache;  ///< Cached level name (if provided)
+        std::filesystem::path LastLevelPathCache;  ///< Cached level file path
+
+        std::string ComponentNameFromId(ComponentTypeId id) const;
+        json SerializeComponentToJson(const GameComponent& component) const;
+        bool SaveLevelInternal(const std::string& filename, const std::vector<GOC*>& objects,
+            const std::string& levelName);
 
     public:
         /// Read-only accessor for all objects managed by the factory (ownership retained by factory).
         const GameObjectIdMapType& Objects() const { return GameObjectIdMap; }
+
+        /// Snapshot of the most recently saved or loaded level objects.
+        const std::vector<GOC*>& LastLevelObjects() const { return LastLevelCache; }
+
+        /// Cached level name associated with the last save/load operation.
+        const std::string& LastLevelName() const { return LastLevelNameCache; }
+
+        /// File path used during the last save/load operation.
+        const std::filesystem::path& LastLevelPath() const { return LastLevelPathCache; }
 
         // Example iteration usage (pseudo-code):
         // void Update(float dt) override {

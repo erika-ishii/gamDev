@@ -4,15 +4,17 @@
 class DecisionNode
 {
     public:
-     std::function<bool()> mainqns;
+     std::function<bool(float)> mainqns;
      std::unique_ptr<DecisionNode> ifTrue;
      std::unique_ptr<DecisionNode> ifFalse;
-     std::function<void()> action;
+     std::function<void(float)> action;
      
-     DecisionNode(std::function<bool()> qns,
-     std::unique_ptr<DecisionNode> trueNode = nullptr,
-     std::unique_ptr<DecisionNode> falseNode = nullptr,
-     std::function<void()> leafAction = nullptr);
+     DecisionNode(
+         std::function<bool(float)> condition,
+         std::unique_ptr<DecisionNode> trueNode,
+         std::unique_ptr<DecisionNode> falseNode,
+         std::function<void(float)> action
+     );
 
      // Delete copy constructor and copy assignment
      DecisionNode(const DecisionNode&) = delete;
@@ -22,7 +24,7 @@ class DecisionNode
      DecisionNode(DecisionNode&&) = default;
      DecisionNode& operator=(DecisionNode&&) = default;
 
-     void evaluate();
+     void evaluate(float dt);
 
 };
 

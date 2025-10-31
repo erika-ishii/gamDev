@@ -1,3 +1,4 @@
+// This one is to be removed or replaced
 #include "InputSystem.h"
 #include <Windows.h>
 #include <GLFW/glfw3.h>
@@ -18,48 +19,50 @@ namespace Framework {
 		(void)dt;
 		if (!window)
 			return;
-
+		
 		input.Update();
 
-		if (IsKeyPressed(GLFW_KEY_SPACE))  std::cout << "Spacebar pressed!" << std::endl;
-		if (IsKeyHeld(GLFW_KEY_SPACE))     std::cout << "Spacebar held!" << std::endl;
-		if (IsKeyReleased(GLFW_KEY_SPACE)) std::cout << "Spacebar released!" << std::endl;
+		if (input.IsKeyPressed(GLFW_KEY_SPACE))  std::cout << "Spacebar pressed!" << std::endl;
+		if (input.IsKeyHeld(GLFW_KEY_SPACE))     std::cout << "Spacebar held!" << std::endl;
+		if (input.IsKeyReleased(GLFW_KEY_SPACE)) std::cout << "Spacebar released!" << std::endl;
 
-		if (IsMousePressed(GLFW_MOUSE_BUTTON_LEFT))  std::cout << "LMB pressed!" << std::endl;
-		if (IsMouseHeld(GLFW_MOUSE_BUTTON_LEFT))     std::cout << "LMB held!" << std::endl;
-		if (IsMouseReleased(GLFW_MOUSE_BUTTON_LEFT)) std::cout << "LMB released!" << std::endl;
+		if (input.IsMousePressed(GLFW_MOUSE_BUTTON_LEFT))  std::cout << "LMB pressed!" << std::endl;
+		if (input.IsMouseHeld(GLFW_MOUSE_BUTTON_LEFT))     std::cout << "LMB held!" << std::endl;
+		if (input.IsMouseReleased(GLFW_MOUSE_BUTTON_LEFT)) std::cout << "LMB released!" << std::endl;
 	}
 
 	void InputSystem::Shutdown()
 	{
 		window = nullptr;
 	}
-	bool InputSystem::IsKeyPressed(int key)const {
+	bool InputSystem::IsKeyPressed(int key)const 
+	{
 		return input.IsKeyPressed(key);
 	}
 
-	bool InputSystem::IsKeyHeld(int key) const {
+	bool InputSystem::IsKeyHeld(int key) const 
+	{
 		return input.IsKeyHeld(key);
 	}
 
-	bool InputSystem::IsKeyReleased(int key)const {
+	bool InputSystem::IsKeyReleased(int key)const
+	{
 		return input.IsKeyReleased(key);
 	}
 
-	bool InputSystem::IsMouseHeld(int button)const {
+	bool InputSystem::IsMouseHeld(int button)const 
+	{
 		return input.IsMouseHeld(button);
 	}
 
-	bool InputSystem::IsMousePressed(int button)const {
+	bool InputSystem::IsMousePressed(int button)const 
+	{
 		return input.IsMousePressed(button);
 	}
 
-	bool InputSystem::IsMouseReleased(int button)const {
+	bool InputSystem::IsMouseReleased(int button)const 
+	{
 		return input.IsMouseReleased(button);
-	}
-
-	bool InputSystem::IsWindowKeyPressed(int key)const {
-		return window ? window->isKeyPressed(key) : false;
 	}
 
 } //namespace framework

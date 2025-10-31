@@ -20,6 +20,8 @@
 #include "Component/TransformComponent.h"
 #include "Physics/Dynamics/RigidBodyComponent.h"
 
+
+
 namespace Framework
 {
 	/*****************************************************************************************
@@ -30,6 +32,7 @@ namespace Framework
 	public:
 		void Update(float dt) override
 		{
+			dt;
 			for (auto& [id, objPtr] : FACTORY->Objects())
 			{
 				auto* obj = objPtr.get();
@@ -42,12 +45,6 @@ namespace Framework
 
 				if (!rb || !tr)
 					continue;
-
-				// Update pos based on vel
-				tr->x += rb->velX * dt;
-				tr->y += rb->velY * dt;
-
-				// Check collision (later)
 			}
 		}
 		// This is just to return the name so the engine knows what system this is

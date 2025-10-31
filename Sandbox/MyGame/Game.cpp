@@ -11,8 +11,8 @@
 #include "Systems/PhysicSystem.h"
 #include "Systems/RenderSystem.h"
 #include "Systems/audioSystem.h"
-
-
+#include "Systems/EnemySystem.h"
+#include "Systems/AiSystem.h"
 #include "Debug/CrashLogger.hpp"
 #include "Debug/Perf.h"
 
@@ -31,6 +31,8 @@ namespace mygame {
         Framework::PhysicSystem* gPhysicsSystem = nullptr;
         Framework::AudioSystem* gAudioSystem = nullptr;
         Framework::RenderSystem* gRenderSystem = nullptr;
+        Framework::EnemySystem* gEnemySystem = nullptr;
+        Framework::AiSystem* gAiSystem = nullptr;
 
         enum class GameState { MAIN_MENU, PLAYING, EXIT };
         GameState currentState = GameState::MAIN_MENU;
@@ -45,7 +47,14 @@ namespace mygame {
         gPhysicsSystem = gSystems.RegisterSystem<Framework::PhysicSystem>(*gLogicSystem);
         gAudioSystem = gSystems.RegisterSystem<Framework::AudioSystem>(win);
         gRenderSystem = gSystems.RegisterSystem<Framework::RenderSystem>(win, *gLogicSystem);
+        gAiSystem = gSystems.RegisterSystem<Framework::AiSystem>(win);
+      
+        //(void)gPhysicsSystem;
+        //(void)gAudioSystem;
+        //(void)gRenderSystem;
+
         gSystems.IntializeAll();
+        
 
         mainMenu.Init(gRenderSystem->ScreenWidth(), gRenderSystem->ScreenHeight());
         currentState = GameState::MAIN_MENU;
@@ -54,7 +63,7 @@ namespace mygame {
     void update(float dt)
     {
         TryGuard::Run([&] {
-            const bool togglePerf = gInputSystem && gInputSystem->IsWindowKeyPressed(GLFW_KEY_F1);
+            const bool togglePerf = gInputSystem && gInputSystem->IsKeyPressed(GLFW_KEY_F1);
             Framework::PerfFrameStart(dt, togglePerf);
 
             switch (currentState)
@@ -103,7 +112,21 @@ namespace mygame {
 
     void shutdown()
     {
+        std::cout << "[Game] Shutting down systems...\n";
+
+        // Only call ShutdownAll(), do NOT manually delete gEnemySystem etc.
         gSystems.ShutdownAll();
+
+        // Null out global pointers so you don’t accidentally access them later
+        gEnemySystem = nullptr;
+        gAiSystem = nullptr;
+        gRenderSystem = nullptr;
+        gAudioSystem = nullptr;
+        gPhysicsSystem = nullptr;
+        gLogicSystem = nullptr;
+        gInputSystem = nullptr;
+
+        std::cout << "[Game] Shutdown complete.\n";
     }
 
 } // namespace mygame

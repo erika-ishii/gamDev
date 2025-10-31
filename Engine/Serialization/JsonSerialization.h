@@ -106,7 +106,7 @@ namespace Framework
         ///@}
 
     private:
-        json              root{};          ///< Owning root JSON document
+        json              root = json::object();        ///< Owning root JSON document
         std::stack<json*> objectStack{};   ///< Traversal stack; top is current node
     };
 } // namespace Framework
