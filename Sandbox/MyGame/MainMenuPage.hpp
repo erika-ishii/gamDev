@@ -23,6 +23,14 @@ namespace mygame {
         // bg
         unsigned menuBgTex = 0;
 
+
+        // button textures
+        unsigned startBtnIdleTex = 0;
+        unsigned startBtnHoverTex = 0;
+        unsigned exitBtnIdleTex = 0;
+        unsigned exitBtnHoverTex = 0;
+
+
         // simple latches for transitions
         bool startLatched = false;
         bool exitLatched = false;

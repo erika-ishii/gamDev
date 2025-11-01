@@ -39,8 +39,8 @@ namespace Framework
             auto* tr = enemy->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
             if (rb && tr)
             {
-                const float patrolSpeed = 0.5f;
-                const float patrolRange = 1.0f;
+                const float patrolSpeed = 0.3f;
+                const float patrolRange = 0.5f;
 
                 rb->velX = patrolSpeed * dir;
                 rb->velY = 0.0f;
@@ -56,15 +56,43 @@ namespace Framework
        
         //Attack Leaf
         auto AttackLeaf = std::make_unique<DecisionNode>
-        (nullptr, nullptr,nullptr,[enemyID](float)
+        (nullptr, nullptr,nullptr,[enemyID](float dt)
         { 
             GOC* enemy = FACTORY->GetObjectWithId(enemyID);
             if (!enemy) return;
             auto* attack = enemy->GetComponentType<EnemyAttackComponent>(ComponentTypeId::CT_EnemyAttackComponent);
-            if (attack )
+            auto* rb = enemy->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);
+            auto* tr = enemy->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
+            if (!attack || !rb || !tr) return;
+            GOC* player = nullptr;
+            auto& objects = FACTORY->Objects();
+            for (auto& kv : objects)
             {
-                std::cout << "Enemy attacks with " << attack->damage << " damage!\n";
+                GOC* goc = kv.second.get();
+                if (!goc) continue;
+                auto* base = goc->GetComponent(ComponentTypeId::CT_PlayerComponent);
+                if (base){player=goc; break;}
             }
+            if (!player) return;
+            
+            auto*trplayer= player->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
+            float speed = 0.3f;
+            float dx = trplayer->x -tr->x;
+            float dy = trplayer->y -tr->y;
+            float distance = std::sqrt(dx*dx + dy*dy);
+            if (distance > 0.1f)
+            {
+                rb->velX = (dx/distance) * speed;
+                rb->velY = (dy/distance) * speed;
+                tr->x += rb->velX * dt;
+                tr->y += rb->velY * dt;
+            }
+            static float attackTimer = 0.0f;
+            const float attackInterval = 0.5;
+            attackTimer += dt;
+            if (attackTimer >= attackInterval)
+            {attackTimer=0.0f; std::cout << "Enemy attacks with " << attack->damage << " damage!\n"; }
+            
         }
         );
 

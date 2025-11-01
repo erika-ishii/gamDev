@@ -19,7 +19,14 @@
 
 #include "RenderSystem.h"
 #include <imgui.h>
+
+#include <GLFW/glfw3.h>
+#include <algorithm>
+#include <cctype>
+#include <system_error>
+#include <vector>
 namespace Framework {
+    RenderSystem* RenderSystem::sInstance = nullptr;
 
     namespace {
         using clock = std::chrono::high_resolution_clock;
@@ -27,6 +34,7 @@ namespace Framework {
 
     RenderSystem::RenderSystem(gfx::Window& window, LogicSystem& logic)
         : window(&window), logic(logic) {
+        sInstance = this;
     }
 
     std::filesystem::path RenderSystem::GetExeDir() const
@@ -111,11 +119,93 @@ namespace Framework {
 
         return {};
     }
+    std::filesystem::path RenderSystem::FindAssetsRoot() const
+    {
+        namespace fs = std::filesystem;
+        std::vector<fs::path> roots{ fs::current_path(), GetExeDir() };
+
+        for (const auto& root : roots)
+        {
+            if (root.empty())
+                continue;
+
+            auto probe = root;
+            for (int up = 0; up < 7 && !probe.empty(); ++up)
+            {
+                fs::path candidate = probe / "assets";
+                std::error_code ec;
+                if (fs::exists(candidate, ec) && fs::is_directory(candidate, ec))
+                    return fs::weakly_canonical(candidate, ec);
+                probe = probe.parent_path();
+            }
+        }
+
+        return {};
+    }
 
     unsigned RenderSystem::CurrentPlayerTexture() const
     {
         return logic.Animation().running ? runTex : idleTex;
     }
+
+    void RenderSystem::HandleFileDrop(int count, const char** paths)
+    {
+        if (count <= 0 || !paths || assetsRoot.empty())
+            return;
+
+        std::vector<std::filesystem::path> dropped;
+        dropped.reserve(static_cast<size_t>(count));
+        for (int i = 0; i < count; ++i)
+        {
+            if (paths[i])
+                dropped.emplace_back(paths[i]);
+        }
+
+        if (!dropped.empty())
+            assetBrowser.QueueExternalFiles(dropped);
+    }
+
+    void RenderSystem::ProcessImportedAssets()
+    {
+        if (assetsRoot.empty())
+            return;
+
+        auto pending = assetBrowser.ConsumePendingImports();
+        if (pending.empty())
+            return;
+
+        for (const auto& relative : pending)
+        {
+            auto absolute = assetsRoot / relative;
+            std::string key = relative.generic_string();
+
+            if (!absolute.empty())
+            {
+                auto it = Resource_Manager::resources_map.find(key);
+                if (it == Resource_Manager::resources_map.end())
+                {
+                    Resource_Manager::load(key, absolute.string());
+                }
+
+                std::string ext = std::filesystem::path(absolute).extension().string();
+                std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) {
+                    return static_cast<char>(std::tolower(c));
+                });
+
+                if (ext == ".png" || ext == ".jpg" || ext == ".jpeg")
+                {
+                    mygame::UseSpriteFromAsset(relative);
+                }
+            }
+        }
+    }
+
+    void RenderSystem::GlfwDropCallback(GLFWwindow*, int count, const char** paths)
+    {
+        if (sInstance)
+            sInstance->HandleFileDrop(count, paths);
+    }
+
 
     int RenderSystem::CurrentColumns() const
     {
@@ -168,6 +258,16 @@ namespace Framework {
         config.dockspace = true;
         config.gamepad = false;
         ImGuiLayer::Initialize(*window, config);
+
+        assetsRoot = FindAssetsRoot();
+        if (!assetsRoot.empty())
+        {
+            assetBrowser.Initialize(assetsRoot);
+            mygame::SetSpawnPanelAssetsRoot(assetsRoot);
+        }
+
+        if (window && window->raw())
+            glfwSetDropCallback(window->raw(), &RenderSystem::GlfwDropCallback);
     }
     void Framework::RenderSystem::BeginMenuFrame()
     {
@@ -358,6 +458,8 @@ namespace Framework {
                 ImGui::End();
             }
 
+            assetBrowser.Draw();
+            ProcessImportedAssets();
 
             mygame::DrawSpawnPanel();
 
@@ -382,6 +484,10 @@ namespace Framework {
 
     void RenderSystem::Shutdown()
     {
+
+        if (window && window->raw())
+            glfwSetDropCallback(window->raw(), nullptr);
+
         gfx::Graphics::cleanup();
         Resource_Manager::unloadAll(Resource_Manager::Graphics);
 
@@ -393,6 +499,7 @@ namespace Framework {
         if (ImGui::GetCurrentContext())
             ImGui::DestroyContext();
 
+        sInstance = nullptr;
         window = nullptr;
     }
 

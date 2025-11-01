@@ -18,6 +18,9 @@
 *********************************************************************************************/
 #pragma once
 
+#include <filesystem>
+#include <string>
+
 // Minimal, prefab-agnostic spawn UI for ImGui.
 // Usage:
 //   1) #include "Debug/Spawn.h" in Game.cpp
@@ -78,5 +81,11 @@ namespace mygame {
       \endcode
     *****************************************************************************************/
     void DrawSpawnPanel();
+    void SetSpawnPanelAssetsRoot(const std::filesystem::path& root);
+    void UseSpriteFromAsset(const std::filesystem::path& relativePath);
+    void ClearSpriteTexture();
+
+    const std::string& CurrentSpriteTextureKey();
+    unsigned CurrentSpriteTextureHandle();
 
 } // namespace mygame

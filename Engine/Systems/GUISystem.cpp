@@ -20,6 +20,25 @@ void GUISystem::AddButton(float x, float y, float w, float h,
     buttons_.push_back(std::move(b));
 }
 
+void GUISystem::AddButton(float x, float y, float w, float h,
+    const std::string& label,
+    unsigned idleTexture,
+    unsigned hoverTexture,
+    std::function<void()> onClick,
+    bool drawLabelOnTexture) {
+    AddButton(x, y, w, h, label, std::move(onClick));
+    if (buttons_.empty()) {
+        return;
+    }
+
+    Button& b = buttons_.back();
+    b.idleTexture = idleTexture;
+    b.hoverTexture = hoverTexture ? hoverTexture : idleTexture;
+    b.useTextures = (b.idleTexture != 0);
+    b.drawLabelOnTexture = drawLabelOnTexture;
+}
+
+
 bool GUISystem::Contains(const Button& b, double mx, double my) {
     return (mx >= b.x && mx <= b.x + b.w && my >= b.y && my <= b.y + b.h);
 }
@@ -58,12 +77,35 @@ void GUISystem::Update(Framework::InputSystem* /*input*/) {
 }
 
 void GUISystem::Draw(Framework::RenderSystem* render) {
+
+    const int screenW = render ? render->ScreenWidth() : 1280;
+    const int screenH = render ? render->ScreenHeight() : 720;
+
     // simple visual: darker when idle, brighter on hover
     for (const auto& b : buttons_) {
-        const float c = b.hovered ? 0.85f : 0.55f;
-        gfx::Graphics::renderRectangle(b.x, b.y, 0.f, b.w, b.h, c, c, c, 0.95f);
+        bool renderedTexture = false;
+        if (b.useTextures) {
+            const unsigned tex = (b.hovered && b.hoverTexture) ? b.hoverTexture : b.idleTexture;
+            if (tex != 0) {
+                gfx::Graphics::renderSpriteUI(tex, b.x, b.y, b.w, b.h,
+                    1.f, 1.f, 1.f, 1.f, screenW, screenH);
+                renderedTexture = true;
 
-        if (render && render->IsTextReadyHint()) {
+                if (b.hovered) {
+                    // subtle highlight overlay for hover feedback
+                    gfx::Graphics::renderRectangleUI(b.x, b.y, b.w, b.h,
+                        1.f, 1.f, 1.f, 0.18f, screenW, screenH);
+                }
+            }
+        }
+
+        if (!renderedTexture) {
+            const float c = b.hovered ? 0.85f : 0.55f;
+            gfx::Graphics::renderRectangleUI(b.x, b.y, b.w, b.h,
+                c, c, c, 0.95f, screenW, screenH);
+        }
+        const bool shouldDrawLabel = (!b.useTextures || b.drawLabelOnTexture || !renderedTexture);
+        if (shouldDrawLabel && render && render->IsTextReadyHint()) {
             // vertically center-ish the label in the button
             const float labelX = b.x + 24.f;
             const float labelY = b.y + (b.h * 0.5f) - 8.f;

@@ -11,6 +11,7 @@ namespace Framework {
     }
     void PhysicSystem::Update(float dt)
     {
+		/*
         //for (GOC)
         const auto& info = logic.Collision();
         if (info.playerValid && info.targetValid)
@@ -20,7 +21,7 @@ namespace Framework {
                 std::cout << "Collision detected!" << std::endl;
             }
         }
-        
+        */
 		auto& objects = FACTORY->Objects();
 
 		for (auto& [id, obj] : objects)
@@ -54,7 +55,7 @@ namespace Framework {
 					continue;
 
 				// Only check walls
-				if (otherObj->GetObjectName() != "Wall")
+				if (otherObj->GetObjectName() != "rect")
 					continue;
 
 				AABB wallBox(trO->x, trO->y, rbO->width, rbO->height);
@@ -68,9 +69,9 @@ namespace Framework {
 					newY = tr->y;
 				}
 			}
-			// These are removed as they infinitely send the guy northeast
-			//tr->x = newX;
-			//tr->y = newY;
+
+			tr->x = newX;
+			tr->y = newY;
 		}
 
 		

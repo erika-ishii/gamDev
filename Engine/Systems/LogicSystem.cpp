@@ -122,6 +122,7 @@ namespace Framework {
         RegisterComponent(CircleRenderComponent);
         RegisterComponent(SpriteComponent);
         RegisterComponent(RigidBodyComponent);
+        RegisterComponent(PlayerComponent);
         RegisterComponent(EnemyComponent);
         RegisterComponent(EnemyAttackComponent);
         RegisterComponent(EnemyDecisionTreeComponent);
@@ -194,10 +195,13 @@ namespace Framework {
 
             if (rb && tr)
             {
-                if (input.IsKeyHeld(GLFW_KEY_D)) tr->x += rb->velX * dt;
-                if (input.IsKeyHeld(GLFW_KEY_A)) tr->x -= rb->velX * dt;
-                if (input.IsKeyHeld(GLFW_KEY_W)) tr->y += rb->velY * dt;
-                if (input.IsKeyHeld(GLFW_KEY_S)) tr->y -= rb->velY * dt;
+                rb->velX = 0.0f;
+                rb->velY = 0.0f;
+
+                if (input.IsKeyHeld(GLFW_KEY_D)) rb->velX = 1.f;
+                if (input.IsKeyHeld(GLFW_KEY_A)) rb->velX = -1.f;
+                if (input.IsKeyHeld(GLFW_KEY_W)) rb->velY = 1.f;
+                if (input.IsKeyHeld(GLFW_KEY_S)) rb->velY = -1.f;
             }
 
             const bool wantRun = input.IsKeyHeld(GLFW_KEY_A) ||

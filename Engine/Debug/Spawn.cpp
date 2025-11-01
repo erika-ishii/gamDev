@@ -1,7 +1,8 @@
 ﻿/*********************************************************************************************
  \file      Spawn.cpp
  \par       SofaSpuds
- \author    elvisshengjie.lim (elvisshengjie.lim@digipen.edu) - Primary Author, 100%
+ \author    elvisshengjie.lim (elvisshengjie.lim@digipen.edu) - Primary Author, 80%
+            erika.ishii (erika.ishii@digipen.edu) - Author, 80%
 
  \brief     Implements a debug ImGui panel for spawning prefabs at runtime. Provides
             interactive controls for position, size, color, texture, and batch spawning.
@@ -44,6 +45,7 @@
 #include "Component/RenderComponent.h"
 #include "Component/CircleRenderComponent.h"
 #include "Component/SpriteComponent.h"
+#include "Resource_Manager/Resource_Manager.h"
 //Player Component
 #include "Component/PlayerComponent.h"
 //Enemy Component
@@ -56,12 +58,17 @@
 
 #include <vector>
 #include <string>
-
+#include <filesystem>
 #include <algorithm>
+#include <cctype>
+#include <cstdint>
+#include <system_error>
 #include <unordered_map>
 namespace mygame {
     /// Currently selected sprite texture key (shared across panel sessions).
     static std::string sSpriteTexKey;
+    static unsigned sSpriteTextureId = 0;
+    static std::filesystem::path sAssetsRoot;
     static bool gLevelFilesInitialized = false;
     static std::vector<std::string> gLevelFiles;
     static int gSelectedLevelIndex = 0;
@@ -196,6 +203,67 @@ namespace mygame {
 
     }
 
+    void SetSpawnPanelAssetsRoot(const std::filesystem::path& root) {
+        if (root.empty()) {
+            sAssetsRoot.clear();
+            return;
+        }
+        std::error_code ec;
+        auto canonical = std::filesystem::weakly_canonical(root, ec);
+        sAssetsRoot = ec ? root : canonical;
+    }
+
+    void UseSpriteFromAsset(const std::filesystem::path& relativePath) {
+        if (relativePath.empty() || sAssetsRoot.empty())
+            return;
+
+        std::filesystem::path relative = relativePath;
+        if (relative.is_absolute()) {
+            std::error_code ec;
+            auto canonical = std::filesystem::weakly_canonical(relative, ec);
+            if (ec)
+                return;
+            relative = canonical.lexically_relative(sAssetsRoot);
+        }
+
+        if (relative.empty())
+            return;
+
+        std::error_code ec;
+        auto absolute = std::filesystem::weakly_canonical(sAssetsRoot / relative, ec);
+        if (ec)
+            absolute = sAssetsRoot / relative;
+
+        if (!std::filesystem::exists(absolute))
+            return;
+
+        std::string key = relative.generic_string();
+        if (key.empty())
+            return;
+
+        if (Resource_Manager::resources_map.find(key) == Resource_Manager::resources_map.end())
+            Resource_Manager::load(key, absolute.string());
+
+        unsigned handle = Resource_Manager::getTexture(key);
+        if (handle != 0) {
+            sSpriteTexKey = key;
+            sSpriteTextureId = handle;
+        }
+    }
+
+    void ClearSpriteTexture() {
+        sSpriteTexKey.clear();
+        sSpriteTextureId = 0;
+    }
+
+    const std::string& CurrentSpriteTextureKey() {
+        return sSpriteTexKey;
+    }
+
+    unsigned CurrentSpriteTextureHandle() {
+        return sSpriteTextureId;
+    }
+
     /// Panel state (persists across frames).
     static std::string gSelectedPrefab = "Rect"; ///< Default prefab choice.
     static SpawnSettings gS;                     ///< Live settings bound to ImGui controls.
@@ -254,6 +322,8 @@ namespace mygame {
             (master->GetComponentType<CircleRenderComponent>(ComponentTypeId::CT_CircleRenderComponent) != nullptr);
         //const bool hasSprite =
         //    (master->GetComponentType<SpriteComponent>(ComponentTypeId::CT_SpriteComponent) != nullptr);
+        const bool hasSprite =
+            (master->GetComponentType<SpriteComponent>(ComponentTypeId::CT_SpriteComponent) != nullptr);
 
         // === Sprite Controls ===
         //if (hasSprite) {
@@ -270,6 +340,45 @@ namespace mygame {
         //        ImGui::EndCombo();
         //    }
        // }
+
+        if (hasSprite) {
+            ImGui::SeparatorText("Sprite");
+            const char* previewLabel = sSpriteTexKey.empty() ? "<drop texture>" : sSpriteTexKey.c_str();
+            ImGui::Text("Texture: %s", previewLabel);
+
+            ImVec2 avail = ImGui::GetContentRegionAvail();
+            float previewEdge = std::min(128.0f, avail.x);
+            ImVec2 previewSize(previewEdge, previewEdge);
+
+            ImGui::PushID("SpritePreview");
+            if (sSpriteTextureId != 0) {
+                ImGui::Image((ImTextureID)(void*)(intptr_t)sSpriteTextureId, previewSize, ImVec2(0, 1), ImVec2(1, 0));
+            }
+            else {
+                ImGui::Button("Drop Texture Here", previewSize);
+            }
+
+
+            if (ImGui::BeginDragDropTarget()) {
+                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_BROWSER_PATH")) {
+                    if (payload->Data && payload->DataSize > 0) {
+                        std::string relative(static_cast<const char*>(payload->Data), payload->DataSize - 1);
+                        UseSpriteFromAsset(relative);
+                    }
+                }
+                ImGui::EndDragDropTarget();
+            }
+            ImGui::PopID();
+
+            if (sSpriteTextureId != 0) {
+                if (ImGui::Button("Clear Sprite Texture"))
+                    ClearSpriteTexture();
+            }
+            else {
+                ImGui::TextDisabled("Drag from the Content Browser or drop files into the editor window.");
+            }
+        }
+
 
         // === Transform Controls ===
         if (hasTransform) {

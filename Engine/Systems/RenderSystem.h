@@ -9,11 +9,16 @@
 #include "Debug/Perf.h"
 #include "Debug/Spawn.h"
 #include "Debug/HierarchyPanel.h"
+#include "Debug/AssetBrowserPanel.h"
 #include "Factory/Factory.h"
 #include "Graphics/Graphics.hpp"
 #include "Graphics/Window.hpp"
 #include "Graphics/GraphicsText.hpp"
 #include "Resource_Manager/Resource_Manager.h"
+
+#include <filesystem>
+
+struct GLFWwindow;
 
 namespace Framework {
 
@@ -42,6 +47,10 @@ namespace Framework {
     private:
         std::filesystem::path GetExeDir() const;
         std::string           FindRoboto() const;
+        std::filesystem::path FindAssetsRoot() const;
+        void HandleFileDrop(int count, const char** paths);
+        void ProcessImportedAssets();
+        static void GlfwDropCallback(GLFWwindow* window, int count, const char** paths);
 
         unsigned CurrentPlayerTexture() const;
         int      CurrentColumns() const;
@@ -49,6 +58,12 @@ namespace Framework {
 
         gfx::Window* window = nullptr;
         LogicSystem& logic;
+
+        static RenderSystem* sInstance;
+
+        mygame::AssetBrowserPanel assetBrowser;
+        std::filesystem::path assetsRoot;
+
 
         int screenW = 1280, screenH = 720;
 

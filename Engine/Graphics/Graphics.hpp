@@ -67,7 +67,13 @@ namespace gfx {
             float r, float g, float b, float a,
             int screenW, int screenH);
 
+        // Draw a sprite in UI pixel coordinates (origin bottom-left)
+        static void renderSpriteUI(unsigned int tex, float x, float y, float w, float h,
+            float r, float g, float b, float a,
+            int screenW, int screenH);
 
+        /// Query the width/height (level 0) of a 2D texture. Returns false if unavailable.
+        static bool getTextureSize(unsigned int tex, int& outW, int& outH);
 
         /**
          * \brief Draw a whole-texture sprite with tint.

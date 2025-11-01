@@ -535,6 +535,57 @@ namespace gfx {
     }
 
 
+    void Graphics::renderSpriteUI(unsigned int tex, float x, float y, float w, float h,
+        float r, float g, float b, float a,
+        int screenW, int screenH)
+    {
+        if (!tex || !spriteShader || !VAO_sprite)
+            return;
+
+        glUseProgram(spriteShader);
+
+        glm::mat4 proj = glm::ortho(0.0f, float(screenW), 0.0f, float(screenH), -1.0f, 1.0f);
+        glm::mat4 model(1.0f);
+        model = glm::translate(model, glm::vec3(x + w * 0.5f, y + h * 0.5f, 0.0f));
+        model = glm::scale(model, glm::vec3(w, h, 1.0f));
+
+        glm::mat4 mvp = proj * model;
+
+        glUniformMatrix4fv(glGetUniformLocation(spriteShader, "uMVP"), 1, GL_FALSE, glm::value_ptr(mvp));
+        glUniform4f(glGetUniformLocation(spriteShader, "uTint"), r, g, b, a);
+        glUniform2f(glGetUniformLocation(spriteShader, "uUVOffset"), 0.0f, 0.0f);
+        glUniform2f(glGetUniformLocation(spriteShader, "uUVScale"), 1.0f, 1.0f);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, tex);
+        glUniform1i(glGetUniformLocation(spriteShader, "uTex"), 0);
+
+        glBindVertexArray(VAO_sprite);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glUseProgram(0);
+        GL_THROW_IF_ERROR("renderSpriteUI");
+    }
+
+
+    bool Graphics::getTextureSize(unsigned int tex, int& outW, int& outH)
+    {
+        outW = 0;
+        outH = 0;
+
+        if (!tex)
+            return false;
+
+        glBindTexture(GL_TEXTURE_2D, tex);
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &outW);
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &outH);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        GL_THROW_IF_ERROR("getTextureSize");
+        return outW > 0 && outH > 0;
+    }
+
     void Graphics::renderFullscreenTexture(unsigned tex)
     {
         if (!tex || !bgShader || !VAO_bg) return; // simple guards

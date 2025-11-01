@@ -15,12 +15,23 @@ public:
         std::string label;
         std::function<void()> onClick;
         bool hovered{ false };
+        unsigned idleTexture{ 0 };
+        unsigned hoverTexture{ 0 };
+        bool useTextures{ false };
+        bool drawLabelOnTexture{ false };
     };
 
     void Clear();
     void AddButton(float x, float y, float w, float h,
         const std::string& label,
         std::function<void()> onClick);
+
+    void AddButton(float x, float y, float w, float h,
+        const std::string& label,
+        unsigned idleTexture,
+        unsigned hoverTexture,
+        std::function<void()> onClick,
+        bool drawLabelOnTexture = false);
 
     void Update(Framework::InputSystem* input);
     void Draw(Framework::RenderSystem* render);
