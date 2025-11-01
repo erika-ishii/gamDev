@@ -151,27 +151,51 @@ namespace mygame {
 
     void AssetBrowserPanel::DrawEntry(const Entry& entry, float cellSize)
     {
-        ImGui::PushID(entry.path.filename().c_str());
-
-        const bool isDirectory = entry.isDirectory;
+        
         const std::string label = entry.path.filename().string();
+        ImGui::PushID(label.c_str());
 
-        ImVec2 size(cellSize, cellSize);
-        if (ImGui::Button(label.c_str(), size) && isDirectory)
-        {
-            m_currentDir = entry.path;
-            RefreshEntries();
-        }
+      
 
-        if (!isDirectory && ImGui::BeginDragDropSource())
+     
+        const bool isDirectory = entry.isDirectory;
+        ImVec2 tileSize(cellSize, cellSize);
+
+        const std::string buttonLabel = "##" + label;
+        bool pressed = ImGui::Button(buttonLabel.c_str(), tileSize);
+        bool buttonDoubleClick = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)
+            && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left);
+
+        const char* overlay = isDirectory ? "DIR" : "FILE";
+        const ImVec2 rectMin = ImGui::GetItemRectMin();
+        const ImVec2 rectMax = ImGui::GetItemRectMax();
+        const ImVec2 textSize = ImGui::CalcTextSize(overlay);
+        const ImVec2 textPos(rectMin.x + (rectMax.x - rectMin.x - textSize.x) * 0.5f,
+            rectMin.y + (rectMax.y - rectMin.y - textSize.y) * 0.5f);
+        ImGui::GetWindowDrawList()->AddText(textPos, ImGui::GetColorU32(ImGuiCol_Text), overlay);
+
+        std::string payloadPath = entry.path.lexically_relative(m_assetsRoot).generic_string();
+        if (payloadPath.empty() || payloadPath == "." || payloadPath.rfind("..", 0) == 0)
+            payloadPath = entry.path.generic_string();
+
+        bool dragging = false;
+        if (!payloadPath.empty() && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+        if (!isDirectory && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
         {
-            auto relative = entry.path.lexically_relative(m_assetsRoot).generic_string();
-            ImGui::SetDragDropPayload("ASSET_BROWSER_PATH", relative.c_str(), relative.size() + 1);
-            ImGui::TextUnformatted(relative.c_str());
+            dragging = true;
+            ImGui::SetDragDropPayload("ASSET_BROWSER_PATH", payloadPath.c_str(), payloadPath.size() + 1);
+            ImGui::TextUnformatted(payloadPath.c_str());
             ImGui::EndDragDropSource();
         }
 
-        if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && isDirectory)
+        float wrapWidth = ImGui::GetCursorPos().x + tileSize.x;
+        ImGui::PushTextWrapPos(wrapWidth);
+        ImGui::TextWrapped(label.c_str());
+        bool textDoubleClick = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)
+            && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left);
+        ImGui::PopTextWrapPos();
+
+        if (isDirectory && !dragging && (pressed || buttonDoubleClick || textDoubleClick))
         {
             m_currentDir = entry.path;
             RefreshEntries();

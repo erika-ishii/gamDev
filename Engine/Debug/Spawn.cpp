@@ -78,6 +78,19 @@ namespace mygame {
     static const std::filesystem::path kLevelDirectory("../../Data_Files");
     using namespace Framework;
     namespace {
+        std::string ToLower(std::string value) {
+            std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
+                return static_cast<char>(std::tolower(c));
+                });
+            return value;
+        }
+
+        bool IsTextureFile(const std::filesystem::path& path) {
+            const auto lower = ToLower(path.extension().string());
+            return lower == ".png" || lower == ".jpg" || lower == ".jpeg";
+        }
+
+        
         std::string TrimCopy(std::string value) {
             auto isSpace = [](unsigned char c) { return std::isspace(c) != 0; };
             value.erase(value.begin(), std::find_if(value.begin(), value.end(),
@@ -237,6 +250,11 @@ namespace mygame {
         if (!std::filesystem::exists(absolute))
             return;
 
+        if (!std::filesystem::is_regular_file(absolute))
+            return;
+
+        if (!IsTextureFile(absolute))
+            return;
         std::string key = relative.generic_string();
         if (key.empty())
             return;
