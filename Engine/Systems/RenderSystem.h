@@ -22,6 +22,7 @@ struct GLFWwindow;
 
 namespace Framework {
 
+
     class RenderSystem : public Framework::ISystem {
     public:
         RenderSystem(gfx::Window& window, LogicSystem& logic);
@@ -50,6 +51,11 @@ namespace Framework {
         std::filesystem::path FindAssetsRoot() const;
         void HandleFileDrop(int count, const char** paths);
         void ProcessImportedAssets();
+        void DrawDockspace();
+        void HandleShortcuts();
+        void UpdateGameViewport();
+        void RestoreFullViewport();
+        void DrawViewportControls();
         static void GlfwDropCallback(GLFWwindow* window, int count, const char** paths);
 
         unsigned CurrentPlayerTexture() const;
@@ -65,12 +71,30 @@ namespace Framework {
         std::filesystem::path assetsRoot;
 
 
+
         int screenW = 1280, screenH = 720;
 
         gfx::TextRenderer textTitle, textHint;
         bool textReadyTitle = false, textReadyHint = false;
 
         unsigned playerTex = 0, idleTex = 0, runTex = 0;
+
+        struct ViewRect
+        {
+            int x = 0;
+            int y = 0;
+            int width = 0;
+            int height = 0;
+        };
+
+        ViewRect gameViewport{};
+        bool showEditor = true;
+        bool gameViewportFullWidth = false;
+        bool  gameViewportFullHeight = false;
+        float heightRatio = 0.8f;
+        float editorSplitRatio = 0.5f;
+        bool editorToggleHeld = false;
+        bool fullscreenToggleHeld = false;
         bool showPhysicsHitboxes = true;
     };
 

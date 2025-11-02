@@ -23,7 +23,8 @@
             "y": 0.5
           }
         },
-        "name": "Rect"
+        "name": "Rect",
+        "layer": "layer1"
       },
       {
         "Components": {
@@ -63,7 +64,8 @@
             "y": 0.5
           }
         },
-        "name": "Enemy"
+        "name": "Enemy",
+        "layer": "apple"
       }
     ],
     "name": "level01"

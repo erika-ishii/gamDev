@@ -129,10 +129,13 @@ void Framework::PerfFrameStart(float dt, bool toggleKeyDown) {
 
 void Framework::DrawPerformanceWindow() {
     if (!sPerfVisible) return;
-
+    ImGuiIO& io = ImGui::GetIO();
+    if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+    {
+        ImGui::SetNextWindowDockID(ImGui::GetMainViewport()->ID, ImGuiCond_FirstUseEver);
+    }
     ImGui::SetNextWindowBgAlpha(0.7f);
     ImGui::Begin("Performance", nullptr,
-        ImGuiWindowFlags_NoDocking |
         ImGuiWindowFlags_AlwaysAutoResize |
         ImGuiWindowFlags_NoFocusOnAppearing);
 

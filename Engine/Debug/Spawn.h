@@ -52,6 +52,8 @@ namespace mygame {
 
         // circle (CircleRenderComponent)
         float radius{ 0.08f };        ///< Radius for circle-based components
+        
+        bool overridePrefabSize{ false }; ///< When true, allow overriding prefab width/height
 
         // tint for anything renderable
         float rgba[4]{ 1.f, 1.f, 1.f, 1.f }; ///< RGBA color tint
@@ -87,5 +89,9 @@ namespace mygame {
 
     const std::string& CurrentSpriteTextureKey();
     unsigned CurrentSpriteTextureHandle();
+
+    const std::string& ActiveLayerName();
+    bool IsLayerIsolationEnabled();
+    bool ShouldRenderLayer(const std::string& layerName);
 
 } // namespace mygame

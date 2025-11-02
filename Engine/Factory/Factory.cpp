@@ -50,7 +50,7 @@
 #include "Component/EnemyDecisionTreeComponent.h"
 #include "Component/EnemyHealthComponent.h"
 #include "Component/EnemyTypeComponent.h"
-#include "Component/PlayerComponent.h"
+
 #include "Physics/Dynamics/RigidBodyComponent.h"
 // Summary of responsibilities:
 // - Create empty game objects (GOCs)
@@ -130,6 +130,10 @@ namespace Framework {
             std::string name; s.ReadString("name", name);
             goc->SetObjectName(name);
         }
+        if (s.HasKey("layer")) {
+            std::string layer; s.ReadString("layer", layer);
+            goc->SetLayerName(layer);
+        }
         if (s.EnterObject("Components")) {
             for (auto& kv : ComponentMap) {
                 const std::string& compName = kv.first;
@@ -170,6 +174,11 @@ namespace Framework {
             std::string name;
             stream.ReadString("name", name);
             goc->SetObjectName(name);
+        }
+        if (stream.HasKey("layer")) {
+            std::string layer;
+            stream.ReadString("layer", layer);
+            goc->SetLayerName(layer);
         }
 
         // Enter the Components object if present
@@ -253,6 +262,7 @@ namespace Framework {
             s.ReadString("name", levelName);
             LastLevelNameCache = levelName;
         }
+    
 
         if (s.EnterArray("GameObjects")) {
             size_t n = s.ArraySize();
@@ -340,66 +350,72 @@ namespace Framework {
     bool GameObjectFactory::SaveLevelInternal(const std::string& filename, const std::vector<GOC*>& objects,
         const std::string& levelName)
     {
-        json root = json::object();
-        auto& level = root["Level"];
-        level = json::object();
+         json root = json::object();                 // Create the root JSON object: { }
+         auto& level = root["Level"];                // Create/access child "Level" node (creates it if missing)
+        level = json::object();                     // Ensure "Level" itself is an object: { "Level": { } }
 
-        std::string finalName = levelName;
-        if (finalName.empty()) {
-            std::filesystem::path p(filename);
-            finalName = p.stem().string();
+        std::string finalName = levelName;          // Copy the provided level name
+        if (finalName.empty()) {                    
+            std::filesystem::path p(filename);      
+            finalName = p.stem().string();          //  default to its stem (filename without extension)
         }
-        if (!finalName.empty())
-            level["name"] = finalName;
+        if (!finalName.empty())                     // If we have a non-empty name by now…
+            level["name"] = finalName;              //   …write it into JSON: "Level": { "name": "<finalName>" }
 
-        auto& array = level["GameObjects"];
-        array = json::array();
+        auto& array = level["GameObjects"];         // Create/access the "GameObjects" array node
+        array = json::array();                      // Make sure it's an array: "GameObjects": [ ]
 
+        // Iterate every object the caller asked to save
         for (GOC* obj : objects) {
-            if (!obj) continue;
+            if (!obj) continue;                     // Skip null entries defensively
 
+            // Only save objects still tracked by the factory and not pending deletion
             auto it = GameObjectIdMap.find(obj->ObjectId);
             if (it == GameObjectIdMap.end() || it->second.get() != obj)
-                continue; // not tracked by factory anymore
+                continue;                           // Skip if not owned by factory 
             if (ObjectsToBeDeleted.count(obj->ObjectId))
-                continue; // skip objects pending deletion
+                continue;                           // Skip if flagged for deletion (deferred)
 
-            json objJson = json::object();
-            if (!obj->ObjectName.empty())
-                objJson["name"] = obj->ObjectName;
+            json objJson = json::object();          // Build: { } for this one object
+            if (!obj->ObjectName.empty())           // If it has a non-empty name…
+                objJson["name"] = obj->ObjectName;  //  write "name": "<GOC name>"
+            objJson["layer"] = obj->GetLayerName(); // Always write the object's layer (string)
 
-            json comps = json::object();
+            json comps = json::object();            // Container for this object's components
+
+            // Serialize each component attached to the object
             for (auto const& up : obj->Components) {
-                if (!up) continue;
-                const GameComponent& comp = *up;
+                if (!up) continue;                  // Skip empty component slots
+                const GameComponent& comp = *up;    // Reference to concrete component
                 std::string compName = ComponentNameFromId(comp.GetTypeId());
                 if (compName.empty())
-                    continue;
-                comps[compName] = SerializeComponentToJson(comp);
+                    continue;                       // Skip if we don't know the component's JSON name
+                comps[compName] = SerializeComponentToJson(comp); // Write its JSON blob
             }
 
-            objJson["Components"] = std::move(comps);
-            array.push_back(std::move(objJson));
+            objJson["Components"] = std::move(comps); // Attach "Components": { ... } to this object
+            array.push_back(std::move(objJson));      // Append object to "GameObjects" array
         }
 
-        std::filesystem::path outputPath(filename);
-        std::error_code ec;
-        if (outputPath.has_parent_path())
-            std::filesystem::create_directories(outputPath.parent_path(), ec);
+            std::filesystem::path outputPath(filename);   // Normalize/hold output path
+            std::error_code ec;                           // Non-throwing error code holder
+            if (outputPath.has_parent_path())
+            std::filesystem::create_directories(outputPath.parent_path(), ec); // Ensure folders exist
 
-        std::ofstream out(outputPath);
-        if (!out.is_open())
-            return false;
+            std::ofstream out(outputPath);                // Open the output file for write
+            if (!out.is_open())
+                return false;                             // Fail if we couldn't open it
 
-        out << std::setw(2) << root;
-        if (!out.good())
-            return false;
+            out << std::setw(2) << root;                  // Pretty-print JSON with 2-space indent
+            if (!out.good())
+                return false;                             // Fail if stream went bad during write
 
-        LastLevelCache = objects;
-        LastLevelNameCache = finalName;
-        LastLevelPathCache = outputPath;
-        return true;
+            LastLevelCache = objects;                     // Cache snapshot of the objects we just saved (non-owning)
+            LastLevelNameCache = finalName;               // Cache the level name
+            LastLevelPathCache = outputPath;              // Cache the level path
+                return true;                                  // Success
     }
+
 
     bool GameObjectFactory::SaveLevel(const std::string& filename, const std::vector<GOC*>& objects,
         const std::string& levelName)
@@ -436,8 +452,15 @@ namespace Framework {
         ++LastGameObjectId;   // assign next unique sequential ID
         gameObject->ObjectId = LastGameObjectId; // friend access grants direct write
         GOC* raw = gameObject.get();             // non-owning view
+        LayerData.AssignToLayer(raw->ObjectId, raw->GetLayerName());
         GameObjectIdMap.emplace(LastGameObjectId, std::move(gameObject)); // take ownership
         return raw;
+    }
+
+    void GameObjectFactory::OnLayerChanged(GOC& object, std::string_view previousLayer)
+    {
+        (void)previousLayer;
+        LayerData.AssignToLayer(object.ObjectId, object.GetLayerName());
     }
 
     /*************************************************************************************
@@ -463,7 +486,7 @@ namespace Framework {
     {
         if (!gameObject)
             return;
-
+        LayerData.RemoveObject(gameObject->ObjectId);
         ObjectsToBeDeleted.insert(gameObject->ObjectId); // mark by ID; actual erase later
     }
 
@@ -482,6 +505,7 @@ namespace Framework {
         for (auto id : ObjectsToBeDeleted) {
             auto it = GameObjectIdMap.find(id);
             if (it != GameObjectIdMap.end()) {
+                LayerData.RemoveObject(id);
                 GameObjectIdMap.erase(it); // unique_ptr destruction happens here
             }
         }
@@ -498,12 +522,20 @@ namespace Framework {
         for (auto id : ObjectsToBeDeleted) {
             auto it = GameObjectIdMap.find(id);
             if (it != GameObjectIdMap.end()) {
+                LayerData.RemoveObject(id);
                 GameObjectIdMap.erase(it); // unique_ptr destruction happens here
             }
         }
         ObjectsToBeDeleted.clear();
         // Destroy any remaining tracked game objects and release their components
+        for (auto const& [id, _] : GameObjectIdMap) {
+            (void)_;
+            LayerData.RemoveObject(id);
+        }
+        // Destroy any remaining tracked game objects and release their components
         GameObjectIdMap.clear();
+
+        LayerData.Clear();
 
         // Component creators are owned by the factory; release them to avoid leak reports
         ComponentMap.clear();

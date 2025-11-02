@@ -20,6 +20,8 @@
 #include "Common/MessageCom.h"
 #include <string>
 
+
+
 namespace Framework {
     using GOCId = unsigned int; //Alias for a game ID
 
@@ -54,6 +56,19 @@ namespace Framework {
           \return A const reference to the object name string.
         *************************************************************************************/
         const std::string& GetObjectName() const { return ObjectName; }
+
+        /*************************************************************************************
+        \brief Sets the logical layer name that this object belongs to.
+        \param layer String layer identifier (e.g., "Gameplay", "UI").
+      *************************************************************************************/
+        void SetLayerName(const std::string& layer);
+
+        /*************************************************************************************
+          \brief Retrieves the logical layer name that this object belongs to.
+          \return Layer name string (defaults to "Default").
+        *************************************************************************************/
+        const std::string& GetLayerName() const { return LayerName; }
+
 
         // Broadcast a message to all component
         /*************************************************************************************
@@ -180,6 +195,7 @@ namespace Framework {
         std::vector<UptrComp> Components; //owned 
         GOCId ObjectId = 0;
         std::string ObjectName;
+        std::string LayerName{ "Default" };
 
   
     };

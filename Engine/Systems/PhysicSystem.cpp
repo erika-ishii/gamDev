@@ -45,10 +45,14 @@ namespace Framework {
 			AABB playerBoxX(newX, tr->y, rb->width, rb->height);
 			AABB playerBoxY(tr->x, newY, rb->width, rb->height);
 
+			const std::string& objectLayer = obj->GetLayerName();
 			// Horizontal Collision
 			for (auto& [otherId, otherObj] : objects)
 			{
 				if (!otherObj || otherObj == obj)
+					continue;
+				// check layer
+				if (otherObj->GetLayerName() != objectLayer)
 					continue;
 
 				auto* rbO = otherObj->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);

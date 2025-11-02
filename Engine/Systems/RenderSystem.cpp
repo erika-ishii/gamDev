@@ -23,6 +23,7 @@
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <system_error>
 #include <vector>
 
@@ -202,6 +203,181 @@ namespace Framework {
         }
     }
 
+    void RenderSystem::HandleShortcuts()
+    {
+        if (!window)
+            return;
+
+        GLFWwindow* native = window->raw();
+        if (!native)
+            return;
+
+        auto handleToggle = [&](int key, bool& held)
+            {
+                const bool pressed = glfwGetKey(native, key) == GLFW_PRESS;
+                const bool triggered = pressed && !held;
+                held = pressed;
+                return triggered;
+            };
+
+        if (handleToggle(GLFW_KEY_F10, editorToggleHeld))
+            showEditor = !showEditor;
+
+        if (handleToggle(GLFW_KEY_F11, fullscreenToggleHeld))
+            gameViewportFullWidth = !gameViewportFullWidth;
+    }
+
+    void RenderSystem::UpdateGameViewport()
+    {
+        if (!window)
+            return;
+
+        const int fullWidth = window->Width();
+        const int fullHeight = window->Height();
+        if (fullWidth <= 0 || fullHeight <= 0)
+            return;
+
+        const float minSplit = 0.3f;
+        const float maxSplit = 0.7f;
+        editorSplitRatio = std::clamp(editorSplitRatio, minSplit, maxSplit);
+        //width
+        int desiredWidth = fullWidth;
+        if (showEditor && !gameViewportFullWidth)
+        {
+            desiredWidth = static_cast<int>(std::lround(fullWidth * editorSplitRatio));
+            const int maxWidth = std::max(1, fullWidth - 1);
+            desiredWidth = std::clamp(desiredWidth, 1, maxWidth);
+        }
+        //height
+        // Clamp to 30–100% of window height when not full height.
+        if (!gameViewportFullHeight) {
+            heightRatio = std::clamp(heightRatio, 0.30f, 1.0f);
+        }
+        else {
+            heightRatio = 1.0f;
+        }
+        int desiredHeight = static_cast<int>(std::lround(fullHeight * heightRatio));
+        desiredHeight = std::clamp(desiredHeight, 1, fullHeight);
+
+        // Center vertically when not using full height
+        int yOffset = (fullHeight - desiredHeight) / 2;
+        if (gameViewportFullHeight) yOffset = 0;
+
+        // Apply if changed
+        if (gameViewport.width != desiredWidth ||
+            gameViewport.height != desiredHeight ||
+            gameViewport.y != yOffset)
+        {
+            gameViewport.x = 0;
+            gameViewport.y = yOffset;
+            gameViewport.width = desiredWidth;
+            gameViewport.height = desiredHeight;
+
+            screenW = gameViewport.width;
+            screenH = gameViewport.height;
+
+            if (textReadyTitle) textTitle.setViewport(screenW, screenH);
+            if (textReadyHint)  textHint.setViewport(screenW, screenH);
+        }
+
+        if (gameViewport.width > 0 && gameViewport.height > 0)
+            glViewport(gameViewport.x, gameViewport.y, gameViewport.width, gameViewport.height);
+    }
+
+    void RenderSystem::RestoreFullViewport()
+    {
+        if (!window)
+            return;
+
+        glViewport(0, 0, window->Width(), window->Height());
+    }
+    void RenderSystem::DrawDockspace()
+    {
+        if (!showEditor)
+            return;
+        ImGuiIO& io = ImGui::GetIO();
+        if (!(io.ConfigFlags & ImGuiConfigFlags_DockingEnable))
+            return;
+
+        const ImGuiViewport* viewport = ImGui::GetMainViewport();
+
+
+        const float editorWidth = viewport->WorkSize.x - static_cast<float>(gameViewport.width);
+        if (editorWidth <= 1.0f || viewport->WorkSize.y <= 1.0f)
+            return;
+
+        const ImVec2 editorPos(viewport->WorkPos.x + static_cast<float>(gameViewport.width), viewport->WorkPos.y);
+        const ImVec2 editorSize(editorWidth, viewport->WorkSize.y);
+
+        ImGui::SetNextWindowPos(editorPos, ImGuiCond_Always);
+        ImGui::SetNextWindowSize(editorSize, ImGuiCond_Always);
+        ImGui::SetNextWindowViewport(viewport->ID);
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+
+        ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+            ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+            ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus |
+            ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBackground;
+
+        ImGui::Begin("EditorDockHost", nullptr, flags);
+        ImGuiID dockspaceId = ImGui::GetID("EditorDockspace");
+        ImGuiDockNodeFlags dockFlags = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_NoDockingInCentralNode;
+        ImGui::DockSpace(dockspaceId, ImVec2(0.0f, 0.0f), dockFlags);
+        ImGui::End();
+
+        ImGui::PopStyleVar(2);
+    }
+
+    void RenderSystem::DrawViewportControls()
+    {
+        if (!showEditor)
+            return;
+
+        const ImGuiViewport* viewport = ImGui::GetMainViewport();
+        ImVec2 pos = viewport->WorkPos;
+        pos.x += 12.0f;
+        pos.y += 12.0f;
+
+        ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
+        ImGui::SetNextWindowBgAlpha(0.35f);
+
+        ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize |
+            ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDocking;
+
+        if (ImGui::Begin("Viewport Controls", nullptr, flags))
+        {
+            ImGui::TextUnformatted("Viewport Controls");
+            ImGui::Separator();
+
+            bool editorEnabled = showEditor;
+            if (ImGui::Checkbox("Editor Enabled (F10)", &editorEnabled))
+                showEditor = editorEnabled;
+
+            bool fullWidth = gameViewportFullWidth;
+            if (ImGui::Checkbox("Game Full Width (F11)", &fullWidth))
+                gameViewportFullWidth = fullWidth;
+            if (showEditor && !gameViewportFullWidth)
+            {
+                float splitPercent = editorSplitRatio * 100.0f;
+                if (ImGui::SliderFloat("Game Width", &splitPercent, 30.0f, 70.0f, "%.0f%%", ImGuiSliderFlags_AlwaysClamp))
+                    editorSplitRatio = splitPercent / 100.0f;
+            }
+            bool fullHeight = gameViewportFullHeight;
+            if (ImGui::Checkbox("Game Full Height", &fullHeight))
+                gameViewportFullHeight = fullHeight;
+
+            if (!gameViewportFullHeight) {
+                float hPercent = heightRatio * 100.0f;
+                if (ImGui::SliderFloat("Game Height", &hPercent, 30.0f, 100.0f, "%.0f%%", ImGuiSliderFlags_AlwaysClamp))
+                    heightRatio = hPercent / 100.0f;
+                ImGui::TextDisabled("Viewport is centered vertically");
+            }
+        }
+        ImGui::End();
+    }
+
     void RenderSystem::GlfwDropCallback(GLFWwindow*, int count, const char** paths)
     {
         if (sInstance)
@@ -224,7 +400,12 @@ namespace Framework {
         WindowConfig cfg = LoadWindowConfig("../../Data_Files/window.json");
         screenW = cfg.width;
         screenH = cfg.height;
-
+        if (window)
+        {
+            screenW = window->Width();
+            screenH = window->Height();
+        }
+        gameViewport = { 0, 0, screenW, screenH };
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -259,7 +440,15 @@ namespace Framework {
         config.glsl_version = "#version 330";
         config.dockspace = true;
         config.gamepad = false;
-        ImGuiLayer::Initialize(*window, config);
+        if (window)
+        {
+            ImGuiLayer::Initialize(*window, config);
+        }
+        else
+        {
+            std::cerr << "[RenderSystem] Warning: window is null, skipping ImGui initialization.\n";
+        }
+
 
         assetsRoot = FindAssetsRoot();
         if (!assetsRoot.empty())
@@ -273,6 +462,7 @@ namespace Framework {
     }
     void Framework::RenderSystem::BeginMenuFrame()
     {
+        RestoreFullViewport();
         glDisable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -285,11 +475,14 @@ namespace Framework {
     void Framework::RenderSystem::EndMenuFrame()
     {
         // Nothing to restore right now; kept for symmetry/future use.
+        RestoreFullViewport();
     }
 
     void RenderSystem::draw()
     {
         TryGuard::Run([&] {
+            HandleShortcuts();
+            UpdateGameViewport();
             auto t0 = clock::now();
 
             gfx::Graphics::renderBackground();
@@ -301,6 +494,8 @@ namespace Framework {
                     (void)id;
                     auto* obj = objPtr.get();
                     if (!obj)
+                        continue;
+                    if (!mygame::ShouldRenderLayer(obj->GetLayerName()))
                         continue;
 
                     auto* tr = obj->GetComponentType<Framework::TransformComponent>(
@@ -349,6 +544,8 @@ namespace Framework {
                     auto* obj = objPtr.get();
                     if (!obj)
                         continue;
+                    if (!mygame::ShouldRenderLayer(obj->GetLayerName()))
+                        continue;
 
                     auto* tr = obj->GetComponentType<Framework::TransformComponent>(
                         Framework::ComponentTypeId::CT_TransformComponent);
@@ -368,6 +565,8 @@ namespace Framework {
                     (void)id;
                     auto* obj = objPtr.get();
                     if (!obj)
+                        continue;
+                    if (!mygame::ShouldRenderLayer(obj->GetLayerName()))
                         continue;
                     auto* tr = obj->GetComponentType<Framework::TransformComponent>(
                         Framework::ComponentTypeId::CT_TransformComponent);
@@ -426,66 +625,28 @@ namespace Framework {
             const double renderMs = std::chrono::duration<double, std::milli>(clock::now() - t0).count();
             Framework::setRender(renderMs);
 
+            RestoreFullViewport();
+
             t0 = clock::now();
 
-            ImGuiIO& io = ImGui::GetIO();
-            if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+            DrawDockspace();
+            if (showEditor)
             {
-                static bool dockspaceOpen = true;
-                static bool dockspaceFullscreen = true;
-                static bool dockspacePadding = false;
-                ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags_None;
-                ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDocking;
+                DrawViewportControls();
+                assetBrowser.Draw();
+                mygame::DrawSpawnPanel();
 
-                if (dockspaceFullscreen)
+                if (ImGui::Begin("Crash Tests"))
                 {
-                    const ImGuiViewport* viewport = ImGui::GetMainViewport();
-                    ImGui::SetNextWindowPos(viewport->Pos);
-                    ImGui::SetNextWindowSize(viewport->Size);
-                    ImGui::SetNextWindowViewport(viewport->ID);
-                    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-                    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-                    dockspaceFlags |= ImGuiDockNodeFlags_PassthruCentralNode;
-                    windowFlags |= ImGuiWindowFlags_NoTitleBar |
-                        ImGuiWindowFlags_NoCollapse |
-                        ImGuiWindowFlags_NoResize |
-                        ImGuiWindowFlags_NoMove |
-                        ImGuiWindowFlags_NoBringToFrontOnFocus |
-                        ImGuiWindowFlags_NoNavFocus |
-                        ImGuiWindowFlags_NoBackground;
+                    if (ImGui::Button("Crash BG shader"))     gfx::Graphics::testCrash(1);
+                    if (ImGui::Button("Crash BG VAO"))        gfx::Graphics::testCrash(2);
+                    if (ImGui::Button("Crash Sprite shader")) gfx::Graphics::testCrash(3);
+                    if (ImGui::Button("Crash Object shader")) gfx::Graphics::testCrash(4);
+                    if (ImGui::Button("Delete BG texture"))   gfx::Graphics::testCrash(5);
                 }
-                else
-                {
-                    dockspaceFlags &= ~ImGuiDockNodeFlags_PassthruCentralNode;
-                }
-
-                if (!dockspacePadding)
-                {
-                    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-                }
-
-                ImGui::Begin("DockSpaceRoot", dockspaceFullscreen ? nullptr : &dockspaceOpen, windowFlags);
-
-                if (!dockspacePadding)
-                {
-                    ImGui::PopStyleVar();
-                }
-                if (dockspaceFullscreen)
-                {
-                    ImGui::PopStyleVar(2);
-                }
-
-                ImGuiID dockspaceID = ImGui::GetID("DockSpaceRoot");
-                ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), dockspaceFlags);
-
                 ImGui::End();
-            }
 
-            assetBrowser.Draw();
-            ProcessImportedAssets();
-
-            mygame::DrawSpawnPanel();
-
+                
             if (ImGui::Begin("Debug Overlays"))
             {
                 const char* buttonLabel = showPhysicsHitboxes ? "Hide Hitboxes" : "Show Hitboxes";
@@ -500,18 +661,9 @@ namespace Framework {
             ImGui::End();
 
 
-            if (ImGui::Begin("Crash Tests"))
-            {
-                if (ImGui::Button("Crash BG shader"))     gfx::Graphics::testCrash(1);
-                if (ImGui::Button("Crash BG VAO"))        gfx::Graphics::testCrash(2);
-                if (ImGui::Button("Crash Sprite shader")) gfx::Graphics::testCrash(3);
-                if (ImGui::Button("Crash Object shader")) gfx::Graphics::testCrash(4);
-                if (ImGui::Button("Delete BG texture"))   gfx::Graphics::testCrash(5);
+                Framework::DrawPerformanceWindow();
             }
-            ImGui::End();
-
-            Framework::DrawPerformanceWindow();
-
+            ProcessImportedAssets();
             const double imguiMs = std::chrono::duration<double, std::milli>(clock::now() - t0).count();
             Framework::setImGui(imguiMs);
             }, "RenderSystem::draw");

@@ -18,8 +18,13 @@ namespace Framework
     {
         ImVec2 windowSize(400, 300);
         ImVec2 displaySize = ImGui::GetIO().DisplaySize;
+        ImGuiIO& io = ImGui::GetIO();
         ImGui::SetNextWindowSize(windowSize, ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowPos(ImVec2(displaySize.x - windowSize.x, 70), ImGuiCond_FirstUseEver);
+        if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+        {
+            ImGui::SetNextWindowDockID(ImGui::GetMainViewport()->ID, ImGuiCond_FirstUseEver);
+        }
         if (ImGui::Begin("Audio Panel"))
         {
             auto& soundManager = SoundManager::getInstance();

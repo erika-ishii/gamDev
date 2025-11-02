@@ -15,7 +15,7 @@
 
 #include "Composition.h"
 #include "Factory/Factory.h"
-
+#include <utility>
 namespace Framework {
     //Default destructor: vector<unique_ptr<...>> automatically release own component
     /*************************************************************************************
@@ -23,6 +23,26 @@ namespace Framework {
              to automatically clean up owned components.
     *************************************************************************************/
     GameObjectComposition::~GameObjectComposition() = default;
+
+    /*************************************************************************************
+    \brief Updates the logical layer assignment for this game object.
+    \param layer Desired layer name. Empty strings fall back to "Default".
+    \note  Notifies the factory so that layer membership lists stay in sync.
+  *************************************************************************************/
+    void GameObjectComposition::SetLayerName(const std::string& layer)
+    {
+        std::string newLayer = layer.empty() ? std::string("Default") : layer;
+        if (LayerName == newLayer)
+            return;
+
+        std::string previous = LayerName;
+        LayerName = std::move(newLayer);
+
+        if (FACTORY && ObjectId != 0)
+        {
+            FACTORY->OnLayerChanged(*this, previous);
+        }
+    }
 
     /*************************************************************************************
       \brief Sends a message to all components attached to this GameObjectComposition.
@@ -107,7 +127,7 @@ namespace Framework {
             newComp->set_type(up->GetTypeId());   // preserve type id
             clone->Components.emplace_back(std::move(newComp));
         }
-
+        clone->SetLayerName(LayerName);
         clone->initialize();
         return clone;
     }

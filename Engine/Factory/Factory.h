@@ -41,6 +41,7 @@
 #include <set>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <filesystem>
 #include "Common/System.h"
@@ -48,6 +49,7 @@
 #include "Composition/ComponentCreator.h"
 #include "Composition/Composition.h"
 #include "Serialization/JsonSerialization.h"
+#include "Core/Layer.h"
 
 // Factory responsibilities (summary)
 // - Create GOCs and assign unique IDs
@@ -138,6 +140,12 @@ namespace Framework {
         /// Forward messages (unused in factory).
         void SendMessage(Message* m) override { (void)m; }
 
+        LayerManager& Layers() { return LayerData; }
+        const LayerManager& Layers() const { return LayerData; }
+
+        void OnLayerChanged(GOC& object, std::string_view previousLayer);
+
+
         // --- Component Creator Registry ---
         /*************************************************************************************
           \brief Registers a component creator with the factory (factory takes ownership).
@@ -159,6 +167,7 @@ namespace Framework {
         std::vector<GOC*>     LastLevelCache;      ///< Snapshot of last saved/loaded level objects (non-owning)
         std::string           LastLevelNameCache;  ///< Cached level name (if provided)
         std::filesystem::path LastLevelPathCache;  ///< Cached level file path
+        LayerManager           LayerData;
 
         std::string ComponentNameFromId(ComponentTypeId id) const;
         json SerializeComponentToJson(const GameComponent& component) const;

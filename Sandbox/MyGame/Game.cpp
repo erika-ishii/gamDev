@@ -45,9 +45,10 @@ namespace mygame {
         gInputSystem = gSystems.RegisterSystem<Framework::InputSystem>(win);
         gLogicSystem = gSystems.RegisterSystem<Framework::LogicSystem>(win, *gInputSystem);
         gPhysicsSystem = gSystems.RegisterSystem<Framework::PhysicSystem>(*gLogicSystem);
+        gAiSystem = gSystems.RegisterSystem<Framework::AiSystem>(win);
         gAudioSystem = gSystems.RegisterSystem<Framework::AudioSystem>(win);
         gRenderSystem = gSystems.RegisterSystem<Framework::RenderSystem>(win, *gLogicSystem);
-        gAiSystem = gSystems.RegisterSystem<Framework::AiSystem>(win);
+     
       
         //(void)gPhysicsSystem;
         //(void)gAudioSystem;
