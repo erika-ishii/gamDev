@@ -26,6 +26,7 @@
 #include <cmath>
 #include <system_error>
 #include <vector>
+#include <limits>
 
 #include "Physics/Dynamics/RigidBodyComponent.h"
 namespace Framework {
@@ -225,6 +226,229 @@ namespace Framework {
 
         if (handleToggle(GLFW_KEY_F11, fullscreenToggleHeld))
             gameViewportFullWidth = !gameViewportFullWidth;
+    }
+    void RenderSystem::HandleViewportPicking()
+    {
+        if (!window || !FACTORY)
+        {
+            leftMouseDownPrev = false;
+            draggingSelection = false;
+            return;
+        }
+
+        GLFWwindow* native = window->raw();
+        if (!native)
+        {
+            leftMouseDownPrev = false;
+            draggingSelection = false;
+            return;
+        }
+
+        ImGuiIO& io = ImGui::GetIO();
+        const bool wantCapture = io.WantCaptureMouse;
+
+        const bool mouseDown = glfwGetMouseButton(native, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+        const bool pressed = mouseDown && !leftMouseDownPrev;
+        const bool released = !mouseDown && leftMouseDownPrev;
+
+        double cursorX = 0.0;
+        double cursorY = 0.0;
+        glfwGetCursorPos(native, &cursorX, &cursorY);
+
+        float worldX = 0.0f;
+        float worldY = 0.0f;
+        bool insideViewport = false;
+        if (!ScreenToWorld(cursorX, cursorY, worldX, worldY, insideViewport))
+        {
+            draggingSelection = false;
+            leftMouseDownPrev = mouseDown;
+            return;
+        }
+
+        if (mygame::HasSelectedObject())
+        {
+            Framework::GOCId selectedId = mygame::GetSelectedObjectId();
+            if (!FACTORY->GetObjectWithId(selectedId))
+            {
+                mygame::ClearSelection();
+                draggingSelection = false;
+            }
+        }
+        else
+        {
+            draggingSelection = false;
+        }
+
+        if (pressed && !wantCapture)
+        {
+            Framework::GOCId pickedId = insideViewport ? TryPickObject(worldX, worldY) : 0;
+            if (pickedId != 0)
+            {
+                mygame::SetSelectedObjectId(pickedId);
+                if (auto* obj = FACTORY->GetObjectWithId(pickedId))
+                {
+                    if (auto* tr = obj->GetComponentType<Framework::TransformComponent>(
+                        Framework::ComponentTypeId::CT_TransformComponent))
+                    {
+                        dragOffsetX = tr->x - worldX;
+                        dragOffsetY = tr->y - worldY;
+                        draggingSelection = true;
+                    }
+                }
+            }
+            else if (insideViewport)
+            {
+                mygame::ClearSelection();
+                draggingSelection = false;
+            }
+        }
+
+        if (draggingSelection && (!mouseDown || wantCapture))
+            draggingSelection = false;
+
+        if (draggingSelection)
+        {
+            Framework::GOCId selectedId = mygame::GetSelectedObjectId();
+            if (selectedId != 0)
+            {
+                if (auto* obj = FACTORY->GetObjectWithId(selectedId))
+                {
+                    if (auto* tr = obj->GetComponentType<Framework::TransformComponent>(
+                        Framework::ComponentTypeId::CT_TransformComponent))
+                    {
+                        tr->x = worldX + dragOffsetX;
+                        tr->y = worldY + dragOffsetY;
+                    }
+                    else
+                    {
+                        draggingSelection = false;
+                    }
+                }
+                else
+                {
+                    mygame::ClearSelection();
+                    draggingSelection = false;
+                }
+            }
+            else
+            {
+                draggingSelection = false;
+            }
+        }
+
+        if (released)
+            draggingSelection = false;
+
+        leftMouseDownPrev = mouseDown;
+    }
+
+    bool RenderSystem::ScreenToWorld(double cursorX, double cursorY, float& worldX, float& worldY, bool& insideViewport) const
+    {
+        if (!window)
+            return false;
+
+        if (gameViewport.width <= 0 || gameViewport.height <= 0)
+            return false;
+
+        const double viewportLeft = static_cast<double>(gameViewport.x);
+        const double viewportWidth = static_cast<double>(gameViewport.width);
+        const double viewportBottom = static_cast<double>(gameViewport.y);
+        const double viewportHeight = static_cast<double>(gameViewport.height);
+
+        const int fullHeight = window->Height();
+        if (fullHeight <= 0)
+            return false;
+
+        const double mouseYFromBottom = static_cast<double>(fullHeight) - cursorY;
+
+        const double normalizedX = (cursorX - viewportLeft) / viewportWidth;
+        const double normalizedY = (mouseYFromBottom - viewportBottom) / viewportHeight;
+
+        worldX = static_cast<float>(normalizedX * 2.0 - 1.0);
+        worldY = static_cast<float>(normalizedY * 2.0 - 1.0);
+
+        insideViewport = (normalizedX >= 0.0 && normalizedX <= 1.0 &&
+            normalizedY >= 0.0 && normalizedY <= 1.0);
+
+        return std::isfinite(worldX) && std::isfinite(worldY);
+    }
+
+    Framework::GOCId RenderSystem::TryPickObject(float worldX, float worldY) const
+    {
+        if (!FACTORY)
+            return 0;
+
+        Framework::GOCId bestId = 0;
+        float bestDistanceSq = std::numeric_limits<float>::max();
+
+        for (const auto& [id, objPtr] : FACTORY->Objects())
+        {
+            (void)id;
+            Framework::GOC* obj = objPtr.get();
+            if (!obj)
+                continue;
+            if (!mygame::ShouldRenderLayer(obj->GetLayerName()))
+                continue;
+
+            auto* tr = obj->GetComponentType<Framework::TransformComponent>(
+                Framework::ComponentTypeId::CT_TransformComponent);
+            if (!tr)
+                continue;
+
+            const float dx = worldX - tr->x;
+            const float dy = worldY - tr->y;
+            const float distanceSq = dx * dx + dy * dy;
+
+            bool contains = false;
+
+            if (auto* circle = obj->GetComponentType<Framework::CircleRenderComponent>(
+                Framework::ComponentTypeId::CT_CircleRenderComponent))
+            {
+                const float radius = circle->radius;
+                if (radius > 0.0f)
+                    contains = (distanceSq <= radius * radius);
+            }
+            else
+            {
+                float width = 1.0f;
+                float height = 1.0f;
+                if (auto* rc = obj->GetComponentType<Framework::RenderComponent>(
+                    Framework::ComponentTypeId::CT_RenderComponent))
+                {
+                    width = rc->w;
+                    height = rc->h;
+                }
+                else if (!obj->GetComponentType<Framework::SpriteComponent>(
+                    Framework::ComponentTypeId::CT_SpriteComponent))
+                {
+                    continue;
+                }
+
+                if (width <= 0.0f)
+                    width = 1.0f;
+                if (height <= 0.0f)
+                    height = 1.0f;
+
+                const float cosR = std::cos(tr->rot);
+                const float sinR = std::sin(tr->rot);
+                const float localX = cosR * dx + sinR * dy;
+                const float localY = -sinR * dx + cosR * dy;
+
+                contains = (std::fabs(localX) <= width * 0.5f) &&
+                    (std::fabs(localY) <= height * 0.5f);
+            }
+
+            if (!contains)
+                continue;
+
+            if (distanceSq < bestDistanceSq)
+            {
+                bestDistanceSq = distanceSq;
+                bestId = obj->GetId();
+            }
+        }
+
+        return bestId;
     }
 
     void RenderSystem::UpdateGameViewport()

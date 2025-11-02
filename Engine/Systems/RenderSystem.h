@@ -8,6 +8,7 @@
 #include "Debug/ImGuiLayer.h"
 #include "Debug/Perf.h"
 #include "Debug/Spawn.h"
+#include "Debug/Selection.h"
 #include "Debug/HierarchyPanel.h"
 #include "Debug/AssetBrowserPanel.h"
 #include "Factory/Factory.h"
@@ -53,6 +54,9 @@ namespace Framework {
         void ProcessImportedAssets();
         void DrawDockspace();
         void HandleShortcuts();
+        void HandleViewportPicking();
+        bool ScreenToWorld(double cursorX, double cursorY, float& worldX, float& worldY, bool& insideViewport) const;
+        Framework::GOCId TryPickObject(float worldX, float worldY) const;
         void UpdateGameViewport();
         void RestoreFullViewport();
         void DrawViewportControls();
@@ -96,6 +100,11 @@ namespace Framework {
         bool editorToggleHeld = false;
         bool fullscreenToggleHeld = false;
         bool showPhysicsHitboxes = true;
+
+        bool leftMouseDownPrev = false;
+        bool draggingSelection = false;
+        float dragOffsetX = 0.0f;
+        float dragOffsetY = 0.0f;
     };
 
 } // namespace Framework
