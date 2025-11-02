@@ -39,8 +39,17 @@ namespace Framework
             auto* tr = enemy->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
             if (rb && tr)
             {
-                const float patrolSpeed = 0.3f;
+                static float pauseTimer = 0.0f;
+                const float patrolSpeed = 0.2f;
                 const float patrolRange = 0.5f;
+                const float pauseDuration = 2.0f;
+                
+                if (pauseTimer > 0.0f)
+                {
+                    pauseTimer -= dt;
+                    rb->velX = 0.0f;
+                    return;
+                }
 
                 rb->velX = patrolSpeed * dir;
                 rb->velY = 0.0f;
@@ -48,8 +57,18 @@ namespace Framework
                 tr->x += rb->velX * dt;   
                 tr->y += rb->velY * dt;
 
-                if (tr->x < -patrolRange) dir = 1.0f;
-                if (tr->x > patrolRange) dir = -1.0f;
+                if (tr->x < -patrolRange)
+                {
+                    tr->x = -patrolRange;
+                    dir = 1.0f;
+                    pauseTimer = pauseDuration; 
+                }
+                if (tr->x > patrolRange)
+                {
+                    tr->x = patrolRange;
+                    dir = -1.0f;
+                    pauseTimer = pauseDuration;
+                }
             }
         }
         );
@@ -96,16 +115,25 @@ namespace Framework
         }
         );
 
-        //Root node - CAPTURE enemyID
+        
         auto root = std::make_unique<DecisionNode>(
-            [enemyID](float) {
+            [enemyID](float) 
+            {
                 GOC* enemy = FACTORY->GetObjectWithId(enemyID);
                 if (!enemy) return false;
-                return IsPlayerNear(enemy, 0.5f);
+                static bool hasSeenPlayer = false;
+                if (IsPlayerNear(enemy, 0.2f))
+                {
+                    hasSeenPlayer = true;
+                }
+                return hasSeenPlayer;
             },
             std::move(AttackLeaf),
             std::move(patrolLeaf),
-            [](float) {}   // empty lambda for leaf action
+            [](float) 
+            {
+      
+            }   
         );
 
         return std::make_unique<DecisionTree>(std::move(root));

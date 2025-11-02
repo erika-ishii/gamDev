@@ -317,7 +317,6 @@ namespace Framework {
                         {
                             sx = rc->w; sy = rc->h; r = rc->r; g = rc->g; b = rc->b; a = rc->a;
                         }
-
                         if (obj->GetObjectName() == "Player" && idleTex && runTex)
                         {
                             gfx::Graphics::renderSpriteFrame(

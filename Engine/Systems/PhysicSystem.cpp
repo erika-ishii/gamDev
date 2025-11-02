@@ -1,5 +1,8 @@
 #include "PhysicSystem.h"
 #include <iostream>
+#include <algorithm>
+#include <cctype>
+#include <string>
 
 namespace Framework {
     PhysicSystem::PhysicSystem(LogicSystem& logic)
@@ -54,8 +57,11 @@ namespace Framework {
 				if (!rbO || !trO)
 					continue;
 
-				// Only check walls
-				if (otherObj->GetObjectName() != "rect")
+				// Only check walls (case-insensitive comparison)
+				std::string otherName = otherObj->GetObjectName();
+				std::transform(otherName.begin(), otherName.end(), otherName.begin(),
+					[](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+				if (otherName != "rect")
 					continue;
 
 				AABB wallBox(trO->x, trO->y, rbO->width, rbO->height);

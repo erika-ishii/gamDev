@@ -179,8 +179,8 @@ namespace mygame {
             payloadPath = entry.path.generic_string();
 
         bool dragging = false;
-        if (!payloadPath.empty() && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
-        if (!isDirectory && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+        if (!isDirectory && !payloadPath.empty()
+            && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
         {
             dragging = true;
             ImGui::SetDragDropPayload("ASSET_BROWSER_PATH", payloadPath.c_str(), payloadPath.size() + 1);

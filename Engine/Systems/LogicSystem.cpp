@@ -1,5 +1,7 @@
 
 #include "Systems/LogicSystem.h"
+#include <cctype>
+#include <string_view>
 
 namespace Framework {
     LogicSystem::LogicSystem(gfx::Window& window, InputSystem& input)
@@ -64,11 +66,26 @@ namespace Framework {
 
         if (!IsAlive(collisionTarget))
             collisionTarget = nullptr;
+
+        auto nameEqualsIgnoreCase = [](const std::string& lhs, std::string_view rhs)
+            {
+                if (lhs.size() != rhs.size())
+                    return false;
+                for (std::size_t i = 0; i < lhs.size(); ++i)
+                {
+                    unsigned char c1 = static_cast<unsigned char>(lhs[i]);
+                    unsigned char c2 = static_cast<unsigned char>(rhs[i]);
+                    if (std::tolower(c1) != std::tolower(c2))
+                        return false;
+                }
+                return true;
+            };
+
         if (!collisionTarget)
         {
             for (auto* obj : levelObjects)
             {
-                if (obj && obj->GetObjectName() == "rect")
+                if (obj && nameEqualsIgnoreCase(obj->GetObjectName(), "rect"))
                 {
                     collisionTarget = obj;
                     break;
