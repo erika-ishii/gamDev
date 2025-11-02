@@ -53,10 +53,10 @@
             "w": 0.25
           },
           "RigidBodyComponent": {
-            "height": 0.25,
+            "height": 0.21,
             "velocity_x": 0.6000000238418579,
             "velocity_y": 0.6000000238418579,
-            "width": 0.25
+            "width": 0.1
           },
           "SpriteComponent": {
             "texture_key": "player"

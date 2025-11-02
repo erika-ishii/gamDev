@@ -56,6 +56,7 @@
 #include "Component/EnemyHealthComponent.h"
 #include "Component/EnemyTypeComponent.h"
 #include "Ai/DecisionTreeDefault.h"
+#include "Physics/Dynamics/RigidBodyComponent.h"
 
 #include <vector>
 #include <string>
@@ -281,6 +282,15 @@ namespace mygame {
             if (!sSpriteTexKey.empty()) {
                 sp->texture_key = sSpriteTexKey;
                 sp->texture_id = Resource_Manager::getTexture(sSpriteTexKey);
+            }
+        }
+        if (auto* rb = obj->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent)) {
+            rb->velX = s.rbVelX;
+            rb->velY = s.rbVelY;
+
+            if (s.overridePrefabCollider) {
+                rb->width = s.rbWidth;
+                rb->height = s.rbHeight;
             }
         }
 
@@ -527,11 +537,17 @@ namespace mygame {
         const bool hasRender = (masterRender != nullptr);
         const bool hasCircle =
             (master->GetComponentType<CircleRenderComponent>(ComponentTypeId::CT_CircleRenderComponent) != nullptr);
-        //const bool hasSprite =
-        //    (master->GetComponentType<SpriteComponent>(ComponentTypeId::CT_SpriteComponent) != nullptr);
-        if (gPendingPrefabSizeSync && masterRender) {
-            gS.w = masterRender->w;
-            gS.h = masterRender->h;
+        const bool hasRigidBody =
+            (master->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent) != nullptr);
+
+        if (gPendingPrefabSizeSync) {
+            if (masterRender) { gS.w = masterRender->w; gS.h = masterRender->h; }
+            if (auto* mrb = master->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent)) {
+                gS.rbWidth = mrb->width;
+                gS.rbHeight = mrb->height;
+                gS.rbVelX = mrb->velX;
+                gS.rbVelY = mrb->velY;
+            }
             gPendingPrefabSizeSync = false;
         }
 
@@ -586,14 +602,17 @@ namespace mygame {
 
         // === Rectangle Controls ===
         if (hasRender) {
-            ImGui::SeparatorText("Rect"); // Section header
+            ImGui::SeparatorText("Size"); // Section header
 
             // When the checkbox is toggled OFF, copy prefab size back
             if (ImGui::Checkbox("Override prefab size", &gS.overridePrefabSize)) {
                 if (!gS.overridePrefabSize && masterRender) {
                     gS.w = masterRender->w;
                     gS.h = masterRender->h;
-                }
+                }            //ImGui::SeparatorText("RigidBody");
+            //ImGui::DragFloat("x", &gS.x, 0.005f, 0.0f, 1.0f);
+            //ImGui::DragFloat("y", &gS.y, 0.005f, 0.0f, 1.0f);
+            //ImGui::DragFloat("rot (rad)", &gS.rot, 0.01f, -3.14159f, 3.14159f);
             }
 
             const bool disableSizeControls = !gS.overridePrefabSize;
@@ -611,6 +630,29 @@ namespace mygame {
             ImGui::DragFloat("radius", &gS.radius, 0.005f, 0.01f, 1.0f);
         }
 
+        if (hasRigidBody) {
+            ImGui::SeparatorText("RigidBody");
+
+            if (ImGui::Checkbox("Override prefab collider", &gS.overridePrefabCollider)) {
+                // if toggled OFF, pull master values back in
+                if (!gS.overridePrefabCollider) {
+                    if (auto* mrb = master->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent)) {
+                        gS.rbWidth = mrb->width;
+                        gS.rbHeight = mrb->height;
+                        gS.rbVelX = mrb->velX;
+                        gS.rbVelY = mrb->velY;
+                    }
+                }
+            }
+
+            const bool disable = !gS.overridePrefabCollider;
+            if (disable) ImGui::BeginDisabled();
+            ImGui::DragFloat("Collider Width", &gS.rbWidth, 0.005f, 0.01f, 2.0f);
+            ImGui::DragFloat("Collider Height", &gS.rbHeight, 0.005f, 0.01f, 2.0f);
+            ImGui::DragFloat("Velocity X", &gS.rbVelX, 0.01f, -100.f, 100.f);
+            ImGui::DragFloat("Velocity Y", &gS.rbVelY, 0.01f, -100.f, 100.f);
+            if (disable) ImGui::EndDisabled();
+        }
         // === Color Controls ===
         if (hasRender || hasCircle) {
             ImGui::SeparatorText("Color");

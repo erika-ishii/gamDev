@@ -707,6 +707,7 @@ namespace Framework {
         TryGuard::Run([&] {
             HandleShortcuts();
             UpdateGameViewport();
+            HandleViewportPicking();
             auto t0 = clock::now();
 
             gfx::Graphics::renderBackground();
@@ -858,6 +859,8 @@ namespace Framework {
             {
                 DrawViewportControls();
                 assetBrowser.Draw();
+                mygame::DrawHierarchyPanel();
+
                 mygame::DrawSpawnPanel();
 
                 if (ImGui::Begin("Crash Tests"))

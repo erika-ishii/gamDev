@@ -58,6 +58,10 @@ namespace mygame {
         // tint for anything renderable
         float rgba[4]{ 1.f, 1.f, 1.f, 1.f }; ///< RGBA color tint
 
+        bool  overridePrefabCollider{ false }; // if false -> keep prefab collider
+        float rbWidth{ 0.5f }, rbHeight{ 0.5f };
+        float rbVelX{ 0.f }, rbVelY{ 0.f };
+
         // batch
         int   count{ 1 };             ///< Number of instances to spawn in batch
         float stepX{ 0.05f }, stepY{ 0.0f }; ///< Step offset applied per batch instance
