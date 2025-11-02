@@ -25,6 +25,8 @@
 #include <cctype>
 #include <system_error>
 #include <vector>
+
+#include "Physics/Dynamics/RigidBodyComponent.h"
 namespace Framework {
     RenderSystem* RenderSystem::sInstance = nullptr;
 
@@ -376,6 +378,28 @@ namespace Framework {
 
                     gfx::Graphics::renderCircle(tr->x, tr->y, cc->radius, cc->r, cc->g, cc->b, cc->a);
                 }
+                if (showPhysicsHitboxes)
+                {
+                    for (auto& [id, objPtr] : FACTORY->Objects())
+                    {
+                        (void)id;
+                        auto* obj = objPtr.get();
+                        if (!obj)
+                            continue;
+
+                        auto* tr = obj->GetComponentType<Framework::TransformComponent>(
+                            Framework::ComponentTypeId::CT_TransformComponent);
+                        auto* rb = obj->GetComponentType<Framework::RigidBodyComponent>(
+                            Framework::ComponentTypeId::CT_RigidBodyComponent);
+                        if (!tr || !rb)
+                            continue;
+
+                        gfx::Graphics::renderRectangleOutline(tr->x, tr->y, 0.0f,
+                            rb->width, rb->height,
+                            1.f, 0.f, 0.f, 1.f,
+                            2.f);
+                    }
+                }
             }
 
             if (textReadyTitle)
@@ -461,6 +485,20 @@ namespace Framework {
             ProcessImportedAssets();
 
             mygame::DrawSpawnPanel();
+
+            if (ImGui::Begin("Debug Overlays"))
+            {
+                const char* buttonLabel = showPhysicsHitboxes ? "Hide Hitboxes" : "Show Hitboxes";
+                if (ImGui::Button(buttonLabel))
+                {
+                    showPhysicsHitboxes = !showPhysicsHitboxes;
+                }
+
+                ImGui::SameLine();
+                ImGui::Text("Hitboxes: %s", showPhysicsHitboxes ? "ON" : "OFF");
+            }
+            ImGui::End();
+
 
             if (ImGui::Begin("Crash Tests"))
             {

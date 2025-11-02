@@ -331,6 +331,40 @@ namespace gfx {
     }
 
     /*************************************************************************************
+     \brief  Draw a rectangle outline (wireframe) using the shared quad geometry.
+     \param  lineWidth Thickness of the rendered outline in pixels.
+   *************************************************************************************/
+    void Graphics::renderRectangleOutline(float posX, float posY, float rot, float scaleX, float scaleY,
+        float r, float g, float b, float a, float lineWidth)
+    {
+        glUseProgram(objectShader);
+
+        const float pivot_sx = sRectPivotX * scaleX;
+        const float pivot_sy = sRectPivotY * scaleY;
+
+        glm::mat4 model(1.0f);
+        model = glm::translate(model, glm::vec3(posX, posY, 0.0f));
+        model = glm::translate(model, glm::vec3(pivot_sx, pivot_sy, 0.0f));
+        model = glm::rotate(model, rot, glm::vec3(0, 0, 1));
+        model = glm::translate(model, glm::vec3(-pivot_sx, -pivot_sy, 0.0f));
+        model = glm::scale(model, glm::vec3(scaleX, scaleY, 1.0f));
+
+        glUniformMatrix4fv(glGetUniformLocation(objectShader, "uMVP"), 1, GL_FALSE, glm::value_ptr(model));
+        glUniform4f(glGetUniformLocation(objectShader, "uColor"), r, g, b, a);
+
+        float width = (lineWidth <= 0.f) ? 1.f : lineWidth;
+
+        glBindVertexArray(VAO_rect);
+        glLineWidth(width);
+        glDrawArrays(GL_LINE_LOOP, 0, 4);
+        glLineWidth(1.0f);
+        glBindVertexArray(0);
+
+        glUseProgram(0);
+        GL_THROW_IF_ERROR("renderRectangleOutline");
+    }
+
+    /*************************************************************************************
       \brief  Convenience overload: uniform scaling and white color.
     *************************************************************************************/
     void Graphics::renderRectangle(float posX, float posY, float rot, float scale) {

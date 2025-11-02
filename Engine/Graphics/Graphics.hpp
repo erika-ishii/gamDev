@@ -50,6 +50,17 @@ namespace gfx {
             float scaleX, float scaleY,
             float r, float g, float b, float a);
 
+
+        /**
+           * \brief Draw an outline-only rectangle using the shared quad geometry.
+           * \param lineWidth Thickness of the outline in pixels (clamped to >= 1).
+           */
+        static void renderRectangleOutline(float posX, float posY, float rot,
+            float scaleX, float scaleY,
+            float r, float g, float b, float a,
+            float lineWidth = 1.f);
+
+
         /**
          * \brief Convenience rectangle draw with uniform scale and white tint.
          */

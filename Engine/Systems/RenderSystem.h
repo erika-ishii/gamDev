@@ -71,6 +71,7 @@ namespace Framework {
         bool textReadyTitle = false, textReadyHint = false;
 
         unsigned playerTex = 0, idleTex = 0, runTex = 0;
+        bool showPhysicsHitboxes = true;
     };
 
 } // namespace Framework
