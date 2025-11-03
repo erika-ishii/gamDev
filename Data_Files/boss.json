@@ -1,10 +1,26 @@
 {
   "GameObject": {
     "Components": {
-   "TransformComponent": { "x": -0.5, "y": 0.5, "rot": 0.0 },
-       "RenderComponent": { "w": 0.5, "h": 0.5, "r": 1, "g": 1, "b": 1, "a": 1 },
-       "SpriteComponent": { "texture_key": "boss" },
-         "RigidBodyComponent": { "velocity_x": 0.2, "velocity_y": 0.2, "width": 0.5, "height": 0.5}
+      "TransformComponent": {
+        "x": -0.5,
+        "y": 0.5,
+        "rot": 0.0
+      },
+      "RenderComponent": {
+        "w": 0.3,
+        "h": 0.3,
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 1
+      },
+      "SpriteComponent": { "texture_key": "boss" },
+      "RigidBodyComponent": {
+        "velocity_x": 0.6,
+        "velocity_y": 0.6,
+        "width": 0.25,
+        "height": 0.25
+      }
     }
   }
 }

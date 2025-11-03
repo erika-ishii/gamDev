@@ -122,6 +122,22 @@ namespace Framework {
         animInfo.rows = cfg.rows;
         animInfo.running = (animState == AnimState::Run);
     }
+
+    bool LogicSystem::GetPlayerWorldPosition(float& outX, float& outY) const
+    {
+        if (!player)
+            return false;
+
+        auto* tr = player->GetComponentType<Framework::TransformComponent>(
+            Framework::ComponentTypeId::CT_TransformComponent);
+        if (!tr)
+            return false;
+
+        outX = tr->x;
+        outY = tr->y;
+        return true;
+    }
+
     void LogicSystem::Initialize()
     {
         crashLogger = std::make_unique<CrashLogger>(std::string("../../logs"),
@@ -140,6 +156,9 @@ namespace Framework {
         RegisterComponent(SpriteComponent);
         RegisterComponent(RigidBodyComponent);
         RegisterComponent(PlayerComponent);
+        RegisterComponent(PlayerAttackComponent);
+        RegisterComponent(PlayerHealthComponent);
+
         RegisterComponent(EnemyComponent);
         RegisterComponent(EnemyAttackComponent);
         RegisterComponent(EnemyDecisionTreeComponent);
@@ -178,13 +197,15 @@ namespace Framework {
             if (!player)
                 return;
 
+            auto mouse = input.Manager().GetMouseState();
+
             auto* tr = player->GetComponentType<Framework::TransformComponent>(
                 Framework::ComponentTypeId::CT_TransformComponent);
             auto* rc = player->GetComponentType<Framework::RenderComponent>(
                 Framework::ComponentTypeId::CT_RenderComponent);
             auto* rb = player->GetComponentType<Framework::RigidBodyComponent>(
                 Framework::ComponentTypeId::CT_RigidBodyComponent);
-
+            
             const float rotSpeed = DegToRad(90.f);
             const float scaleRate = 1.5f;
             const bool shift = input.IsKeyPressed(GLFW_KEY_LEFT_SHIFT) ||
@@ -209,6 +230,13 @@ namespace Framework {
                 rc->w = rectBaseW * rectScale;
                 rc->h = rectBaseH * rectScale;
             }
+            float normalizedX = (float)((mouse.x / window->Width()) * 2.0 - 1.0);
+            // rc->w is the image flipping thingamajic
+            if (normalizedX > tr->x)
+                rc->w = std::abs(rc->w);
+            else if (normalizedX < tr->x)
+                rc->w = -std::abs(rc->w); 
+           
 
             if (rb && tr)
             {

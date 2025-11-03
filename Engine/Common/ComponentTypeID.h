@@ -53,6 +53,8 @@ namespace Framework
         
         //PlayerComponent
         CT_PlayerComponent,
+        CT_PlayerHealthComponent,
+        CT_PlayerAttackComponent,
 
         /// EnemyComponent: Enemy Component
         CT_EnemyComponent,

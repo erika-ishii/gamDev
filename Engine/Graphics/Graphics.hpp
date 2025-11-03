@@ -17,6 +17,7 @@
 
 #include <glad/glad.h>
 #include "../Resource_Manager/Resource_Manager.h"
+#include <glm/mat4x4.hpp>
 
 namespace gfx {
 
@@ -41,6 +42,18 @@ namespace gfx {
         static void renderBackground();
 
         static void renderFullscreenTexture(unsigned tex);
+
+        /**
+         * \brief Configure the active camera view/projection used for world-space rendering.
+         * \param view  View matrix (usually from camera transform).
+         * \param proj  Projection matrix (orthographic or perspective).
+         */
+        static void setViewProjection(const glm::mat4& view, const glm::mat4& proj);
+
+        /**
+         * \brief Reset camera transforms to identity (useful for UI/menus).
+         */
+        static void resetViewProjection();
 
         /**
          * \brief Draw a colored rectangle at (posX,posY) with rotation and non-uniform scale.

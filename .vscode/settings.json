@@ -79,6 +79,7 @@
         "stack": "cpp",
         "stop_token": "cpp",
         "thread": "cpp",
-        "csignal": "cpp"
+        "csignal": "cpp",
+        "unordered_set": "cpp"
     }
 }

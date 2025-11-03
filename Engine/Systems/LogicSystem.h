@@ -7,6 +7,10 @@
 #include "Component/CircleRenderComponent.h"
 #include "Component/SpriteComponent.h"
 
+#include "Component/PlayerComponent.h"
+#include "Component/PlayerAttackComponent.h"
+#include "Component/PlayerHealthComponent.h"
+
 #include "Component/EnemyComponent.h"
 #include "Component/EnemyAttackComponent.h"
 #include "Component/EnemyDecisionTreeComponent.h"
@@ -78,7 +82,7 @@ namespace Framework {
 		float PlayerBaseWidth() const { return rectBaseW; }
 		float PlayerBaseHeight() const { return rectBaseH; }
 		float PlayerScale() const { return rectScale; }
-
+		bool GetPlayerWorldPosition(float& outX, float& outY) const;
 		int ScreenWidth() const { return screenW; }
 		int ScreenHeight() const { return screenH; }
 

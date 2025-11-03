@@ -1,12 +1,45 @@
+/*********************************************************************************************
+ \file      AudioImGui.cpp
+ \par       SofaSpuds
+ \author    jianwei.c (jianwei.c@digipen.edu) - Primary Author, 100%
+
+ \brief     Implementation of the AudioImGui class, providing an ImGui-based interface for
+            audio management, including master volume control, playback control, and
+            per-sound volume and loop settings.
+
+ \details
+            AudioImGui integrates with the framework's SoundManager and Resource_Manager
+            to allow developers to visualize and control audio assets during runtime.
+            Features include:
+            - Master volume slider for all sounds.
+            - Play, pause, stop, and resume controls for all sounds.
+            - Individual sound volume sliders and loop toggles.
+            - Dynamic listing of all loaded sound resources.
+
+ \copyright
+            All content © 2025 DigiPen Institute of Technology Singapore.
+            All rights reserved.
+*********************************************************************************************/
 #include "AudioImGui.h"
 #include <iostream>
 
 namespace Framework
 {
+    //Static Memeber Initialization
     bool AudioImGui::s_audioReady = false;
     std::vector<std::string> AudioImGui::soundNames;
     float AudioImGui::masterVolume = 0.7f;
+    /*****************************************************************************************
+    \brief
+    Initializes the AudioImGui interface and sets up ImGui for audio control.
 
+    \param win
+    Reference to the graphics window where the ImGui interface will be attached.
+
+    \details
+    This function must be called before rendering the audio interface. It ensures
+    that the system is ready and prints a confirmation message to the console.
+    *****************************************************************************************/
     void AudioImGui::Initialize(gfx::Window& win)
     {
         (void)win;
@@ -14,6 +47,17 @@ namespace Framework
         s_audioReady = true;
         std::cout << "[AudioImGui] Audio initialized successfully.\n";
     }
+    /*****************************************************************************************
+    \brief
+    Renders the ImGui audio interface with controls for all loaded sounds.
+
+    \details
+    Provides a GUI window that allows the user to:
+    - Adjust master volume for all sounds.
+    - Play, pause, resume, or stop all sounds.
+    - View and control individual sounds with sliders for volume and checkboxes for looping.
+    - Dynamically detects and lists all sound resources from the Resource_Manager.
+    *****************************************************************************************/
     void AudioImGui::Render()
     {
         ImVec2 windowSize(400, 300);
@@ -74,7 +118,14 @@ namespace Framework
         ImGui::End();
     }
 
+    /*****************************************************************************************
+    \brief
+    Shuts down the AudioImGui interface and releases associated resources.
 
+    \details
+    Marks the interface as no longer ready and prints a shutdown confirmation message.
+    This should be called before application exit or when audio GUI is no longer needed.
+    *****************************************************************************************/
     void AudioImGui::Shutdown()
     {
         if (!s_audioReady) return;

@@ -58,7 +58,9 @@ namespace gfx {
     // Computed in initialize() from current rect vertex data.
     static float sRectPivotX = 0.0f;
     static float sRectPivotY = 0.0f;
-
+    static glm::mat4 sViewMatrix(1.0f);
+    static glm::mat4 sProjectionMatrix(1.0f);
+    static glm::mat4 sViewProjectionMatrix(1.0f);
     /*************************************************************************************
       \brief  Throws std::runtime_error if a GL error is present (post-call guard).
       \param  where Call site identifier for error context.
@@ -279,7 +281,7 @@ namespace gfx {
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
+        resetViewProjection();
         GL_THROW_IF_ERROR("initialize_end");
     }
 
@@ -321,7 +323,8 @@ namespace gfx {
         model = glm::translate(model, glm::vec3(-pivot_sx, -pivot_sy, 0.0f));
         model = glm::scale(model, glm::vec3(scaleX, scaleY, 1.0f));
 
-        glUniformMatrix4fv(glGetUniformLocation(objectShader, "uMVP"), 1, GL_FALSE, glm::value_ptr(model));
+        const glm::mat4 mvp = sViewProjectionMatrix * model;
+        glUniformMatrix4fv(glGetUniformLocation(objectShader, "uMVP"), 1, GL_FALSE, glm::value_ptr(mvp));
         glUniform4f(glGetUniformLocation(objectShader, "uColor"), r, g, b, a);
         glBindVertexArray(VAO_rect);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -349,7 +352,8 @@ namespace gfx {
         model = glm::translate(model, glm::vec3(-pivot_sx, -pivot_sy, 0.0f));
         model = glm::scale(model, glm::vec3(scaleX, scaleY, 1.0f));
 
-        glUniformMatrix4fv(glGetUniformLocation(objectShader, "uMVP"), 1, GL_FALSE, glm::value_ptr(model));
+        const glm::mat4 mvp = sViewProjectionMatrix * model;
+        glUniformMatrix4fv(glGetUniformLocation(objectShader, "uMVP"), 1, GL_FALSE, glm::value_ptr(mvp));
         glUniform4f(glGetUniformLocation(objectShader, "uColor"), r, g, b, a);
 
         float width = (lineWidth <= 0.f) ? 1.f : lineWidth;
@@ -380,7 +384,8 @@ namespace gfx {
         glm::mat4 model(1.0f);
         model = glm::translate(model, glm::vec3(posX, posY, 0.0f));
         model = glm::scale(model, glm::vec3(radius, radius, 1.0f));
-        glUniformMatrix4fv(glGetUniformLocation(objectShader, "uMVP"), 1, GL_FALSE, glm::value_ptr(model));
+        const glm::mat4 mvp = sViewProjectionMatrix * model;
+        glUniformMatrix4fv(glGetUniformLocation(objectShader, "uMVP"), 1, GL_FALSE, glm::value_ptr(mvp));
         glUniform4f(glGetUniformLocation(objectShader, "uColor"), r, g, b, a);
         glBindVertexArray(VAO_circle);
         glDrawArrays(GL_TRIANGLE_FAN, 0, circleVertexCount);
@@ -400,7 +405,8 @@ namespace gfx {
         model = glm::translate(model, glm::vec3(posX, posY, 0.0f));
         model = glm::rotate(model, rot, glm::vec3(0, 0, 1));
         model = glm::scale(model, glm::vec3(scaleX, scaleY, 1.0f));
-        glUniformMatrix4fv(glGetUniformLocation(spriteShader, "uMVP"), 1, GL_FALSE, glm::value_ptr(model));
+        const glm::mat4 mvp = sViewProjectionMatrix * model;
+        glUniformMatrix4fv(glGetUniformLocation(spriteShader, "uMVP"), 1, GL_FALSE, glm::value_ptr(mvp));
         glUniform4f(glGetUniformLocation(spriteShader, "uTint"), r, g, b, a);
 
         // Whole-texture UVs
@@ -437,7 +443,8 @@ namespace gfx {
         model = glm::translate(model, glm::vec3(posX, posY, 0.0f));
         model = glm::rotate(model, rot, glm::vec3(0, 0, 1));
         model = glm::scale(model, glm::vec3(scaleX, scaleY, 1.0f));
-        glUniformMatrix4fv(glGetUniformLocation(spriteShader, "uMVP"), 1, GL_FALSE, glm::value_ptr(model));
+        const glm::mat4 mvp = sViewProjectionMatrix * model;
+        glUniformMatrix4fv(glGetUniformLocation(spriteShader, "uMVP"), 1, GL_FALSE, glm::value_ptr(mvp));
         glUniform4f(glGetUniformLocation(spriteShader, "uTint"), r, g, b, a);
 
         if (cols <= 0) cols = 1;
@@ -638,7 +645,17 @@ namespace gfx {
         glUseProgram(0);
         GL_THROW_IF_ERROR("renderFullscreenTexture");
     }
+    void Graphics::setViewProjection(const glm::mat4& view, const glm::mat4& proj)
+    {
+        sViewMatrix = view;
+        sProjectionMatrix = proj;
+        sViewProjectionMatrix = proj * view;
+    }
 
+    void Graphics::resetViewProjection()
+    {
+        setViewProjection(glm::mat4(1.0f), glm::mat4(1.0f));
+    }
 
     /*************************************************************************************
       \brief  Intentionally perturb GL state for crash/robustness testing.

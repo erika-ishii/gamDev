@@ -1,10 +1,40 @@
 #include "audioSystem.h"
+#include "RenderSystem.h"
 #include <iostream>
+/*********************************************************************************************
+ \file      AudioSystem.cpp
+ \par       SofaSpuds
+ \author    jianwei.c (jianwei.c@digipen.edu) - Primary Author, 100%
 
+ \brief     Implementation of the AudioSystem class, responsible for managing audio playback,
+            resource loading, and debug GUI integration.
 
+ \details
+            AudioSystem integrates the SoundManager and Resource_Manager to:
+            - Initialize and shutdown audio resources.
+            - Load audio assets at startup.
+            - Provide per-frame updates (currently empty, reserved for future logic).
+            - Render an ImGui-based debug panel for runtime audio management via AudioImGui.
+*********************************************************************************************/
 namespace Framework {
-    AudioSystem::AudioSystem(gfx::Window& window) :window(&window) {}
+    /*****************************************************************************************
+     \brief
+        Constructs the AudioSystem with a reference to the main window.
 
+     \param window
+        Reference to the graphics window for ImGui context.
+    *****************************************************************************************/
+    AudioSystem::AudioSystem(gfx::Window& window) :window(&window) {}
+    /*****************************************************************************************
+     \brief
+        Initializes the audio system and debug GUI.
+
+     \details
+        - Initializes the SoundManager engine.
+        - Loads all audio assets from the assets directory.
+        - Sets the default master volume.
+        - Initializes the ImGui audio debug panel via AudioImGui.
+    *****************************************************************************************/
     void AudioSystem::Initialize()
     {
         // Initialize audio engine
@@ -21,10 +51,33 @@ namespace Framework {
         // Initialize ImGui for audio panel
         AudioImGui::Initialize(*window);
     }
+    /*****************************************************************************************
+     \brief
+        Updates the audio system per frame.
 
+     \param dt
+        Delta time since the last frame (currently unused, reserved for future logic).
+    *****************************************************************************************/
     void AudioSystem::Update(float dt){ (void)dt; }
-    void AudioSystem::draw() { AudioImGui::Render(); };
+    /*****************************************************************************************
+     \brief
+        Draws the ImGui-based audio debug panel.
+    *****************************************************************************************/
+    void AudioSystem::draw() {
+        if (!RenderSystem::IsEditorVisible())
+            return;
 
+        AudioImGui::Render();
+    };
+    /*****************************************************************************************
+     \brief
+        Shuts down the audio system and releases resources.
+
+     \details
+        - Unloads all loaded sounds from SoundManager.
+        - Shuts down the AudioImGui debug interface.
+        - Prints a confirmation message to the console.
+    *****************************************************************************************/
     void AudioSystem::Shutdown()
     {
         // Unload all sounds

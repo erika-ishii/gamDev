@@ -44,6 +44,8 @@
 #include "Component/SpriteComponent.h"
 
 #include "Component/PlayerComponent.h"
+#include "Component/PlayerHealthComponent.h"
+#include "Component/PlayerAttackComponent.h"
 
 #include "Component/EnemyComponent.h"
 #include "Component/EnemyAttackComponent.h"
@@ -323,6 +325,16 @@ namespace Framework {
         }
         case ComponentTypeId::CT_InputComponents:
         case ComponentTypeId::CT_PlayerComponent:
+        case ComponentTypeId::CT_PlayerHealthComponent:
+        {
+            auto const& hp = static_cast<PlayerHealthComponent const&>(component);
+            return json{ {"health", hp.playerHealth}, {"maxhealth", hp.playerMaxhealth} };
+        }
+        case ComponentTypeId::CT_PlayerAttackComponent:
+        {
+          auto const& atk = static_cast<PlayerAttackComponent const&>(component);
+          return json{ {"damage", atk.damage}, {"attack_speed", atk.attack_speed} };
+        }
         case ComponentTypeId::CT_EnemyComponent:
         case ComponentTypeId::CT_EnemyDecisionTreeComponent:
             return json::object();
@@ -332,7 +344,7 @@ namespace Framework {
         }
         case ComponentTypeId::CT_EnemyHealthComponent: {
             auto const& hp = static_cast<EnemyHealthComponent const&>(component);
-            return json{ {"health", hp.health}, {"maxhealth", hp.maxhealth} };
+            return json{ {"health", hp.enemyHealth}, {"maxhealth", hp.enemyMaxhealth} };
         }
         case ComponentTypeId::CT_EnemyTypeComponent: {
             auto const& type = static_cast<EnemyTypeComponent const&>(component);

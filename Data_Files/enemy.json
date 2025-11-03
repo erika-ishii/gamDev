@@ -14,8 +14,8 @@
       },
 
       "EnemyHealthComponent": {
-        "max": 100,
-        "current": 100
+        "enemyHealth": 100,
+        "enemyMaxHealth": 100
       },
 
       "EnemyDecisionTreeComponent": {},
