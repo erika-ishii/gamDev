@@ -194,11 +194,11 @@ namespace Framework {
     void LogicSystem::Update(float dt)
     {
         TryGuard::Run([&] {
-             bool triggerCrash = input.IsKeyPressed(GLFW_KEY_F10);
+             bool triggerCrash = input.IsKeyPressed(GLFW_KEY_F9);
             if (triggerCrash && !crashTestLatched) {
                 crashTestLatched = true;
                 if (g_crashLogger) {
-                    auto line = g_crashLogger->WriteWithStack("manual_trigger", "key=F10|stage=pre_abort");
+                    auto line = g_crashLogger->WriteWithStack("manual_trigger", "key=F9|stage=pre_abort");
                     g_crashLogger->Mirror(line);
                 }
                 std::cout << "[CrashLog] Deliberate crash requested via F9.\n";

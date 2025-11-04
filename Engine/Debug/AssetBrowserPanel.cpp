@@ -1,4 +1,3 @@
-
 #include "Debug/AssetBrowserPanel.h"
 
 #include <algorithm>
@@ -7,6 +6,8 @@
 #include <imgui.h>
 #include <system_error>
 #include <unordered_set>
+#include <iomanip>
+#include <sstream>
 
 #include "Graphics/Graphics.hpp"
 
@@ -15,14 +16,105 @@ namespace mygame {
     namespace {
         constexpr float kThumbnailSize = 96.0f;
         constexpr float kPadding = 16.0f;
+
+        // Non-overlapping transform to appease MSVC debug iterator checks.
         std::string ToLower(std::string value)
         {
-            std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
-                return static_cast<char>(std::tolower(c));
-                });
-            return value;
+            std::string out;
+            out.resize(value.size());
+            std::transform(value.begin(), value.end(), out.begin(),
+                [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+            return out;
         }
-    }
+
+        // -------- Audio Library popup state (no header changes needed) --------
+        struct AudioPopupState {
+            bool openRequest = false;                              // request to open next frame
+            std::filesystem::path folder;                          // current folder
+            std::vector<std::filesystem::path> files;              // audio files in folder
+        };
+        static AudioPopupState gAudioPopup;
+
+        // Build list of audio files from current entries
+        template <typename Entries>
+        void OpenAudioPopupFrom(const std::filesystem::path& folder,
+            const Entries& entries)
+        {
+            gAudioPopup.folder = folder;
+            gAudioPopup.files.clear();
+            gAudioPopup.files.reserve(entries.size());
+            for (const auto& e : entries) {
+                if (!e.isDirectory) {
+                    auto ext = ToLower(e.path.extension().string());
+                    if (ext == ".wav" || ext == ".mp3") {
+                        gAudioPopup.files.emplace_back(e.path);
+                    }
+                }
+            }
+            gAudioPopup.openRequest = true;
+        }
+
+        // Human-friendly size for display
+        static std::string PrettySize(std::uintmax_t sz) {
+            const char* units[] = { "B", "KB", "MB", "GB" };
+            int u = 0;
+            double val = static_cast<double>(sz);
+            while (val >= 1024.0 && u < 3) { val /= 1024.0; ++u; }
+            std::ostringstream oss;
+            oss << std::fixed << std::setprecision(val >= 100 ? 0 : 2) << val << " " << units[u];
+            return oss.str();
+        }
+
+        // Draw the modal once requested
+        static void DrawAudioPopup(const std::filesystem::path& assetsRoot)
+        {
+            if (gAudioPopup.openRequest) {
+                ImGui::OpenPopup("Audio Files");
+                gAudioPopup.openRequest = false;
+            }
+            if (!ImGui::BeginPopupModal("Audio Files", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+                return;
+
+            // Header
+            std::string relFolder = gAudioPopup.folder.lexically_relative(assetsRoot).generic_string();
+            if (relFolder.empty()) relFolder = gAudioPopup.folder.filename().string();
+            ImGui::Text("Folder: %s", relFolder.c_str());
+            ImGui::Separator();
+
+            if (gAudioPopup.files.empty()) {
+                ImGui::TextDisabled("No .wav or .mp3 files in this folder.");
+            }
+            else {
+                // Simple table (name + size). You can add duration/sample rate once your audio system exposes it.
+                if (ImGui::BeginTable("audioTable", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
+                    ImGui::TableSetupColumn("File");
+                    ImGui::TableSetupColumn("Size");
+                    ImGui::TableHeadersRow();
+
+                    for (const auto& p : gAudioPopup.files) {
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        std::string name = p.filename().string();
+                        ImGui::TextUnformatted(name.c_str());
+
+                        ImGui::TableSetColumnIndex(1);
+                        std::error_code ec;
+                        auto sz = std::filesystem::file_size(p, ec);
+                        ImGui::TextUnformatted(ec ? "-" : PrettySize(sz).c_str());
+                    }
+
+                    ImGui::EndTable();
+                }
+            }
+
+            ImGui::Separator();
+            if (ImGui::Button("Close")) {
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
+        // ---------------------------------------------------------------------
+    } // anonymous namespace
 
     AssetBrowserPanel::~AssetBrowserPanel()
     {
@@ -59,7 +151,6 @@ namespace mygame {
         DrawStatusLine();
 
         ImGui::TextDisabled("Drag and drop files from your OS to add or replace assets in the current folder.");
-
 
         if (m_currentDir != m_assetsRoot)
         {
@@ -101,8 +192,12 @@ namespace mygame {
         ImGui::Columns(1);
         DrawReplacePopup();
 
+        // <- Audio popup (lists all audio files in current folder)
+        DrawAudioPopup(m_assetsRoot);
+
         ImGui::End();
     }
+
     std::size_t AssetBrowserPanel::QueueExternalFiles(const std::vector<std::filesystem::path>& files)
     {
         if (m_assetsRoot.empty())
@@ -240,17 +335,18 @@ namespace mygame {
 
     void AssetBrowserPanel::DrawEntry(const Entry& entry, float cellSize)
     {
+        // Unique, stable ID per tile based on full path.
+        const std::string idStr = entry.path.lexically_normal().generic_string();
+        ImGui::PushID(idStr.c_str());
 
         const std::string label = entry.path.filename().string();
-        ImGui::PushID(label.c_str());
-
-
-
 
         const bool isDirectory = entry.isDirectory;
         const bool isTexture = !isDirectory && IsTextureFile(entry.path);
-        const bool isInteractable = isDirectory || isTexture;
+        const bool isAudio = !isDirectory && IsAudioFile(entry.path);
+        const bool isInteractable = isDirectory || isTexture || isAudio;
         const bool isSelected = isInteractable && IsSelected(entry.path);
+
         if (isSelected)
         {
             const ImVec4 header = ImGui::GetStyleColorVec4(ImGuiCol_Header);
@@ -261,27 +357,25 @@ namespace mygame {
             ImGui::PushStyleColor(ImGuiCol_ButtonActive, headerActive);
         }
 
-        const std::string buttonLabel = "##" + label;
+        // Neutral button label: ID is controlled by PushID above.
+        const char* buttonLabel = "##tile";
         const ImVec2 tileSize(cellSize, cellSize);
         if (!isInteractable)
             ImGui::BeginDisabled(true);
 
-        const bool pressed = ImGui::Button(buttonLabel.c_str(), tileSize);
+        const bool pressed = ImGui::Button(buttonLabel, tileSize);
+
         if (!isInteractable)
             ImGui::EndDisabled();
-
 
         if (isSelected)
             ImGui::PopStyleColor(3);
 
-      
-
         const PreviewTexture* preview = isTexture ? GetTexturePreview(entry.path) : nullptr;
         const char* overlay = nullptr;
-        if (isDirectory)
-            overlay = "DIR";
-        else if (!preview || preview->textureId == 0)
-            overlay = "FILE";
+        if (isDirectory) overlay = "DIR";
+        else if (isAudio) overlay = "AUDIO";
+        else if (!preview || preview->textureId == 0) overlay = "FILE";
 
         const ImVec2 rectMin = ImGui::GetItemRectMin();
         const ImVec2 rectMax = ImGui::GetItemRectMax();
@@ -324,6 +418,7 @@ namespace mygame {
             ImGui::GetWindowDrawList()->AddText(textPos, ImGui::GetColorU32(ImGuiCol_Text), overlay);
         }
 
+        // Drag-drop: keep for textures only (by design)
         if (isTexture)
         {
             std::string payloadPath = entry.path.lexically_relative(m_assetsRoot).generic_string();
@@ -333,14 +428,15 @@ namespace mygame {
             if (!payloadPath.empty()
                 && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
             {
-                ImGui::SetDragDropPayload("ASSET_BROWSER_PATH", payloadPath.c_str(), payloadPath.size() + 1);
+                ImGui::SetDragDropPayload("ASSET_BROWSER_PATH",
+                    payloadPath.c_str(), payloadPath.size() + 1);
                 ImGui::TextUnformatted(payloadPath.c_str());
                 ImGui::EndDragDropSource();
             }
         }
 
         ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + tileSize.x);
-        ImGui::TextWrapped(label.c_str());
+        ImGui::TextWrapped("%s", label.c_str());
         const bool textHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
         const bool textDoubleClick = textHovered && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left);
         const bool textClicked = ImGui::IsItemClicked();
@@ -351,13 +447,23 @@ namespace mygame {
         if (pressed)
             m_selectedEntry = entry.path;
 
+        // Navigate into directory
         if (isDirectory && (pressed || textClicked || textDoubleClick))
         {
             m_currentDir = entry.path;
             m_selectedEntry.clear();
             RefreshEntries();
         }
-        if (!isDirectory && ImGui::BeginPopupContextItem("AssetContextMenu"))
+
+        // Clicking on an audio tile opens the Audio Files modal (listing all audio in the folder)
+        if (isAudio && (pressed || textClicked || textDoubleClick))
+        {
+            OpenAudioPopupFrom(m_currentDir, m_entries);
+        }
+
+        // Per-item popup ID to avoid collisions between different tiles.
+        const std::string popupId = std::string("AssetContextMenu##") + idStr;
+        if (!isDirectory && ImGui::BeginPopupContextItem(popupId.c_str()))
         {
             if (IsTextureFile(entry.path))
             {

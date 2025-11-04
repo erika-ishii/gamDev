@@ -225,3 +225,8 @@
 2025-11-04T12:58:08Z|std::exception|thread=57052|RenderSystem::draw/renderSprite/gl_error=1281/stack=stacktrace_unavailable
 2025-11-04T12:58:08Z|std::exception|thread=57052|mygame::draw/renderSprite/gl_error=1281/stack=stacktrace_unavailable
 2025-11-04T12:58:08Z|std_terminate|thread=57052|stack=stacktrace_unavailable
+2025-11-04T13:11:03Z|signal_11|thread=62228|stack=stacktrace_unavailable
+2025-11-04T13:29:33Z|signal_11|thread=59516|stack=stacktrace_unavailable
+2025-11-04T13:30:28Z|signal_11|thread=18360|stack=stacktrace_unavailable
+2025-11-04T13:37:24Z|manual_trigger|thread=57164|key=F9/stage=pre_abort/stack=stacktrace_unavailable
+2025-11-04T13:37:24Z|signal_22|thread=57164|stack=stacktrace_unavailable

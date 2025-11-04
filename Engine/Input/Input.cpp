@@ -14,156 +14,167 @@
 #include <Windows.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <algorithm>
 
 
 namespace Framework
 {
-	/*****************************************************************************************
-	\brief Constructor for the InputManager calss. This is to ensure that no
-		   key gets stucked in the "pressed" state and no mouse button is considered
-		   down
-	*****************************************************************************************/
-	InputManager::InputManager(GLFWwindow* window) : m_window(window)
-	{
-		// Initialize keys of interest
-		int keys[] = {
-			GLFW_KEY_W, GLFW_KEY_A, GLFW_KEY_S, GLFW_KEY_D,
-			GLFW_KEY_UP, GLFW_KEY_DOWN, GLFW_KEY_LEFT, GLFW_KEY_RIGHT,
-			GLFW_KEY_SPACE
-		};
+    /*****************************************************************************************
+        \brief Constructor for the InputManager calss. This is to ensure that no
+                   key gets stucked in the "pressed" state and no mouse button is considered
+                   down
+        *****************************************************************************************/
+    InputManager::InputManager(GLFWwindow* window) : m_window(window),
+        m_keyHeld(GLFW_KEY_LAST + 1, false),
+        m_keyPressed(GLFW_KEY_LAST + 1, false),
+        m_keyReleased(GLFW_KEY_LAST + 1, false),
+        m_mouseHeld(GLFW_MOUSE_BUTTON_LAST + 1, false),
+        m_mousePressed(GLFW_MOUSE_BUTTON_LAST + 1, false),
+        m_mouseReleased(GLFW_MOUSE_BUTTON_LAST + 1, false)
+    {
+    }
 
-		for (int key : keys)
-		{
-			m_keyHeld[key] = false;
-		}
+    /*****************************************************************************************
+    \brief Updates the inputs and ensures that any key that isn't held is cleared. Also
+               updates the position of the mouse cursor.
+    *****************************************************************************************/
+    void InputManager::Update()
+    {
+        std::fill(m_keyPressed.begin(), m_keyPressed.end(), false);
+        std::fill(m_keyReleased.begin(), m_keyReleased.end(), false);
+        std::fill(m_mousePressed.begin(), m_mousePressed.end(), false);
+        std::fill(m_mouseReleased.begin(), m_mouseReleased.end(), false);
 
-		// Initialize the mouse buttons
-		int buttons[] = { GLFW_MOUSE_BUTTON_LEFT, GLFW_MOUSE_BUTTON_RIGHT };
-		for (int btn : buttons)
-		{
-			m_mouseHeld[btn] = false;
-		}
-	}
+        if (!m_window)
+            return;
 
-	/*****************************************************************************************
-	\brief Updates the inputs and ensures that any key that isn't held is cleared. Also
-		   updates the position of the mouse cursor.
-	*****************************************************************************************/
-	void InputManager::Update()
-	{
-		m_keyPressed.clear();
-		m_keyReleased.clear();
-		m_mousePressed.clear();
-		m_mouseReleased.clear();
+        // Keyboard
+         
+        for (int key = 0; key <= GLFW_KEY_LAST; ++key)
+        {
+            if (key < GLFW_KEY_SPACE) {
+                // make sure nothing gets "stuck" for invalid indices
+                m_keyHeld[key] = false;
+                // pressed/released were already cleared at the top of Update()
+                continue;
+            }
 
-		// Keyboard
-		for (auto& [key, held] : m_keyHeld)
-		{
-			int state = glfwGetKey(m_window, key);
-			if (state == GLFW_PRESS)
-			{
-				if (!held)
-					m_keyPressed[key] = true;
-				held = true;
-			}
-			else
-			{
-				if (held)
-					m_keyReleased[key] = true;
-				held = false;
-			}
-		}
+            int state = glfwGetKey(m_window, key);
+            bool wasHeld = m_keyHeld[key];
+            bool isHeld = (state == GLFW_PRESS) || (state == GLFW_REPEAT);
 
-		// Mouse buttons
-		for (auto& [btn, held] : m_mouseHeld)
-		{
-			int state = glfwGetMouseButton(m_window, btn);
-			if (state == GLFW_PRESS)
-			{
-				if (!held)
-					m_mousePressed[btn] = true;
-				held = true;
-			}
-			else
-			{
-				if (held)
-					m_mouseReleased[btn] = true;
-				held = false;
-			}
-		}
+            if (isHeld) {
+                if (!wasHeld) m_keyPressed[key] = true;
+            }
+            else if (wasHeld) {
+                m_keyReleased[key] = true;
+            }
 
-		// Mouse position
-		glfwGetCursorPos(m_window, &m_mouseState.x, &m_mouseState.y);
-		m_mouseState.leftClick = m_mouseHeld[GLFW_MOUSE_BUTTON_LEFT];
-		m_mouseState.rightClick = m_mouseHeld[GLFW_MOUSE_BUTTON_RIGHT];
-	}
+            m_keyHeld[key] = isHeld;
+        }
 
-	/*****************************************************************************************
-	\brief A boolean to check if the key has been pressed
-	\return True if it's pressed, false if it isn't
-	*****************************************************************************************/
-	bool InputManager::IsKeyPressed(int key) const
-	{
-		auto it = m_keyPressed.find(key);
-		return it != m_keyPressed.end() && it->second;
-	}
+        // Mouse buttons
+        for (int btn = 0; btn <= GLFW_MOUSE_BUTTON_LAST; ++btn)
+        {
+            int state = glfwGetMouseButton(m_window, btn);
+            bool wasHeld = m_mouseHeld[btn];
+            bool isHeld = (state == GLFW_PRESS);
 
-	/*****************************************************************************************
-	\brief A boolean to check if the key is being held
-	\return True if it's being held, false if it isn't
-	*****************************************************************************************/
-	bool InputManager::IsKeyHeld(int key) const
-	{
-		auto it = m_keyHeld.find(key);
-		return it != m_keyHeld.end() && it->second;
-	}
+            if (isHeld)
+            {
+                if (!wasHeld)
+                    m_mousePressed[btn] = true;
+            }
+            else if (wasHeld)
+            {
+                m_mouseReleased[btn] = true;
+            }
 
-	/*****************************************************************************************
-	\brief A boolean to check if the key has been released
-	\return True if it's released, false if it isn't
-	*****************************************************************************************/
-	bool InputManager::IsKeyReleased(int key) const
-	{
-		auto it = m_keyReleased.find(key);
-		return it != m_keyReleased.end() && it->second;
-	}
+            m_mouseHeld[btn] = isHeld;
+        }
 
-	/*****************************************************************************************
-	\brief Returns the state of the mouse, which includes x pos, y pos, left click and right click
-	\return Mouse state
-	*****************************************************************************************/
-	MouseState InputManager::GetMouseState() const
-	{
-		return m_mouseState;
-	}
+        // Mouse position
+        glfwGetCursorPos(m_window, &m_mouseState.x, &m_mouseState.y);
+        m_mouseState.leftClick = false;
+        m_mouseState.rightClick = false;
+        if (GLFW_MOUSE_BUTTON_LEFT >= 0 && GLFW_MOUSE_BUTTON_LEFT <= GLFW_MOUSE_BUTTON_LAST)
+            m_mouseState.leftClick = m_mouseHeld[GLFW_MOUSE_BUTTON_LEFT];
+        if (GLFW_MOUSE_BUTTON_RIGHT >= 0 && GLFW_MOUSE_BUTTON_RIGHT <= GLFW_MOUSE_BUTTON_LAST)
+            m_mouseState.rightClick = m_mouseHeld[GLFW_MOUSE_BUTTON_RIGHT];
+    }
 
-	/*****************************************************************************************
-	\brief A boolean to check if the mouse button has been pressed
-	\return True if it's pressed, false if it isn't
-	*****************************************************************************************/
-	bool InputManager::IsMousePressed(int button) const
-	{
-		auto it = m_mousePressed.find(button);
-		return it != m_mousePressed.end() && it->second;
-	}
+    /*****************************************************************************************
+    \brief A boolean to check if the key has been pressed
+    \return True if it's pressed, false if it isn't
+    *****************************************************************************************/
+    bool InputManager::IsKeyPressed(int key) const
+    {
+        if (key < 0 || key >= static_cast<int>(m_keyPressed.size()))
+            return false;
+        return m_keyPressed[key];
+    }
 
-	/*****************************************************************************************
-	\brief A boolean to check if the mouse button is being held
-	\return True if it's being held, false if it isn't
-	*****************************************************************************************/
-	bool InputManager::IsMouseHeld(int button) const
-	{
-		auto it = m_mouseHeld.find(button);
-		return it != m_mouseHeld.end() && it->second;
-	}
+    /*****************************************************************************************
+    \brief A boolean to check if the key is being held
+    \return True if it's being held, false if it isn't
+    *****************************************************************************************/
+    bool InputManager::IsKeyHeld(int key) const
+    {
+        if (key < 0 || key >= static_cast<int>(m_keyHeld.size()))
+            return false;
+        return m_keyHeld[key];
+    }
 
-	/*****************************************************************************************
-	\brief A boolean to check if the mouse button has been released
-	\return True if it's released, false if it isn't
-	*****************************************************************************************/
-	bool InputManager::IsMouseReleased(int button) const
-	{
-		auto it = m_mouseReleased.find(button);
-		return it != m_mouseReleased.end() && it->second;
-	}
+    /*****************************************************************************************
+    \brief A boolean to check if the key has been released
+    \return True if it's released, false if it isn't
+    *****************************************************************************************/
+    bool InputManager::IsKeyReleased(int key) const
+    {
+        if (key < 0 || key >= static_cast<int>(m_keyReleased.size()))
+            return false;
+        return m_keyReleased[key];
+    }
+
+    /*****************************************************************************************
+    \brief Returns the state of the mouse, which includes x pos, y pos, left click and right click
+    \return Mouse state
+    *****************************************************************************************/
+    MouseState InputManager::GetMouseState() const
+    {
+        return m_mouseState;
+    }
+
+    /*****************************************************************************************
+    \brief A boolean to check if the mouse button has been pressed
+    \return True if it's pressed, false if it isn't
+    *****************************************************************************************/
+    bool InputManager::IsMousePressed(int button) const
+    {
+        if (button < 0 || button >= static_cast<int>(m_mousePressed.size()))
+            return false;
+        return m_mousePressed[button];
+    }
+
+    /*****************************************************************************************
+    \brief A boolean to check if the mouse button is being held
+    \return True if it's being held, false if it isn't
+    *****************************************************************************************/
+    bool InputManager::IsMouseHeld(int button) const
+    {
+        if (button < 0 || button >= static_cast<int>(m_mouseHeld.size()))
+            return false;
+        return m_mouseHeld[button];
+    }
+
+    /*****************************************************************************************
+    \brief A boolean to check if the mouse button has been released
+    \return True if it's released, false if it isn't
+    *****************************************************************************************/
+    bool InputManager::IsMouseReleased(int button) const
+    {
+        if (button < 0 || button >= static_cast<int>(m_mouseReleased.size()))
+            return false;
+        return m_mouseReleased[button];
+    }
 }

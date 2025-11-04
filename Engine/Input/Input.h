@@ -12,7 +12,7 @@
 *********************************************************************************************/
 #pragma once
 
-#include <unordered_map>
+#include <vector>
 #include "Composition/Component.h"
 struct GLFWwindow;
 
@@ -55,13 +55,13 @@ namespace Framework
 	private:
 		GLFWwindow* m_window;
 
-		std::unordered_map<int, bool> m_keyHeld;
-		std::unordered_map<int, bool> m_keyPressed;
-		std::unordered_map<int, bool> m_keyReleased;
+		std::vector<bool> m_keyHeld;
+		std::vector<bool> m_keyPressed;
+		std::vector<bool> m_keyReleased;
 
-		std::unordered_map<int, bool> m_mouseHeld;
-		std::unordered_map<int, bool> m_mousePressed;
-		std::unordered_map<int, bool> m_mouseReleased;
+		std::vector<bool> m_mouseHeld;
+		std::vector<bool> m_mousePressed;
+		std::vector<bool> m_mouseReleased;
 
 		MouseState m_mouseState;
 	};

@@ -42,11 +42,13 @@ namespace Framework {
 
         inline std::string ToLower(std::string value)
         {
-            std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
-                return static_cast<char>(std::tolower(c));
-                });
-            return value;
+            std::string out;
+            out.resize(value.size());
+            std::transform(value.begin(), value.end(), out.begin(),
+                [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+            return out;
         }
+
 
         // Camera follow drag-lock state lives only in this translation unit.
         // We lock camera follow while dragging the Player so screen->world mapping stays stable.
