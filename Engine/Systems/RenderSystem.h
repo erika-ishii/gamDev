@@ -20,6 +20,8 @@
 #include "Resource_Manager/Resource_Manager.h"
 
 #include <filesystem>
+#include <imgui.h>
+#include <glm/vec2.hpp>
 
 struct GLFWwindow;
 
@@ -61,7 +63,12 @@ namespace Framework {
         void DrawDockspace();
         void HandleShortcuts();
         void HandleViewportPicking();
+        void UpdateEditorCameraControls(GLFWwindow* native, const ImGuiIO& io, double cursorX, double cursorY);
         bool ScreenToWorld(double cursorX, double cursorY, float& worldX, float& worldY, bool& insideViewport) const;
+        bool CursorToViewportNdc(double cursorX, double cursorY, float& ndcX, float& ndcY, bool& insideViewport) const;
+        bool UnprojectWithCamera(const gfx::Camera2D& cam, float ndcX, float ndcY, float& worldX, float& worldY) const;
+        bool ShouldUseEditorCamera() const;
+        void FrameEditorSelection();
         Framework::GOCId TryPickObject(float worldX, float worldY) const;
         void UpdateGameViewport();
         void RestoreFullViewport();
@@ -115,6 +122,13 @@ namespace Framework {
         gfx::Camera2D camera;
         float cameraViewHeight = 1.0f;
         bool cameraEnabled = true;
+
+        gfx::Camera2D editorCamera;
+        float editorCameraViewHeight = 1.0f;
+        bool  editorCameraPanning = false;
+        glm::vec2 editorCameraPanStartWorld{ 0.0f, 0.0f };
+        glm::vec2 editorCameraPanStartFocus{ 0.0f, 0.0f };
+        bool editorFrameHeld = false;
         std::string imguiLayoutPath{};
     };
 

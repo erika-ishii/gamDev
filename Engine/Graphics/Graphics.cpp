@@ -23,6 +23,7 @@
 #include <vector>
 #include <cmath>
 #include <iostream>
+#include <cstddef>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -50,7 +51,8 @@ namespace gfx {
     unsigned int Graphics::VBO_sprite = 0;
     unsigned int Graphics::EBO_sprite = 0;
     unsigned int Graphics::spriteShader = 0;
-
+    unsigned int Graphics::spriteInstanceVBO = 0;
+    unsigned int Graphics::spriteInstanceShader = 0;
     /// Circle tessellation segments (triangle fan).
     static int segments = 50;
 
@@ -479,7 +481,33 @@ namespace gfx {
         glUseProgram(0);
         GL_THROW_IF_ERROR("renderSpriteFrame");
     }
+    void Graphics::renderSpriteBatchInstanced(unsigned int tex, const SpriteInstance* instances, size_t count)
+    {
+        if (!tex || !instances || count == 0)
+            return;
 
+        glUseProgram(spriteInstanceShader);
+        glUniformMatrix4fv(glGetUniformLocation(spriteInstanceShader, "uVP"), 1, GL_FALSE, glm::value_ptr(sViewProjectionMatrix));
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, tex);
+        glUniform1i(glGetUniformLocation(spriteInstanceShader, "uTex"), 0);
+
+        glBindVertexArray(VAO_sprite);
+        glBindBuffer(GL_ARRAY_BUFFER, spriteInstanceVBO);
+        glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(sizeof(SpriteInstance) * count), instances, GL_DYNAMIC_DRAW);
+        glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, static_cast<GLsizei>(count));
+        glBindVertexArray(0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glUseProgram(0);
+
+        GL_THROW_IF_ERROR("renderSpriteBatchInstanced");
+    }
+
+    void Graphics::renderSpriteBatchInstanced(unsigned int tex, const std::vector<SpriteInstance>& instances)
+    {
+        renderSpriteBatchInstanced(tex, instances.data(), instances.size());
+    }
     /*************************************************************************************
       \brief  Destroy GL resources created by initialize() / initSpritePipeline().
     *************************************************************************************/
@@ -497,6 +525,8 @@ namespace gfx {
         glDeleteBuffers(1, &VBO_sprite);
         glDeleteBuffers(1, &EBO_sprite);
         glDeleteProgram(spriteShader);
+        glDeleteBuffers(1, &spriteInstanceVBO);
+        glDeleteProgram(spriteInstanceShader);
     }
 
     /*************************************************************************************
@@ -546,6 +576,56 @@ namespace gfx {
             "uniform vec4 uTint;\n"
             "void main(){ FragColor = texture(uTex, vUV) * uTint; }\n";
         spriteShader = createShaderProgram(vs, fs);
+        // Configure per-instance attributes for instanced sprite rendering.
+        if (!spriteInstanceVBO)
+            glGenBuffers(1, &spriteInstanceVBO);
+        glBindBuffer(GL_ARRAY_BUFFER, spriteInstanceVBO);
+        glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
+
+        const GLsizei stride = static_cast<GLsizei>(sizeof(SpriteInstance));
+        const std::size_t modelOffset = offsetof(SpriteInstance, model);
+        for (int i = 0; i < 4; ++i) {
+            glEnableVertexAttribArray(2 + i);
+            glVertexAttribPointer(2 + i, 4, GL_FLOAT, GL_FALSE, stride,
+                reinterpret_cast<const void*>(modelOffset + sizeof(glm::vec4) * static_cast<std::size_t>(i)));
+            glVertexAttribDivisor(2 + i, 1);
+        }
+
+        const std::size_t tintOffset = offsetof(SpriteInstance, tint);
+        glEnableVertexAttribArray(6);
+        glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, stride,
+            reinterpret_cast<const void*>(tintOffset));
+        glVertexAttribDivisor(6, 1);
+
+        const std::size_t uvOffset = offsetof(SpriteInstance, uv);
+        glEnableVertexAttribArray(7);
+        glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, stride,
+            reinterpret_cast<const void*>(uvOffset));
+        glVertexAttribDivisor(7, 1);
+
+        const char* instVs =
+            "#version 330 core\n"
+            "layout(location=0) in vec3 aPos;\n"
+            "layout(location=1) in vec2 aUV;\n"
+            "layout(location=2) in mat4 iModel;\n"
+            "layout(location=6) in vec4 iTint;\n"
+            "layout(location=7) in vec4 iUV;\n"
+            "uniform mat4 uVP;\n"
+            "out vec2 vUV;\n"
+            "out vec4 vTint;\n"
+            "void main(){\n"
+            "  gl_Position = uVP * iModel * vec4(aPos,1.0);\n"
+            "  vUV = aUV * iUV.zw + iUV.xy;\n"
+            "  vTint = iTint;\n"
+            "}\n";
+        const char* instFs =
+            "#version 330 core\n"
+            "in vec2 vUV;\n"
+            "in vec4 vTint;\n"
+            "out vec4 FragColor;\n"
+            "uniform sampler2D uTex;\n"
+            "void main(){ FragColor = texture(uTex, vUV) * vTint; }\n";
+        spriteInstanceShader = createShaderProgram(instVs, instFs);
         glBindVertexArray(0);
         GL_THROW_IF_ERROR("initSpritePipeline");
     }

@@ -27,10 +27,10 @@
 #include <vector>
 #include <limits>
 #include <unordered_set>
-
+#include <unordered_map>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_inverse.hpp> // for glm::inverse (used in ScreenToWorld)
-
+#include <glm/gtc/matrix_transform.hpp>
 #include "Physics/Dynamics/RigidBodyComponent.h"
 #include "../../Sandbox/MyGame/Game.hpp"
 namespace Framework {
@@ -100,6 +100,8 @@ namespace Framework {
         sInstance = this;
         // Initialize camera with a default view height so that projection is valid early.
         camera.SetViewHeight(cameraViewHeight);
+        editorCameraViewHeight = cameraViewHeight;
+        editorCamera.SetViewHeight(editorCameraViewHeight);
     }
 
     std::filesystem::path RenderSystem::GetExeDir() const
@@ -347,6 +349,16 @@ namespace Framework {
 
         if (handleToggle(GLFW_KEY_F11, fullscreenToggleHeld))
             gameViewportFullWidth = !gameViewportFullWidth;
+        if (ShouldUseEditorCamera())
+        {
+            if (handleToggle(GLFW_KEY_F, editorFrameHeld))
+                FrameEditorSelection();
+        }
+        else
+        {
+            // Keep state accurate so the next editor activation treats F as a fresh press.
+            editorFrameHeld = glfwGetKey(native, GLFW_KEY_F) == GLFW_PRESS;
+        }
     }
 
     void RenderSystem::HandleViewportPicking()
@@ -376,6 +388,7 @@ namespace Framework {
         double cursorX = 0.0;
         double cursorY = 0.0;
         glfwGetCursorPos(native, &cursorX, &cursorY);
+        UpdateEditorCameraControls(native, io, cursorX, cursorY);
 
         float worldX = 0.0f;
         float worldY = 0.0f;
@@ -488,19 +501,50 @@ namespace Framework {
         float& worldX, float& worldY,
         bool& insideViewport) const
     {
-        if (!window) return false;
-        if (gameViewport.width <= 0 || gameViewport.height <= 0) return false;
+        float ndcX = 0.0f;
+        float ndcY = 0.0f;
+        if (!CursorToViewportNdc(cursorX, cursorY, ndcX, ndcY, insideViewport))
+            return false;
 
-        // 1) Convert from window coordinates to normalized [0,1] within the current game viewport.
+        if (!insideViewport)
+            return false;
+
+        const bool usingEditorCamera = ShouldUseEditorCamera();
+
+        if (!usingEditorCamera && !cameraEnabled)
+        {
+            worldX = ndcX;
+            worldY = ndcY;
+            return true;
+        }
+
+        const gfx::Camera2D& activeCamera = usingEditorCamera ? editorCamera : camera;
+        return UnprojectWithCamera(activeCamera, ndcX, ndcY, worldX, worldY);
+    }
+
+    bool RenderSystem::CursorToViewportNdc(double cursorX, double cursorY,
+        float& ndcX, float& ndcY, bool& insideViewport) const
+    {
+        ndcX = 0.0f;
+        ndcY = 0.0f;
+        insideViewport = false;
+
+        if (!window)
+            return false;
+        if (gameViewport.width <= 0 || gameViewport.height <= 0)
+            return false;
+
+       
         const double viewportLeft = static_cast<double>(gameViewport.x);
         const double viewportWidth = static_cast<double>(gameViewport.width);
         const double viewportBottom = static_cast<double>(gameViewport.y);
         const double viewportHeight = static_cast<double>(gameViewport.height);
 
         const int fullHeight = window->Height();
-        if (fullHeight <= 0) return false;
+        if (fullHeight <= 0)
+            return false;
 
-        // GLFW reports Y from top; OpenGL viewport origin is bottom-left, so flip Y.
+        
         const double mouseYFromBottom = static_cast<double>(fullHeight) - cursorY;
 
         const double normalizedX = (cursorX - viewportLeft) / viewportWidth;
@@ -508,34 +552,151 @@ namespace Framework {
 
         insideViewport = (normalizedX >= 0.0 && normalizedX <= 1.0 &&
             normalizedY >= 0.0 && normalizedY <= 1.0);
-        if (!insideViewport) return false;
+        ndcX = static_cast<float>(normalizedX * 2.0 - 1.0);
+        ndcY = static_cast<float>(normalizedY * 2.0 - 1.0);
 
-        // 2) Map [0,1] to NDC [-1,1].
-        const float ndcX = static_cast<float>(normalizedX * 2.0 - 1.0);
-        const float ndcY = static_cast<float>(normalizedY * 2.0 - 1.0);
+        return true;
+    }
 
-        if (!cameraEnabled)
-        {
-            worldX = ndcX;
-            worldY = ndcY;
-            return true;
-        }
-
-        // 3) Unproject NDC using the inverse of the current camera VP matrix.
-        // For a 2D orthographic camera, using z=0 is sufficient (scene lies in z=0 plane).
-        const glm::mat4 VP = camera.ProjectionMatrix() * camera.ViewMatrix();
+    bool RenderSystem::UnprojectWithCamera(const gfx::Camera2D& cam,
+        float ndcX, float ndcY,
+        float& worldX, float& worldY) const
+    {
+        const glm::mat4 VP = cam.ProjectionMatrix() * cam.ViewMatrix();
         const glm::mat4 invVP = glm::inverse(VP);
 
         const glm::vec4 ndcPos = glm::vec4(ndcX, ndcY, 0.0f, 1.0f);
         glm::vec4 world = invVP * ndcPos;
-        if (world.w != 0.0f) world /= world.w;
+        if (world.w != 0.0f)
+            world /= world.w;
 
         worldX = world.x;
         worldY = world.y;
 
         return std::isfinite(worldX) && std::isfinite(worldY);
     }
+    bool RenderSystem::ShouldUseEditorCamera() const
+    {
+        if (!showEditor)
+            return false;
+        if (mygame::IsEditorSimulationRunning())
+            return false;
+        if (gameViewport.width <= 0 || gameViewport.height <= 0)
+            return false;
+        return true;
+    }
 
+    void RenderSystem::UpdateEditorCameraControls(GLFWwindow* native, const ImGuiIO& io,
+        double cursorX, double cursorY)
+    {
+        if (!ShouldUseEditorCamera())
+        {
+            editorCameraPanning = false;
+            return;
+        }
+
+        float ndcX = 0.0f;
+        float ndcY = 0.0f;
+        bool insideViewport = false;
+        if (!CursorToViewportNdc(cursorX, cursorY, ndcX, ndcY, insideViewport))
+        {
+            editorCameraPanning = false;
+            return;
+        }
+
+        float worldX = 0.0f;
+        float worldY = 0.0f;
+        if (insideViewport)
+        {
+            UnprojectWithCamera(editorCamera, ndcX, ndcY, worldX, worldY);
+        }
+        else
+        {
+            editorCameraPanning = false;
+        }
+
+        const bool wantCaptureMouse = io.WantCaptureMouse;
+        const bool middleDown = glfwGetMouseButton(native, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
+
+        if (middleDown && insideViewport && !wantCaptureMouse)
+        {
+            if (!editorCameraPanning)
+            {
+                editorCameraPanning = true;
+                editorCameraPanStartWorld = glm::vec2(worldX, worldY);
+                editorCameraPanStartFocus = editorCamera.Position();
+            }
+            else
+            {
+                const glm::vec2 current(worldX, worldY);
+                const glm::vec2 delta = editorCameraPanStartWorld - current;
+                editorCamera.SnapTo(editorCameraPanStartFocus + delta);
+            }
+        }
+        else
+        {
+            editorCameraPanning = false;
+        }
+
+        const float wheel = io.MouseWheel;
+        if (insideViewport && !wantCaptureMouse && std::fabs(wheel) > 0.0001f)
+        {
+            const float zoomFactor = std::pow(1.1f, -wheel);
+            const float targetHeight = editorCameraViewHeight * zoomFactor;
+            editorCamera.SetViewHeight(targetHeight);
+            editorCameraViewHeight = editorCamera.ViewHeight();
+
+            float newWorldX = worldX;
+            float newWorldY = worldY;
+            if (UnprojectWithCamera(editorCamera, ndcX, ndcY, newWorldX, newWorldY))
+            {
+                const glm::vec2 before(worldX, worldY);
+                const glm::vec2 after(newWorldX, newWorldY);
+                editorCamera.SnapTo(editorCamera.Position() + (before - after));
+            }
+        }
+    }
+
+    void RenderSystem::FrameEditorSelection()
+    {
+        if (!ShouldUseEditorCamera())
+            return;
+        if (!FACTORY)
+            return;
+        if (!mygame::HasSelectedObject())
+            return;
+
+        Framework::GOCId selectedId = mygame::GetSelectedObjectId();
+        Framework::GOC* obj = FACTORY->GetObjectWithId(selectedId);
+        if (!obj)
+            return;
+
+        auto* tr = obj->GetComponentType<Framework::TransformComponent>(
+            Framework::ComponentTypeId::CT_TransformComponent);
+        if (!tr)
+            return;
+
+        editorCamera.SnapTo(glm::vec2(tr->x, tr->y));
+
+        float extent = 0.5f;
+
+        if (auto* circle = obj->GetComponentType<Framework::CircleRenderComponent>(
+            Framework::ComponentTypeId::CT_CircleRenderComponent))
+        {
+            extent = std::max(extent, circle->radius);
+        }
+
+        if (auto* rect = obj->GetComponentType<Framework::RenderComponent>(
+            Framework::ComponentTypeId::CT_RenderComponent))
+        {
+            extent = std::max(extent, std::max(rect->w, rect->h) * 0.5f);
+        }
+
+        const float padding = 0.35f;
+        const float desiredHeight = std::max(extent * 2.0f + padding, 0.4f);
+        editorCamera.SetViewHeight(desiredHeight);
+        editorCameraViewHeight = editorCamera.ViewHeight();
+    }
     Framework::GOCId RenderSystem::TryPickObject(float worldX, float worldY) const
     {
         if (!FACTORY)
@@ -672,8 +833,10 @@ namespace Framework {
         if (gameViewport.width > 0 && gameViewport.height > 0)
         {
             camera.SetViewportSize(gameViewport.width, gameViewport.height);
+            editorCamera.SetViewportSize(gameViewport.width, gameViewport.height);
         }
         camera.SetViewHeight(cameraViewHeight);
+        editorCamera.SetViewHeight(editorCameraViewHeight);
 
         if (gameViewport.width > 0 && gameViewport.height > 0)
             glViewport(gameViewport.x, gameViewport.y, gameViewport.width, gameViewport.height);
@@ -970,7 +1133,13 @@ namespace Framework {
             // === Update camera BEFORE picking and rendering ===
             gfx::Graphics::resetViewProjection();
 
-            if (cameraEnabled)
+            const bool usingEditorCamera = ShouldUseEditorCamera();
+
+            if (usingEditorCamera)
+            {
+                gfx::Graphics::setViewProjection(editorCamera.ViewMatrix(), editorCamera.ProjectionMatrix());
+            }
+            else if (cameraEnabled)
             {
                 float playerX = 0.0f, playerY = 0.0f;
                 const bool hasPlayer = logic.GetPlayerWorldPosition(playerX, playerY);
@@ -1008,7 +1177,14 @@ namespace Framework {
 
             if (FACTORY)
             {
-                // Pass 1: Sprites
+                std::unordered_map<unsigned, std::vector<gfx::Graphics::SpriteInstance>> spriteBatches;
+                spriteBatches.reserve(64);
+
+                const auto& animState = logic.Animation();
+                const int animCols = std::max(1, CurrentColumns());
+                const int animRows = std::max(1, CurrentRows());
+
+                // Pass 1: Sprites (instanced)
                 for (auto& [id, objPtr] : FACTORY->Objects())
                 {
                     (void)id;
@@ -1031,31 +1207,50 @@ namespace Framework {
                         {
                             sx = rc->w; sy = rc->h; r = rc->r; g = rc->g; b = rc->b; a = rc->a;
                         }
-
+                        unsigned tex = sp->texture_id;
+                        glm::vec4 uvRect(0.0f, 0.0f, 1.0f, 1.0f);
                         if (IsPlayerObject(obj) && idleTex && runTex)
                         {
-                            gfx::Graphics::renderSpriteFrame(
-                                CurrentPlayerTexture(), tr->x, tr->y, tr->rot,
-                                sx, sy,
-                                logic.Animation().frame, CurrentColumns(), CurrentRows(),
-                                r, g, b, a
-                            );
-                            continue;
+                            tex = CurrentPlayerTexture();
+                            if (tex)
+                            {
+                                const int frame = animState.frame;
+                                const float sxUV = 1.0f / static_cast<float>(animCols);
+                                const float syUV = 1.0f / static_cast<float>(animRows);
+                                const int c = frame % animCols;
+                                const int rIdx = frame / animCols;
+                                uvRect = glm::vec4(
+                                    static_cast<float>(c) * sxUV,
+                                    static_cast<float>(rIdx) * syUV,
+                                    sxUV, syUV);
+                            }
                         }
 
-                        unsigned tex = sp->texture_id;
-                        if (!tex && !sp->texture_key.empty())
+                        else if (!tex && !sp->texture_key.empty())
                         {
                             tex = Resource_Manager::getTexture(sp->texture_key);
                             sp->texture_id = tex;
                         }
-                        if (tex)
-                        {
-                            gfx::Graphics::renderSprite(tex, tr->x, tr->y, tr->rot, sx, sy, r, g, b, a);
-                        }
+                        if (!tex)
+                            continue;
+
+                        gfx::Graphics::SpriteInstance instance;
+                        glm::mat4 model(1.0f);
+                        model = glm::translate(model, glm::vec3(tr->x, tr->y, 0.0f));
+                        model = glm::rotate(model, tr->rot, glm::vec3(0, 0, 1));
+                        model = glm::scale(model, glm::vec3(sx, sy, 1.0f));
+                        instance.model = model;
+                        instance.tint = glm::vec4(r, g, b, a);
+                        instance.uv = uvRect;
+
+                        spriteBatches[tex].push_back(instance);
                     }
                 }
-
+                for (auto& [tex, batch] : spriteBatches)
+                {
+                    if (!batch.empty())
+                        gfx::Graphics::renderSpriteBatchInstanced(tex, batch);
+                }
                 // Pass 2: Rectangles (non-sprite quads)
                 for (auto& [id, objPtr] : FACTORY->Objects())
                 {

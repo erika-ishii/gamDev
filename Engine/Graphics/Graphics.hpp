@@ -18,11 +18,16 @@
 #include <glad/glad.h>
 #include "../Resource_Manager/Resource_Manager.h"
 #include <glm/mat4x4.hpp>
-
+#include <vector>
 namespace gfx {
 
     class Graphics {
     public:
+        struct SpriteInstance {
+            glm::mat4 model{ 1.0f };
+            glm::vec4 tint{ 1.0f, 1.0f, 1.0f, 1.0f };
+            glm::vec4 uv{ 0.0f, 0.0f, 1.0f, 1.0f };
+        };
         /**
          * \brief Load a 2D texture from disk (stb_image) and set basic filtering/wrap.
          * \param path Filesystem path.
@@ -123,7 +128,18 @@ namespace gfx {
             float scaleX, float scaleY,
             int frameIndex, int cols, int rows,
             float r = 1.f, float g = 1.f, float b = 1.f, float a = 1.f);
+        /**
+         * \brief Draw multiple sprites sharing the same texture using instanced rendering.
+         * \param tex        GL texture handle shared by all instances.
+         * \param instances  Array of per-instance transforms/tints/UVs.
+         * \param count      Number of instances in the array.
+         */
+        static void renderSpriteBatchInstanced(unsigned int tex, const SpriteInstance* instances, size_t count);
 
+        /**
+         * \brief Convenience overload accepting an std::vector of SpriteInstance data.
+         */
+        static void renderSpriteBatchInstanced(unsigned int tex, const std::vector<SpriteInstance>& instances);
         /**
          * \brief Release GL resources created by initialize().
          */
@@ -151,6 +167,8 @@ namespace gfx {
         static unsigned int objectShader;
         static unsigned int VAO_sprite, VBO_sprite, EBO_sprite;
         static unsigned int spriteShader;
+        static unsigned int spriteInstanceVBO;
+        static unsigned int spriteInstanceShader;
     };
 
 } // namespace gfx

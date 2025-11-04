@@ -161,7 +161,7 @@ namespace Framework
             { 
                 std::random_device rd;
                 std::mt19937 gen(rd());
-                std::uniform_real_distribution<float> dist(0.2f, 0.4f);
+                std::uniform_real_distribution<float> dist(0.3f, 0.5f);
                 ai->chaseSpeed = dist(gen);
             }
 
@@ -182,11 +182,32 @@ namespace Framework
             float distance = std::sqrt(dx*dx + dy*dy);
             if (distance > 0.1f)
             {
-                rb->velX = (dx/distance) * speed;
-                rb->velY = (dy/distance) * speed;
+                float vx = 0.0f;
+                float vy = 0.0f;
+                const float nudge = 0.2f;
+                if (std::fabs(dx) > 0.01f)  
+                {
+                    vx = (dx > 0.0f ? speed : -speed);
+                    vy = 0.0f;
+                }
+                else if (std::fabs(dy) > 0.01f)  
+                {
+                    vx = 0.0f;
+                    vy = (dy > 0.0f ? speed : -speed);
+                }
+                if (std::fabs(vx) < 0.01f && std::fabs(vy) < 0.01f)
+                {
+                    vx = (dx > 0.0f ? -nudge : nudge);
+                    vy = (dy > 0.0f ? -nudge : nudge);
+                }
+
+                rb->velX = vx;
+                rb->velY = vy;
+                bool collision = false; 
                 tr->x += rb->velX * dt;
                 tr->y += rb->velY * dt;
             }
+
             static float attackTimer = 0.0f;
             const float attackInterval = 1.5f;
             attackTimer += dt;
