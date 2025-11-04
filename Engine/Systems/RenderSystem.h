@@ -11,6 +11,7 @@
 #include "Debug/Selection.h"
 #include "Debug/HierarchyPanel.h"
 #include "Debug/AssetBrowserPanel.h"
+#include "Debug/JsonEditorPanel.h"
 #include "Factory/Factory.h"
 #include "Graphics/Graphics.hpp"
 #include "Graphics/Camera2D.hpp"
@@ -54,6 +55,7 @@ namespace Framework {
         std::filesystem::path GetExeDir() const;
         std::string           FindRoboto() const;
         std::filesystem::path FindAssetsRoot() const;
+        std::filesystem::path FindDataFilesRoot() const;
         void HandleFileDrop(int count, const char** paths);
         void ProcessImportedAssets();
         void DrawDockspace();
@@ -77,7 +79,8 @@ namespace Framework {
 
         mygame::AssetBrowserPanel assetBrowser;
         std::filesystem::path assetsRoot;
-
+        mygame::JsonEditorPanel jsonEditor;
+        std::filesystem::path dataFilesRoot;
 
 
         int screenW = 1280, screenH = 720;

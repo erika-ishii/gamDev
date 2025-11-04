@@ -73,6 +73,14 @@ namespace mygame {
         //EnemyHealth
         int enemyHealth{};
         int enemyMaxhealth{};
+
+        // override toggles (default: inherit from prefab JSON)
+        bool overridePrefabTransform{ false };
+        bool overridePrefabCircle{ false };
+        bool overrideSpriteTexture{ false };      // 
+        bool overrideEnemyAttack{ false };        // for damage/attack_speed
+        bool overrideEnemyHealth{ false };        // for health fields
+        bool overridePrefabVelocity{ false };     // if you want velocities opt-in too
     };
 
     /*****************************************************************************************

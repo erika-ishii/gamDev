@@ -219,3 +219,6 @@
 2025-11-03T01:40:31Z|signal_22|
 2025-11-03T01:45:32Z|signal_22|
 2025-11-04T07:04:20Z|signal_22|
+2025-11-04T09:07:38Z|std::exception|RenderSystem::draw|renderSprite|gl_error=1282
+2025-11-04T09:07:38Z|std::exception|mygame::draw|renderSprite|gl_error=1282
+2025-11-04T09:07:38Z|std_terminate|

@@ -1,14 +1,18 @@
+
 #pragma once
 
 #include <filesystem>
 #include <string>
 #include <vector>
 #include <array>
+#include <unordered_map>
 
 namespace mygame {
 
     class AssetBrowserPanel {
     public:
+        ~AssetBrowserPanel();
+
         void Initialize(const std::filesystem::path& assetsRoot);
         void Draw();
 
@@ -41,6 +45,19 @@ namespace mygame {
         void SetStatus(const std::string& message, bool isError);
 
         bool IsSelected(const std::filesystem::path& path) const;
+
+        struct PreviewTexture {
+            unsigned int textureId = 0;
+            int width = 0;
+            int height = 0;
+        };
+
+        const PreviewTexture* GetTexturePreview(const std::filesystem::path& path);
+        void PrunePreviewCache();
+        void ClearPreviewCache();
+        void RemovePreviewForPath(const std::filesystem::path& path);
+        static std::string PathKey(const std::filesystem::path& path);
+
         std::filesystem::path m_assetsRoot;
         std::filesystem::path m_currentDir;
         std::filesystem::path m_selectedEntry;
@@ -56,6 +73,8 @@ namespace mygame {
 
         std::string m_statusMessage;
         bool m_statusIsError = false;
+
+        std::unordered_map<std::string, PreviewTexture> m_previewCache;
     };
 
 } // namespace mygame

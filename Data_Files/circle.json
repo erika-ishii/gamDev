@@ -3,7 +3,7 @@
     
 "Components": {
     "TransformComponent": {
-      "x": 0.0,
+      "x": -0.5,
       "y": 0.6,
       "rot": 0.0
      },

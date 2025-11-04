@@ -209,6 +209,57 @@ namespace Framework {
         return {};
     }
 
+    std::filesystem::path RenderSystem::FindDataFilesRoot() const
+    {
+        namespace fs = std::filesystem;
+
+        auto directory_exists = [](const fs::path& candidate) -> bool {
+            std::error_code ec;
+            return fs::exists(candidate, ec) && fs::is_directory(candidate, ec);
+            };
+
+        std::vector<fs::path> roots{ fs::current_path(), GetExeDir() };
+
+        for (const auto& root : roots)
+        {
+            if (root.empty())
+                continue;
+
+            auto probe = root;
+            for (int up = 0; up < 7 && !probe.empty(); ++up)
+            {
+                fs::path candidate = probe / "Data_Files";
+                if (directory_exists(candidate))
+                {
+                    std::error_code canonicalEc;
+                    auto canonical = fs::weakly_canonical(candidate, canonicalEc);
+                    return canonicalEc ? candidate : canonical;
+                }
+                probe = probe.parent_path();
+            }
+        }
+
+        static const char* rels[] = {
+            "Data_Files",
+            "../Data_Files",
+            "../../Data_Files",
+            "../../../Data_Files"
+        };
+
+        for (auto rel : rels)
+        {
+            fs::path candidate = rel;
+            if (directory_exists(candidate))
+            {
+                std::error_code canonicalEc;
+                auto canonical = fs::weakly_canonical(candidate, canonicalEc);
+                return canonicalEc ? candidate : canonical;
+            }
+        }
+
+        return {};
+    }
+
     unsigned RenderSystem::CurrentPlayerTexture() const
     {
         return logic.Animation().running ? runTex : idleTex;
@@ -876,6 +927,10 @@ namespace Framework {
             mygame::SetSpawnPanelAssetsRoot(assetsRoot);
         }
 
+        dataFilesRoot = FindDataFilesRoot();
+        jsonEditor.Initialize(dataFilesRoot);
+
+
         if (window && window->raw())
             glfwSetDropCallback(window->raw(), &RenderSystem::GlfwDropCallback);
     }
@@ -1115,6 +1170,7 @@ namespace Framework {
             {
                
                 assetBrowser.Draw();
+                jsonEditor.Draw();
                 mygame::DrawHierarchyPanel();
                 mygame::DrawSpawnPanel();
 

@@ -1,10 +1,14 @@
+
 #include "Debug/AssetBrowserPanel.h"
 
 #include <algorithm>
 #include <cctype>
+#include <cstdint>
 #include <imgui.h>
 #include <system_error>
 #include <unordered_set>
+
+#include "Graphics/Graphics.hpp"
 
 namespace mygame {
 
@@ -20,14 +24,19 @@ namespace mygame {
         }
     }
 
+    AssetBrowserPanel::~AssetBrowserPanel()
+    {
+        ClearPreviewCache();
+    }
+
     void AssetBrowserPanel::Initialize(const std::filesystem::path& assetsRoot)
     {
+        ClearPreviewCache();
         std::error_code ec;
         auto canonical = std::filesystem::weakly_canonical(assetsRoot, ec);
         m_assetsRoot = ec ? std::filesystem::absolute(assetsRoot) : canonical;
         m_currentDir = m_assetsRoot;
         m_selectedEntry.clear();
-        m_importBuffer.fill('\0');
         m_replaceBuffer.fill('\0');
         m_statusMessage.clear();
         m_statusIsError = false;
@@ -49,20 +58,7 @@ namespace mygame {
 
         DrawStatusLine();
 
-        if (ImGui::Button("Import Assets..."))
-        {
-            m_importBuffer.fill('\0');
-            m_openImportPopup = true;
-        }
-        ImGui::SameLine();
-        ImGui::TextDisabled("Drag and drop files from your OS to import them.");
-
-        if (m_openImportPopup)
-        {
-            ImGui::OpenPopup("Import Assets");
-            m_openImportPopup = false;
-        }
-        DrawImportPopup();
+        ImGui::TextDisabled("Drag and drop files from your OS to add or replace assets in the current folder.");
 
 
         if (m_currentDir != m_assetsRoot)
@@ -113,6 +109,7 @@ namespace mygame {
             return 0u;
 
         std::size_t imported = 0u;
+        std::size_t replaced = 0u;
 
         for (const auto& file : files)
         {
@@ -123,6 +120,11 @@ namespace mygame {
             std::filesystem::path destination = ResolveImportTarget(file);
             if (destination.empty())
                 continue;
+
+            ec.clear();
+            bool existedBefore = std::filesystem::exists(destination, ec);
+            if (ec)
+                existedBefore = false;
 
             ec.clear();
             std::filesystem::create_directories(destination.parent_path(), ec);
@@ -141,8 +143,14 @@ namespace mygame {
             if (relative.empty() || relative.generic_string().rfind("..", 0) == 0)
                 continue;
 
+            if (existedBefore)
+                RemovePreviewForPath(canonical);
+
             AddPendingImport(relative);
-            ++imported;
+            if (existedBefore)
+                ++replaced;
+            else
+                ++imported;
         }
 
         if (!files.empty())
@@ -150,9 +158,21 @@ namespace mygame {
 
         if (!files.empty())
         {
-            if (imported > 0)
+            if (imported > 0 || replaced > 0)
             {
-                SetStatus("Imported " + std::to_string(imported) + (imported == 1 ? " asset." : " assets."), false);
+                std::string message;
+                if (imported > 0)
+                {
+                    message += "Imported " + std::to_string(imported) + (imported == 1 ? " asset" : " assets");
+                }
+                if (replaced > 0)
+                {
+                    if (!message.empty())
+                        message += " and ";
+                    message += "replaced " + std::to_string(replaced) + (replaced == 1 ? " asset" : " assets");
+                }
+                message += ".";
+                SetStatus(message, false);
             }
             else
             {
@@ -160,7 +180,7 @@ namespace mygame {
             }
         }
 
-        return imported;
+        return imported + replaced;
     }
 
     std::vector<std::filesystem::path> AssetBrowserPanel::ConsumePendingImports()
@@ -215,17 +235,18 @@ namespace mygame {
         m_entries.insert(m_entries.end(), files.begin(), files.end());
 
         ClearSelectionIfInvalid();
+        PrunePreviewCache();
     }
 
     void AssetBrowserPanel::DrawEntry(const Entry& entry, float cellSize)
     {
-        
+
         const std::string label = entry.path.filename().string();
         ImGui::PushID(label.c_str());
 
-      
 
-     
+
+
         const bool isDirectory = entry.isDirectory;
         const bool isSelected = IsSelected(entry.path);
         if (isSelected)
@@ -245,16 +266,56 @@ namespace mygame {
         if (isSelected)
             ImGui::PopStyleColor(3);
 
-        const bool hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
-        const bool buttonDoubleClick = hovered && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left);
+      
 
-        const char* overlay = isDirectory ? "DIR" : "FILE";
+        const bool isTexture = !isDirectory && IsTextureFile(entry.path);
+        const PreviewTexture* preview = isTexture ? GetTexturePreview(entry.path) : nullptr;
+        const char* overlay = nullptr;
+        if (isDirectory)
+            overlay = "DIR";
+        else if (!preview || preview->textureId == 0)
+            overlay = "FILE";
+
         const ImVec2 rectMin = ImGui::GetItemRectMin();
         const ImVec2 rectMax = ImGui::GetItemRectMax();
-        const ImVec2 textSize = ImGui::CalcTextSize(overlay);
-        const ImVec2 textPos(rectMin.x + (rectMax.x - rectMin.x - textSize.x) * 0.5f,
-            rectMin.y + (rectMax.y - rectMin.y - textSize.y) * 0.5f);
-        ImGui::GetWindowDrawList()->AddText(textPos, ImGui::GetColorU32(ImGuiCol_Text), overlay);
+        if (preview && preview->textureId != 0 && preview->width > 0 && preview->height > 0)
+        {
+            ImVec2 displayMin = rectMin;
+            ImVec2 displayMax = rectMax;
+            const float areaWidth = rectMax.x - rectMin.x;
+            const float areaHeight = rectMax.y - rectMin.y;
+            const float aspect = static_cast<float>(preview->width) / static_cast<float>(preview->height);
+            const float areaAspect = areaWidth / areaHeight;
+
+            if (aspect > areaAspect)
+            {
+                const float desiredHeight = areaWidth / aspect;
+                const float pad = (areaHeight - desiredHeight) * 0.5f;
+                displayMin.y += pad;
+                displayMax.y -= pad;
+            }
+            else
+            {
+                const float desiredWidth = areaHeight * aspect;
+                const float pad = (areaWidth - desiredWidth) * 0.5f;
+                displayMin.x += pad;
+                displayMax.x -= pad;
+            }
+
+            ImGui::GetWindowDrawList()->AddImage(
+                (ImTextureID)(void*)(intptr_t)preview->textureId,
+                displayMin,
+                displayMax,
+                ImVec2(0.0f, 1.0f),
+                ImVec2(1.0f, 0.0f));
+        }
+        else if (overlay)
+        {
+            const ImVec2 textSize = ImGui::CalcTextSize(overlay);
+            const ImVec2 textPos(rectMin.x + (rectMax.x - rectMin.x - textSize.x) * 0.5f,
+                rectMin.y + (rectMax.y - rectMin.y - textSize.y) * 0.5f);
+            ImGui::GetWindowDrawList()->AddText(textPos, ImGui::GetColorU32(ImGuiCol_Text), overlay);
+        }
 
         std::string payloadPath = entry.path.lexically_relative(m_assetsRoot).generic_string();
         if (payloadPath.empty() || payloadPath == "." || payloadPath.rfind("..", 0) == 0)
@@ -274,14 +335,15 @@ namespace mygame {
         ImGui::TextWrapped(label.c_str());
         const bool textHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
         const bool textDoubleClick = textHovered && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left);
-        if (ImGui::IsItemClicked())
+        const bool textClicked = ImGui::IsItemClicked();
+        if (textClicked)
             m_selectedEntry = entry.path;
         ImGui::PopTextWrapPos();
 
         if (pressed)
             m_selectedEntry = entry.path;
 
-        if (isDirectory && !dragging && (buttonDoubleClick || textDoubleClick))
+        if (isDirectory && (pressed || textClicked || textDoubleClick))
         {
             m_currentDir = entry.path;
             m_selectedEntry.clear();
@@ -312,28 +374,25 @@ namespace mygame {
 
     std::filesystem::path AssetBrowserPanel::ResolveImportTarget(const std::filesystem::path& file) const
     {
-        const auto ext = ToLower(file.extension().string());
+        if (file.empty())
+            return {};
+
         std::filesystem::path base = m_assetsRoot;
-
-        if (IsTextureFile(file))
-            base /= "Textures";
-        else if (IsAudioFile(file))
-            base /= "Audio";
-
-        std::filesystem::path candidate = base / file.filename();
-        if (!std::filesystem::exists(candidate))
-            return candidate;
-
-        std::string stem = file.stem().string();
-        std::string extension = file.extension().string();
-        for (int i = 1; i < 1000; ++i)
+        if (!m_currentDir.empty() && IsPathInside(m_assetsRoot, m_currentDir))
         {
-            std::filesystem::path numbered = base / (stem + "_" + std::to_string(i) + extension);
-            if (!std::filesystem::exists(numbered))
-                return numbered;
+            std::error_code ec;
+            if (std::filesystem::is_directory(m_currentDir, ec) && !ec)
+                base = m_currentDir;
         }
 
-        return {};
+        if (base.empty())
+            return {};
+
+        std::filesystem::path preferred = base / file.filename();
+        if (preferred.empty())
+            return {};
+
+        return preferred;
     }
 
     bool AssetBrowserPanel::IsTextureFile(const std::filesystem::path& path)
@@ -613,6 +672,7 @@ namespace mygame {
         if (relative.empty() || relative.generic_string().rfind("..", 0) == 0)
             return false;
 
+        RemovePreviewForPath(canonicalTarget);
         AddPendingImport(relative);
         RefreshEntries();
         m_selectedEntry = canonicalTarget;
@@ -635,6 +695,109 @@ namespace mygame {
         std::error_code ec;
         bool equivalent = std::filesystem::equivalent(m_selectedEntry, path, ec);
         return !ec && equivalent;
+    }
+
+    const AssetBrowserPanel::PreviewTexture* AssetBrowserPanel::GetTexturePreview(const std::filesystem::path& path)
+    {
+        if (path.empty())
+            return nullptr;
+
+        const std::string key = PathKey(path);
+        if (key.empty())
+            return nullptr;
+
+        auto it = m_previewCache.find(key);
+        if (it != m_previewCache.end())
+            return &it->second;
+
+        std::error_code ec;
+        auto canonical = std::filesystem::weakly_canonical(path, ec);
+        if (ec)
+            canonical = path;
+
+        if (!std::filesystem::exists(canonical, ec) || !std::filesystem::is_regular_file(canonical, ec))
+            return nullptr;
+
+        PreviewTexture preview;
+        preview.textureId = gfx::Graphics::loadTexture(canonical.string().c_str());
+        if (preview.textureId == 0)
+            return nullptr;
+
+        if (!gfx::Graphics::getTextureSize(preview.textureId, preview.width, preview.height))
+        {
+            gfx::Graphics::destroyTexture(preview.textureId);
+            return nullptr;
+        }
+
+        auto [insertedIt, inserted] = m_previewCache.emplace(key, preview);
+        return inserted ? &insertedIt->second : &m_previewCache[key];
+    }
+
+    void AssetBrowserPanel::PrunePreviewCache()
+    {
+        std::unordered_set<std::string> active;
+        active.reserve(m_entries.size());
+        for (const auto& entry : m_entries)
+        {
+            if (!entry.isDirectory && IsTextureFile(entry.path))
+            {
+                const std::string key = PathKey(entry.path);
+                if (!key.empty())
+                    active.insert(key);
+            }
+        }
+
+        for (auto it = m_previewCache.begin(); it != m_previewCache.end(); )
+        {
+            if (active.find(it->first) == active.end())
+            {
+                if (it->second.textureId != 0)
+                    gfx::Graphics::destroyTexture(it->second.textureId);
+                it = m_previewCache.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+    }
+
+    void AssetBrowserPanel::ClearPreviewCache()
+    {
+        for (auto& entry : m_previewCache)
+        {
+            if (entry.second.textureId != 0)
+                gfx::Graphics::destroyTexture(entry.second.textureId);
+        }
+        m_previewCache.clear();
+    }
+
+    void AssetBrowserPanel::RemovePreviewForPath(const std::filesystem::path& path)
+    {
+        const std::string key = PathKey(path);
+        if (key.empty())
+            return;
+
+        auto it = m_previewCache.find(key);
+        if (it != m_previewCache.end())
+        {
+            if (it->second.textureId != 0)
+                gfx::Graphics::destroyTexture(it->second.textureId);
+            m_previewCache.erase(it);
+        }
+    }
+
+    std::string AssetBrowserPanel::PathKey(const std::filesystem::path& path)
+    {
+        if (path.empty())
+            return {};
+
+        std::error_code ec;
+        auto canonical = std::filesystem::weakly_canonical(path, ec);
+        if (ec)
+            canonical = path;
+
+        return canonical.lexically_normal().generic_string();
     }
 
 } // namespace mygame

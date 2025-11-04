@@ -257,37 +257,70 @@ namespace mygame {
         const float x = s.x + s.stepX * index;
         const float y = s.y + s.stepY * index;
 
-        // Apply Transform settings
+        // Transform: inherit JSON unless override is ON
         if (auto* tr = obj->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent)) {
-            tr->x = x; tr->y = y; tr->rot = s.rot;
+            if (s.overridePrefabTransform) {
+                tr->x = s.x + s.stepX * index;
+                tr->y = s.y + s.stepY * index;
+                tr->rot = s.rot;
+            }
         }
-        // Apply Rectangle render settings
+
+        // Rectangle render: you already do this via overridePrefabSize
         if (auto* rc = obj->GetComponentType<RenderComponent>(ComponentTypeId::CT_RenderComponent)) {
             if (s.overridePrefabSize) {
                 rc->w = s.w; rc->h = s.h;
             }
+            // tint: if you also want to inherit color by default, wrap color with a toggle too
             rc->r = s.rgba[0]; rc->g = s.rgba[1]; rc->b = s.rgba[2]; rc->a = s.rgba[3];
         }
-        // Apply Circle render settings
+
+        // Circle: inherit JSON unless override is ON
         if (auto* cc = obj->GetComponentType<CircleRenderComponent>(ComponentTypeId::CT_CircleRenderComponent)) {
-            cc->radius = s.radius;
+            if (s.overridePrefabCircle) {
+                cc->radius = s.radius;
+            }
+            // tint same note as above
             cc->r = s.rgba[0]; cc->g = s.rgba[1]; cc->b = s.rgba[2]; cc->a = s.rgba[3];
         }
 
-        // Apply Sprite settings
+        // Sprite: only override if explicitly enabled
         if (auto* sp = obj->GetComponentType<SpriteComponent>(ComponentTypeId::CT_SpriteComponent)) {
-            if (!sSpriteTexKey.empty()) {
+            if (s.overrideSpriteTexture && !sSpriteTexKey.empty()) {
                 sp->texture_key = sSpriteTexKey;
                 sp->texture_id = Resource_Manager::getTexture(sSpriteTexKey);
             }
         }
-        if (auto* rb = obj->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent)) {
-            rb->velX = s.rbVelX;
-            rb->velY = s.rbVelY;
 
+        // RigidBody: collider stays as you had with overridePrefabCollider
+        if (auto* rb = obj->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent)) {
+            if (s.overridePrefabVelocity) {
+                rb->velX = s.rbVelX;
+                rb->velY = s.rbVelY;
+            }
             if (s.overridePrefabCollider) {
                 rb->width = s.rbWidth;
                 rb->height = s.rbHeight;
+            }
+        }
+
+        // Enemy Attack: only override if enabled
+        if (auto* atk = obj->GetComponentType<EnemyAttackComponent>(ComponentTypeId::CT_EnemyAttackComponent)) {
+            if (s.overrideEnemyAttack) {
+                atk->damage = s.attackDamage;
+                atk->attack_speed = s.attack_speed;
+            }
+        }
+
+        // Enemy Health: only override if enabled
+        if (auto* eh = obj->GetComponentType<EnemyHealthComponent>(ComponentTypeId::CT_EnemyHealthComponent)) {
+            if (s.overrideEnemyHealth) {
+                eh->enemyMaxhealth = s.enemyMaxhealth;
+                eh->enemyHealth = s.enemyHealth;
+            }
+            else {
+                // Typical behavior: when spawning keep JSON max, set current= max
+                eh->enemyHealth = eh->enemyMaxhealth;
             }
         }
 
@@ -300,14 +333,7 @@ namespace mygame {
 
         if (auto* enemy = obj->GetComponentType<EnemyComponent>(ComponentTypeId::CT_EnemyComponent)) { (void)enemy; }
 
-        if (auto* health = obj->GetComponentType<EnemyHealthComponent>(ComponentTypeId::CT_EnemyHealthComponent)) {
-            health->enemyHealth = health->enemyMaxhealth;
-        }
-
-        if (auto* attack = obj->GetComponentType<EnemyAttackComponent>(ComponentTypeId::CT_EnemyAttackComponent)) {
-            attack->damage = s.attackDamage;
-            attack->attack_speed = s.attack_speed;
-        }
+   
 
         if (auto* type = obj->GetComponentType<EnemyTypeComponent>(ComponentTypeId::CT_EnemyTypeComponent)) {
             type->Etype = Framework::EnemyTypeComponent::EnemyType::physical;
@@ -541,25 +567,30 @@ namespace mygame {
         const bool hasRigidBody =
             (master->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent) != nullptr);
         const bool hasEnemyAttack = (master->GetComponentType<EnemyAttackComponent>(ComponentTypeId::CT_EnemyAttackComponent) != nullptr);
-        const bool hasEnemyHealth = (master->GetComponentType<EnemyAttackComponent>(ComponentTypeId::CT_EnemyAttackComponent) != nullptr);
+        const bool hasEnemyHealth = (master->GetComponentType<EnemyHealthComponent>(ComponentTypeId::CT_EnemyHealthComponent) != nullptr);
 
         if (gPendingPrefabSizeSync) {
-            if (masterRender) { gS.w = masterRender->w; gS.h = masterRender->h; }
+            if (auto* trm = master->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent)) {
+                gS.x = trm->x; gS.y = trm->y; gS.rot = trm->rot;
+            }
+            if (auto* ccm = master->GetComponentType<CircleRenderComponent>(ComponentTypeId::CT_CircleRenderComponent)) {
+                gS.radius = ccm->radius;
+            }
+            if (auto* atm = master->GetComponentType<EnemyAttackComponent>(ComponentTypeId::CT_EnemyAttackComponent)) {
+                gS.attackDamage = atm->damage;
+                gS.attack_speed = atm->attack_speed;
+            }
+            if (auto* ehm = master->GetComponentType<EnemyHealthComponent>(ComponentTypeId::CT_EnemyHealthComponent)) {
+                gS.enemyMaxhealth = ehm->enemyMaxhealth;
+                gS.enemyHealth = ehm->enemyMaxhealth; // start current at max
+            }
             if (auto* mrb = master->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent)) {
-                gS.rbWidth = mrb->width;
-                gS.rbHeight = mrb->height;
-                gS.rbVelX = mrb->velX;
-                gS.rbVelY = mrb->velY;
-                
+                gS.rbWidth = mrb->width; gS.rbHeight = mrb->height;
+                gS.rbVelX = mrb->velX;  gS.rbVelY = mrb->velY;
             }
-            if (auto* atk = master->GetComponentType<EnemyAttackComponent>(
-                ComponentTypeId::CT_EnemyAttackComponent)) {
-                gS.attackDamage = atk->damage;
-                gS.attack_speed = atk->attack_speed;
+            if (auto* rc = master->GetComponentType<RenderComponent>(ComponentTypeId::CT_RenderComponent)) {
+                gS.w = rc->w; gS.h = rc->h;
             }
-         
-            
-    
             gPendingPrefabSizeSync = false;
         }
 
@@ -607,9 +638,12 @@ namespace mygame {
         // === Transform Controls ===
         if (hasTransform) {
             ImGui::SeparatorText("Transform");
+            ImGui::Checkbox("Override prefab transform", &gS.overridePrefabTransform);
+            if (!gS.overridePrefabTransform) ImGui::BeginDisabled();
             ImGui::DragFloat("x", &gS.x, 0.005f, 0.0f, 1.0f);
             ImGui::DragFloat("y", &gS.y, 0.005f, 0.0f, 1.0f);
-            ImGui::DragFloat("rot (rad)", &gS.rot, 0.01f, -3.14159f, 3.14159f);
+            ImGui::DragFloat("rot", &gS.rot, 0.01f, -3.14159f, 3.14159f);
+            if (!gS.overridePrefabTransform) ImGui::EndDisabled();
         }
 
         // === Rectangle Controls ===
@@ -639,48 +673,69 @@ namespace mygame {
         // === Circle Controls ===
         if (hasCircle) {
             ImGui::SeparatorText("Circle");
+            ImGui::Checkbox("Override prefab circle", &gS.overridePrefabCircle);
+            if (!gS.overridePrefabCircle) ImGui::BeginDisabled();
             ImGui::DragFloat("radius", &gS.radius, 0.005f, 0.01f, 1.0f);
+            if (!gS.overridePrefabCircle) ImGui::EndDisabled();
         }
 
         if (hasRigidBody) {
             ImGui::SeparatorText("RigidBody");
 
+            // --- Collider override ---
             if (ImGui::Checkbox("Override prefab collider", &gS.overridePrefabCollider)) {
-                // if toggled OFF, pull master values back in
                 if (!gS.overridePrefabCollider) {
-                    if (auto* mrb = master->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent)) {
+                    if (auto* mrb = master->GetComponentType<RigidBodyComponent>(
+                        ComponentTypeId::CT_RigidBodyComponent)) {
                         gS.rbWidth = mrb->width;
                         gS.rbHeight = mrb->height;
+                    }
+                }
+            }
+
+            // Collider fields depend on collider override only
+            if (!gS.overridePrefabCollider) ImGui::BeginDisabled();
+            ImGui::DragFloat("Collider Width", &gS.rbWidth, 0.005f, 0.01f, 2.0f);
+            ImGui::DragFloat("Collider Height", &gS.rbHeight, 0.005f, 0.01f, 2.0f);
+            if (!gS.overridePrefabCollider) ImGui::EndDisabled();
+
+            ImGui::Separator(); // visual separation
+
+            // --- Velocity override (independent from collider) ---
+            if (ImGui::Checkbox("Override prefab velocity", &gS.overridePrefabVelocity)) {
+                // If turning OFF, pull back master velocities
+                if (!gS.overridePrefabVelocity) {
+                    if (auto* mrb = master->GetComponentType<RigidBodyComponent>(
+                        ComponentTypeId::CT_RigidBodyComponent)) {
                         gS.rbVelX = mrb->velX;
                         gS.rbVelY = mrb->velY;
                     }
                 }
             }
 
-         
-
-            const bool disable = !gS.overridePrefabCollider;
-            if (disable) ImGui::BeginDisabled();
-            ImGui::DragFloat("Collider Width", &gS.rbWidth, 0.005f, 0.01f, 2.0f);
-            ImGui::DragFloat("Collider Height", &gS.rbHeight, 0.005f, 0.01f, 2.0f);
+            if (!gS.overridePrefabVelocity) ImGui::BeginDisabled();
             ImGui::DragFloat("Velocity X", &gS.rbVelX, 0.01f, -100.f, 100.f);
             ImGui::DragFloat("Velocity Y", &gS.rbVelY, 0.01f, -100.f, 100.f);
-            if (disable) ImGui::EndDisabled();
+            if (!gS.overridePrefabVelocity) ImGui::EndDisabled();
         }
         // === EnenmyAttack ===
         if (hasEnemyAttack) {
             ImGui::SeparatorText("Enemy Attack");
-            ImGui::DragInt("Damage", &gS.attackDamage, 1, 0, 100000);      // clamp to non-negative
+            ImGui::Checkbox("Override prefab attack", &gS.overrideEnemyAttack);
+            if (!gS.overrideEnemyAttack) ImGui::BeginDisabled();
+            ImGui::DragInt("Damage", &gS.attackDamage, 1, 0, 100000);
             ImGui::DragFloat("Attack Speed (s)", &gS.attack_speed, 0.01f, 0.01f, 10.0f);
-            ImGui::SameLine();
-            ImGui::TextDisabled("(lower = faster)");
+            if (!gS.overrideEnemyAttack) ImGui::EndDisabled();
+            ImGui::SameLine(); ImGui::TextDisabled("(lower = faster)");
         }
 
         if (hasEnemyHealth) {
             ImGui::SeparatorText("Enemy Health");
-            ImGui::DragInt("Health", &gS.enemyHealth, 1, 0, 100000);      // clamp to non-negative
+            ImGui::Checkbox("Override prefab health", &gS.overrideEnemyHealth);
+            if (!gS.overrideEnemyHealth) ImGui::BeginDisabled();
+            ImGui::DragInt("Health", &gS.enemyHealth, 1, 0, 100000);
             ImGui::DragInt("HealthMax", &gS.enemyMaxhealth, 1, 0, 100000);
-           
+            if (!gS.overrideEnemyHealth) ImGui::EndDisabled();
         }
 
         // === Color Controls ===

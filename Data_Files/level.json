@@ -7,7 +7,7 @@
         "layer": "layer1",
         "Components": 
         {
-          "TransformComponent": { "x": 0.5, "y": 0.6, "rot": 0.0 },
+          "TransformComponent": { "x": 0.5, "y": 0.5, "rot": 0.0 },
           "CircleRenderComponent": { "radius": 0.20, "r": 0.9, "g": 0.2, "b": 0.3, "a": 1.0 }
         }
       },
@@ -63,7 +63,7 @@
       "name": "Boss",
       "Components": 
       {
-       "TransformComponent": { "x": -0.5, "y": 0.5, "rot": 0.0 },
+       "TransformComponent": { "x": -0.5, "y": -0.5, "rot": 0.0 },
        "RenderComponent": { "w": 0.3, "h": 0.3, "r": 1, "g": 1, "b": 1, "a": 1 },
        "SpriteComponent": { "texture_key": "boss" },
          "RigidBodyComponent": { "velocity_x": 0.6, "velocity_y": 0.6, "width": 0.25, "height": 0.25}
@@ -73,7 +73,7 @@
       "name": "Enemy",
       "Components": 
       {
-      "TransformComponent": { "x": 0, "y": 0, "rot": 0 },
+      "TransformComponent": { "x": 0.2, "y": 0.2, "rot": 0 },
       "RenderComponent": { "w": 0.3, "h": 0.3, "r": 1, "g": 1, "b": 1, "a": 1 },
       "SpriteComponent": { "texture_key": "boss" },
       "RigidBodyComponent": { "velocity_x": 10, "velocity_y": 0, "width": 0.13, "height": 0.24 },
