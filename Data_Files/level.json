@@ -7,7 +7,7 @@
         "layer": "layer1",
         "Components": 
         {
-          "TransformComponent": { "x": 0.5, "y": 0.5, "rot": 0.0 },
+          "TransformComponent": { "x": -0.7, "y": -0.7, "rot": 0.0 },
           "CircleRenderComponent": { "radius": 0.20, "r": 0.9, "g": 0.2, "b": 0.3, "a": 1.0 }
         }
       },
@@ -15,7 +15,7 @@
         "name": "Rect",
         "Components": 
         {
-          "TransformComponent": { "x": 0.0, "y": 0.0, "rot": 0.0 },
+          "TransformComponent": { "x":-0.5, "y": 0.0, "rot": 0.0 },
           "RenderComponent":    { "w": 0.5, "h": 0.5, "r": 0.95, "g": 0.75, "b": 0.25, "a": 1.0 },
           "RigidBodyComponent": { "velocity_x": 0, "velocity_y": 0, "width": 0.5, "height": 0.5 }
         }

@@ -286,7 +286,7 @@ namespace mygame {
 
         // Sprite: only override if explicitly enabled
         if (auto* sp = obj->GetComponentType<SpriteComponent>(ComponentTypeId::CT_SpriteComponent)) {
-            if (s.overrideSpriteTexture && !sSpriteTexKey.empty()) {
+            if ( !sSpriteTexKey.empty()) {
                 sp->texture_key = sSpriteTexKey;
                 sp->texture_id = Resource_Manager::getTexture(sSpriteTexKey);
             }
