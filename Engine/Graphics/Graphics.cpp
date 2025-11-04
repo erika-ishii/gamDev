@@ -164,6 +164,11 @@ namespace gfx {
         GL_THROW_IF_ERROR("loadTexture");
         return textureID;
     }
+    void Graphics::destroyTexture(unsigned int tex)
+    {
+        if (tex != 0)
+            glDeleteTextures(1, &tex);
+    }
 
     /*************************************************************************************
       \brief  Create geometry (rect, circle, background, sprite), load background texture,

@@ -26,6 +26,7 @@
 #include <system_error>
 #include <vector>
 #include <limits>
+#include <unordered_set>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_inverse.hpp> // for glm::inverse (used in ScreenToWorld)
@@ -38,6 +39,14 @@ namespace Framework {
 
     namespace {
         using clock = std::chrono::high_resolution_clock;
+
+        inline std::string ToLower(std::string value)
+        {
+            std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
+                return static_cast<char>(std::tolower(c));
+                });
+            return value;
+        }
 
         // Camera follow drag-lock state lives only in this translation unit.
         // We lock camera follow while dragging the Player so screen->world mapping stays stable.
@@ -55,6 +64,32 @@ namespace Framework {
             if (auto* rb = obj->GetComponentType<Framework::RigidBodyComponent>(
                 Framework::ComponentTypeId::CT_RigidBodyComponent))
             {
+
+            }
+        }
+
+        inline void RefreshSpriteComponentsForKey(const std::string& key)
+        {
+            if (key.empty() || !FACTORY)
+                return;
+
+            const unsigned handle = Resource_Manager::getTexture(key);
+            if (handle == 0)
+                return;
+
+            for (auto& [id, objPtr] : FACTORY->Objects())
+            {
+                (void)id;
+                auto* obj = objPtr.get();
+                if (!obj)
+                    continue;
+
+                if (auto* sprite = obj->GetComponentType<Framework::SpriteComponent>(
+                    Framework::ComponentTypeId::CT_SpriteComponent))
+                {
+                    if (sprite->texture_key == key)
+                        sprite->texture_id = handle;
+                }
                 
             }
         }
@@ -205,26 +240,34 @@ namespace Framework {
         if (pending.empty())
             return;
 
+        std::unordered_set<std::string> processed;
         for (const auto& relative : pending)
         {
-            auto absolute = assetsRoot / relative;
+            
             std::string key = relative.generic_string();
+            if (key.empty() || !processed.insert(key).second)
+                continue;
 
-            if (!absolute.empty())
+            std::error_code ec;
+            auto absolute = std::filesystem::weakly_canonical(assetsRoot / relative, ec);
+            if (ec)
+                absolute = assetsRoot / relative;
+
+            if (!std::filesystem::exists(absolute, ec) || !std::filesystem::is_regular_file(absolute, ec))
+                continue;
+
+            std::string ext = ToLower(absolute.extension().string());
+            const bool isTexture = (ext == ".png" || ext == ".jpg" || ext == ".jpeg");
+            const bool isAudio = (ext == ".wav" || ext == ".mp3");
+
+            if (!isTexture && !isAudio)
+                continue;
+
+            if (Resource_Manager::load(key, absolute.string()))
             {
-                auto it = Resource_Manager::resources_map.find(key);
-                if (it == Resource_Manager::resources_map.end())
+                if (isTexture)
                 {
-                    Resource_Manager::load(key, absolute.string());
-                }
-
-                std::string ext = std::filesystem::path(absolute).extension().string();
-                std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) {
-                    return static_cast<char>(std::tolower(c));
-                    });
-
-                if (ext == ".png" || ext == ".jpg" || ext == ".jpeg")
-                {
+                    RefreshSpriteComponentsForKey(key);
                     mygame::UseSpriteFromAsset(relative);
                 }
             }

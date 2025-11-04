@@ -31,6 +31,11 @@ namespace gfx {
         static unsigned int loadTexture(const char* path);
 
         /**
+         * \brief Destroy a previously created texture handle.
+         */
+        static void destroyTexture(unsigned int tex);
+
+        /**
          * \brief Create geometry VAOs/VBOs, build shaders, and prepare background resources.
          * \note  Must be called after a valid GL context is current.
          */

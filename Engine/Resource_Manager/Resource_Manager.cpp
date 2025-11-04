@@ -70,13 +70,34 @@ bool Resource_Manager::load(const std::string& id, const std::string& path)
     if (isTexture(ext))
     {  
         unsigned int texID = gfx::Graphics::loadTexture(path.c_str());
-        if (texID != 0){ resources_map[id] = { id, Resource_Type::Graphics, texID };; return true;}
+        if (texID != 0)
+        {
+            auto existing = resources_map.find(id);
+            if (existing != resources_map.end() && existing->second.type == Resource_Type::Graphics)
+            {
+                if (existing->second.handle != 0 && existing->second.handle != texID)
+                    gfx::Graphics::destroyTexture(existing->second.handle);
+            }
+
+            resources_map[id] = { id, Resource_Type::Graphics, texID };
+            return true;
+        }
         return false;
     }
     else if (isSound(ext))
-    {  
-        bool success = SoundManager::getInstance().loadSound(id,path); 
-        if (success){resources_map[id] = { id, Resource_Type::Sound ,0};}
+    {
+        auto existing = resources_map.find(id);
+        if (existing != resources_map.end() && existing->second.type == Resource_Type::Sound)
+        {
+            SoundManager::getInstance().stopSound(id);
+            SoundManager::getInstance().unloadSound(id);
+        }
+
+        bool success = SoundManager::getInstance().loadSound(id, path);
+        if (success)
+        {
+            resources_map[id] = { id, Resource_Type::Sound ,0 };
+        }
         return success;
     }
     else {std::cerr << "[Resource_Manager] Unsupported file type: "  << path << std::endl; return false;}
