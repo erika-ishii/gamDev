@@ -222,3 +222,6 @@
 2025-11-04T09:07:38Z|std::exception|RenderSystem::draw|renderSprite|gl_error=1282
 2025-11-04T09:07:38Z|std::exception|mygame::draw|renderSprite|gl_error=1282
 2025-11-04T09:07:38Z|std_terminate|
+2025-11-04T12:58:08Z|std::exception|thread=57052|RenderSystem::draw/renderSprite/gl_error=1281/stack=stacktrace_unavailable
+2025-11-04T12:58:08Z|std::exception|thread=57052|mygame::draw/renderSprite/gl_error=1281/stack=stacktrace_unavailable
+2025-11-04T12:58:08Z|std_terminate|thread=57052|stack=stacktrace_unavailable

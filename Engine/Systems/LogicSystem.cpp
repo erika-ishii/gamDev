@@ -2,6 +2,7 @@
 #include "Systems/LogicSystem.h"
 #include <cctype>
 #include <string_view>
+#include <csignal>
 
 namespace Framework {
     LogicSystem::LogicSystem(gfx::Window& window, InputSystem& input)
@@ -145,6 +146,8 @@ namespace Framework {
             std::string("ENGINE/CRASH"));
         g_crashLogger = crashLogger.get();
         std::cout << "[CrashLog] " << g_crashLogger->LogPath() << "\n";
+        std::cout << "[CrashLog] Press F9 to force a crash-test (logs to file + logcat).\n";
+        std::cout << "[CrashLog] Android builds mirror to ENGINE/CRASH in logcat.\n";
 
         InstallTerminateHandler();
         InstallSignalHandlers();
@@ -184,12 +187,25 @@ namespace Framework {
             << "WASD: Move | Q/E: Rotate | Z/X: Scale | R: Reset\n"
             << "A/D held => Run animation, otherwise Idle\n"
             << "F1: Toggle Performance Overlay (FPS & timings)\n"
+            << "F9: Trigger crash logging test (SIGABRT)\n"
             << "=======================================\n";
     }
 
     void LogicSystem::Update(float dt)
     {
         TryGuard::Run([&] {
+             bool triggerCrash = input.IsKeyPressed(GLFW_KEY_F10);
+            if (triggerCrash && !crashTestLatched) {
+                crashTestLatched = true;
+                if (g_crashLogger) {
+                    auto line = g_crashLogger->WriteWithStack("manual_trigger", "key=F10|stage=pre_abort");
+                    g_crashLogger->Mirror(line);
+                }
+                std::cout << "[CrashLog] Deliberate crash requested via F9.\n";
+                std::raise(SIGABRT);
+            } else if (!triggerCrash) {
+                crashTestLatched = false;
+            }
             if (factory)
                 factory->Update(dt);
 

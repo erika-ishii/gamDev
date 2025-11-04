@@ -321,7 +321,7 @@ namespace Framework {
                 if (isTexture)
                 {
                     RefreshSpriteComponentsForKey(key);
-                    mygame::UseSpriteFromAsset(relative);
+                   
                 }
             }
         }

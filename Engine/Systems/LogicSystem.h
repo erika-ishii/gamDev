@@ -133,6 +133,7 @@ namespace Framework {
 		int screenH{ 600 };
 
 		bool captured{ false };
+		bool crashTestLatched{ false };
 		std::unique_ptr<CrashLogger> crashLogger;
 	};
 }

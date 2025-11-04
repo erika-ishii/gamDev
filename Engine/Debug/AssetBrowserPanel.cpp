@@ -248,7 +248,9 @@ namespace mygame {
 
 
         const bool isDirectory = entry.isDirectory;
-        const bool isSelected = IsSelected(entry.path);
+        const bool isTexture = !isDirectory && IsTextureFile(entry.path);
+        const bool isInteractable = isDirectory || isTexture;
+        const bool isSelected = isInteractable && IsSelected(entry.path);
         if (isSelected)
         {
             const ImVec4 header = ImGui::GetStyleColorVec4(ImGuiCol_Header);
@@ -261,14 +263,19 @@ namespace mygame {
 
         const std::string buttonLabel = "##" + label;
         const ImVec2 tileSize(cellSize, cellSize);
+        if (!isInteractable)
+            ImGui::BeginDisabled(true);
+
         const bool pressed = ImGui::Button(buttonLabel.c_str(), tileSize);
+        if (!isInteractable)
+            ImGui::EndDisabled();
+
 
         if (isSelected)
             ImGui::PopStyleColor(3);
 
       
 
-        const bool isTexture = !isDirectory && IsTextureFile(entry.path);
         const PreviewTexture* preview = isTexture ? GetTexturePreview(entry.path) : nullptr;
         const char* overlay = nullptr;
         if (isDirectory)
@@ -317,18 +324,19 @@ namespace mygame {
             ImGui::GetWindowDrawList()->AddText(textPos, ImGui::GetColorU32(ImGuiCol_Text), overlay);
         }
 
-        std::string payloadPath = entry.path.lexically_relative(m_assetsRoot).generic_string();
-        if (payloadPath.empty() || payloadPath == "." || payloadPath.rfind("..", 0) == 0)
-            payloadPath = entry.path.generic_string();
-
-        bool dragging = false;
-        if (!isDirectory && !payloadPath.empty()
-            && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+        if (isTexture)
         {
-            dragging = true;
-            ImGui::SetDragDropPayload("ASSET_BROWSER_PATH", payloadPath.c_str(), payloadPath.size() + 1);
-            ImGui::TextUnformatted(payloadPath.c_str());
-            ImGui::EndDragDropSource();
+            std::string payloadPath = entry.path.lexically_relative(m_assetsRoot).generic_string();
+            if (payloadPath.empty() || payloadPath == "." || payloadPath.rfind("..", 0) == 0)
+                payloadPath = entry.path.generic_string();
+
+            if (!payloadPath.empty()
+                && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+            {
+                ImGui::SetDragDropPayload("ASSET_BROWSER_PATH", payloadPath.c_str(), payloadPath.size() + 1);
+                ImGui::TextUnformatted(payloadPath.c_str());
+                ImGui::EndDragDropSource();
+            }
         }
 
         ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + tileSize.x);
