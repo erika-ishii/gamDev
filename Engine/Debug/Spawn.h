@@ -69,6 +69,10 @@ namespace mygame {
         //Enemy use
         int attackDamage{ 10 }; // add this
         float attack_speed{ 1.0f }; // optionally also add speed
+
+        //EnemyHealth
+        int enemyHealth{};
+        int enemyMaxhealth{};
     };
 
     /*****************************************************************************************

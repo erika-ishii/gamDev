@@ -5,10 +5,11 @@
  \brief     Minimal application core that owns the window and drives the main loop.
  \details   Provides lightweight lifecycle callbacks (init/update/render/shutdown) and an
             orderly frame flow:
-              pollEvents → compute/clamp dt → update → beginFrame → ImGui::BeginFrame →
-              user render → ImGui::EndFrame → endFrame → swapBuffers.
-            Delta time is clamped (≤ 0.1s) to avoid simulation explosions after stalls.
-            Call Quit() to request a graceful exit on the next loop iteration.
+             pollEvents → accumulate frame dt → fixed-step update → beginFrame →
+             ImGui::BeginFrame → user render → ImGui::EndFrame → endFrame → swapBuffers.
+            The simulation advances using a 60 Hz fixed timestep (with a safety cap on
+            sub-steps) while the measured frame delta is still clamped (≤ 0.1s) to avoid
+            runaway accumulation after stalls.
  \copyright
             All content ©2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
@@ -41,6 +42,8 @@ public:
     void SetCallbacks(InitFn i, UpdateFn u, RenderFn r, ShutdownFn s) {
         init = i; update = u; render = r; shutdown = s;
     }
+    int GetCurrentNumSteps() const noexcept { return m_CurrentNumSteps; }
+    float GetFixedDeltaSeconds() const noexcept { return m_FixedStep.count(); }
 
 private:
     using Clock = std::chrono::steady_clock;       // monotonic clock for dt
@@ -48,7 +51,8 @@ private:
 
     bool m_Running{ false };                         ///< Main loop flag
     std::unique_ptr<gfx::Window> m_Window;           ///< Owned window (RAII)
-
+    int m_CurrentNumSteps = 0;
+    SecondsF  m_FixedStep{ 1.0f / 60.0f };
     // Callback storage (may be null)
     InitFn     init{ nullptr };
     UpdateFn   update{ nullptr };

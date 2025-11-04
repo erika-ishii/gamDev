@@ -48,6 +48,9 @@ namespace Framework
         /// RigidBodyComponent: physics velocity, size, and collision data
         CT_RigidBodyComponent,
 
+        /// HurtBoxComponent: The hitbox for the attacks
+        CT_HurtBoxComponent,
+
         /// SpriteComponent: textured sprite rendering
         CT_SpriteComponent,
         

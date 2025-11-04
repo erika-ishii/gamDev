@@ -32,4 +32,9 @@ namespace mygame {
     void draw();
     void shutdown();
 
+    // Editor simulation controls
+    bool IsEditorSimulationRunning();
+    void EditorPlaySimulation();
+    void EditorStopSimulation();
+
 }

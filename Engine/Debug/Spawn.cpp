@@ -200,18 +200,12 @@ namespace mygame {
         }
 
         // Prefer a non-Default layer as the initial active layer
-        std::string ChooseDefaultLayerForLevel(const std::string& levelKey) {
-            if (!levelKey.empty()) {
-                if (auto it = gLevelLayers.find(levelKey); it != gLevelLayers.end()) {
-                    for (const auto& nm : it->second) {
-                        if (NormalizeLayerUi(nm) != "Default")
-                            return NormalizeLayerUi(nm);
-                    }
-                    if (!it->second.empty())
-                        return NormalizeLayerUi(it->second.front());
-                }
-            }
-            return "Default";
+        std::string ChooseDefaultLayerForLevel(const std::string& key) {
+            auto it = gLevelLayers.find(key);
+            if (it == gLevelLayers.end()) return "Default";
+            bool hasDefault = false;
+            for (auto& nm : it->second) if (NormalizeLayerUi(nm) == "Default") hasDefault = true;
+            return hasDefault ? "Default" : (it->second.empty() ? "Default" : NormalizeLayerUi(it->second.front()));
         }
 
         void SyncActiveLayerWithLevel(const std::string& levelKey) {
@@ -546,6 +540,8 @@ namespace mygame {
         const bool hasCircle = (masterCircle != nullptr);
         const bool hasRigidBody =
             (master->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent) != nullptr);
+        const bool hasEnemyAttack = (master->GetComponentType<EnemyAttackComponent>(ComponentTypeId::CT_EnemyAttackComponent) != nullptr);
+        const bool hasEnemyHealth = (master->GetComponentType<EnemyAttackComponent>(ComponentTypeId::CT_EnemyAttackComponent) != nullptr);
 
         if (gPendingPrefabSizeSync) {
             if (masterRender) { gS.w = masterRender->w; gS.h = masterRender->h; }
@@ -554,15 +550,22 @@ namespace mygame {
                 gS.rbHeight = mrb->height;
                 gS.rbVelX = mrb->velX;
                 gS.rbVelY = mrb->velY;
+                
             }
-           // gS.overridePrefabSize = false;
-           // gS.overridePrefabCollider = false;
-            //gPendingPrefabSizeSync = false;
+            if (auto* atk = master->GetComponentType<EnemyAttackComponent>(
+                ComponentTypeId::CT_EnemyAttackComponent)) {
+                gS.attackDamage = atk->damage;
+                gS.attack_speed = atk->attack_speed;
+            }
+         
+            
+    
+            gPendingPrefabSizeSync = false;
         }
 
         const bool hasSprite =
             (master->GetComponentType<SpriteComponent>(ComponentTypeId::CT_SpriteComponent) != nullptr);
-
+     
         // === Sprite Controls ===
         if (hasSprite) {
             ImGui::SeparatorText("Sprite");
@@ -600,7 +603,7 @@ namespace mygame {
                 ImGui::TextDisabled("Drag from the Content Browser or drop files into the editor window.");
             }
         }
-
+       
         // === Transform Controls ===
         if (hasTransform) {
             ImGui::SeparatorText("Transform");
@@ -654,6 +657,8 @@ namespace mygame {
                 }
             }
 
+         
+
             const bool disable = !gS.overridePrefabCollider;
             if (disable) ImGui::BeginDisabled();
             ImGui::DragFloat("Collider Width", &gS.rbWidth, 0.005f, 0.01f, 2.0f);
@@ -662,6 +667,22 @@ namespace mygame {
             ImGui::DragFloat("Velocity Y", &gS.rbVelY, 0.01f, -100.f, 100.f);
             if (disable) ImGui::EndDisabled();
         }
+        // === EnenmyAttack ===
+        if (hasEnemyAttack) {
+            ImGui::SeparatorText("Enemy Attack");
+            ImGui::DragInt("Damage", &gS.attackDamage, 1, 0, 100000);      // clamp to non-negative
+            ImGui::DragFloat("Attack Speed (s)", &gS.attack_speed, 0.01f, 0.01f, 10.0f);
+            ImGui::SameLine();
+            ImGui::TextDisabled("(lower = faster)");
+        }
+
+        if (hasEnemyHealth) {
+            ImGui::SeparatorText("Enemy Health");
+            ImGui::DragInt("Health", &gS.enemyHealth, 1, 0, 100000);      // clamp to non-negative
+            ImGui::DragInt("HealthMax", &gS.enemyMaxhealth, 1, 0, 100000);
+           
+        }
+
         // === Color Controls ===
         if (hasRender || hasCircle) {
             ImGui::SeparatorText("Color");

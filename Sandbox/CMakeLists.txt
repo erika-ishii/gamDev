@@ -43,7 +43,7 @@ set_property(TARGET MyGame PROPERTY CXX_STANDARD 20)
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   target_compile_options(MyGame PRIVATE -Wall -Wextra)
 elseif (MSVC)
-  target_compile_options(MyGame PRIVATE /W3 /WX-)
+  target_compile_options(MyGame PRIVATE /W4 /WX-)
 endif()
 
 # Copy FMOD DLL files to build directory

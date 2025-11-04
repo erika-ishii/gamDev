@@ -27,6 +27,7 @@
 
 #include "Graphics/Window.hpp"
 #include "Physics/Collision/Collision.h"
+#include "Component/HurtBoxComponent.h"
 
 #include "../../Sandbox/MyGame/MathUtils.hpp"
 
@@ -69,9 +70,9 @@ namespace Framework {
 
 		void Update(float dt) override;
 
-
-
 		void Shutdown() override;
+
+		void ReloadLevel();
 
 		GameObjectFactory* Factory() const { return factory.get(); }
 		const std::vector<GOC*>& LevelObjects() const { return levelObjects; }

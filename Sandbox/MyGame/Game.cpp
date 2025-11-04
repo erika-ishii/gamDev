@@ -36,6 +36,7 @@ namespace mygame {
 
         enum class GameState { MAIN_MENU, PLAYING, EXIT };
         GameState currentState = GameState::MAIN_MENU;
+        bool editorSimulationRunning = false;
 
         MainMenuPage mainMenu;
     }
@@ -59,6 +60,8 @@ namespace mygame {
 
         mainMenu.Init(gRenderSystem->ScreenWidth(), gRenderSystem->ScreenHeight());
         currentState = GameState::MAIN_MENU;
+
+        editorSimulationRunning = false;
     }
 
     void update(float dt)
@@ -71,16 +74,29 @@ namespace mygame {
             {
             case GameState::MAIN_MENU:
                 mainMenu.Update(gInputSystem);
-                if (mainMenu.ConsumeStart()) currentState = GameState::PLAYING;
+                if (mainMenu.ConsumeStart())
+                {
+                    currentState = GameState::PLAYING;
+                    editorSimulationRunning = true;
+                }
                 if (mainMenu.ConsumeExit())  currentState = GameState::EXIT;
                 break;
 
             case GameState::PLAYING:
-                gSystems.UpdateAll(dt);
+                if (editorSimulationRunning)
+                {
+                    gSystems.UpdateAll(dt);
+                }
+                else if (gInputSystem)
+                {
+                    gInputSystem->Update(dt);
+                }
                 break;
 
             case GameState::EXIT:
-                if (auto* w = gInputSystem->Window()) w->close();
+                if (gInputSystem) {
+                    if (auto* w = gInputSystem->Window()) w->close();
+                }
                 break;
             }
 
@@ -128,6 +144,30 @@ namespace mygame {
         gInputSystem = nullptr;
 
         std::cout << "[Game] Shutdown complete.\n";
+    }
+
+    bool IsEditorSimulationRunning()
+    {
+        return editorSimulationRunning;
+    }
+
+    void EditorPlaySimulation()
+    {
+        editorSimulationRunning = true;
+        if (currentState != GameState::PLAYING)
+            currentState = GameState::PLAYING;
+    }
+
+    void EditorStopSimulation()
+    {
+        if (!gLogicSystem)
+        {
+            editorSimulationRunning = false;
+            return;
+        }
+
+        gLogicSystem->ReloadLevel();
+        editorSimulationRunning = false;
     }
 
 } // namespace mygame

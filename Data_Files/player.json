@@ -7,7 +7,15 @@
       "RigidBodyComponent": { "velocity_x": 0.0, "velocity_y": 0.0, "width": 0.1, "height": 0.21 },
       "PlayerComponent": {},
       "PlayerHealthComponent": { "playerHealth": 100, "playerMaxhealth": 100 },
-      "PlayerAttackComponent": { "damage": 50, "attack_speed": 1.0 }
+    "PlayerAttackComponent": {
+      "damage": 50,
+      "attack_speed": 1.0
+    },
+    "HurtBoxComponent": {
+      "hurtwidth": 0.15,
+      "hurtheight": 0.15,
+      "hurtduration": 0.15
+    }
   }
 }
 }

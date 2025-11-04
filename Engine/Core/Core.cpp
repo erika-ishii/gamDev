@@ -35,20 +35,44 @@ void Core::Run() {
     if (init) init(*m_Window);
 
     auto t_prev = Clock::now();
+    //target simulation step (60 hz)
+    const SecondsF fixedStep{ 1.0f / 60.0f };
+    // carry over leftover frame time
+    SecondsF accumulator = SecondsF::zero();
+    // safety cap to avoid a spiral of death
+    constexpr int kMaxSubSteps = 5;
+
     while (m_Running && !m_Window->shouldClose()) {
         // Process input/events (keyboard, mouse, OS signals)
         m_Window->pollEvents();
 
         // Measure frame delta time (in seconds, as float)
         const auto t_now = Clock::now();
-        float dt = std::chrono::duration_cast<SecondsF>(t_now - t_prev).count();
+  
+
+        float frameDt = std::chrono::duration_cast<SecondsF>(t_now - t_prev).count();
         t_prev = t_now;
+       
 
         // Clamp delta to avoid simulation explosion after stalls (>100 ms)
-        if (dt > 0.1f) dt = 0.1f;
+        if (frameDt > 0.1f) frameDt = 0.1f;
+
+        // Accumulate elapsed time and step the simulation with a fixed timestep
+        accumulator += SecondsF{ frameDt };
+        int subSteps = 0;
+        while (accumulator >= fixedStep && subSteps < kMaxSubSteps) {
+            if (update) update(fixedStep.count());
+            accumulator -= fixedStep;
+            ++subSteps;
+        }
 
         // Game/logic update
-        if (update) update(dt);
+        // Drop excess time if we hit the cap to prevent spiral of death
+        if (subSteps == kMaxSubSteps && accumulator > fixedStep) {
+            accumulator = SecondsF::zero();
+        }
+
+        m_CurrentNumSteps = subSteps;
 
         // Rendering stage
         m_Window->beginFrame();    // clear buffers, prepare GL state
