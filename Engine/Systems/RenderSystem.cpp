@@ -1404,10 +1404,25 @@ namespace Framework {
                     if (obj->GetComponentType<Framework::SpriteComponent>(
                         Framework::ComponentTypeId::CT_SpriteComponent))
                         continue;
+                    unsigned rectTex = rc->texture_id;
+                    if (!rectTex && !rc->texture_key.empty())
+                    {
+                        rectTex = Resource_Manager::getTexture(rc->texture_key);
+                        rc->texture_id = rectTex;
+                    }
 
-                    gfx::Graphics::renderRectangle(tr->x, tr->y, tr->rot,
-                        rc->w, rc->h,
-                        rc->r, rc->g, rc->b, rc->a);
+                    if (rectTex)
+                    {
+                        gfx::Graphics::renderSprite(rectTex, tr->x, tr->y, tr->rot,
+                            rc->w, rc->h,
+                            rc->r, rc->g, rc->b, rc->a);
+                    }
+                    else
+                    {
+                        gfx::Graphics::renderRectangle(tr->x, tr->y, tr->rot,
+                            rc->w, rc->h,
+                            rc->r, rc->g, rc->b, rc->a);
+                    }
                 }
 
                 // Pass 3: Circles

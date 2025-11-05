@@ -14,8 +14,10 @@
 *********************************************************************************************/
 // Component/RenderComponent.hpp
 #pragma once
+#include <string>
 #include "Composition/Component.h"
 #include "Serialization/Serialization.h"
+#include "Resource_Manager/Resource_Manager.h"
 
 namespace Framework {
     /*****************************************************************************************
@@ -33,11 +35,24 @@ namespace Framework {
         float w{ 64.f }, h{ 64.f };               ///< Width and height (treated as scale factors in NDC)
         float r{ 1.f }, g{ 1.f }, b{ 1.f }, a{ 1.f }; ///< RGBA tint color values (default white)
 
+        unsigned int texture_id{ 0 }; 
+        std::string  texture_key;      
+        std::string  texture_path;     
+
         /*************************************************************************************
           \brief Initializes the component.
                  Default implementation does nothing but may be extended if needed.
         *************************************************************************************/
-        void initialize() override {}
+        void initialize() override {
+            if (!texture_key.empty()) {
+                texture_id = Resource_Manager::getTexture(texture_key);
+                if (!texture_id && !texture_path.empty()) {
+                    if (Resource_Manager::load(texture_key, texture_path)) {
+                        texture_id = Resource_Manager::getTexture(texture_key);
+                    }
+                }
+            }
+        }
 
         /*************************************************************************************
           \brief Handles incoming messages for this component.
@@ -58,6 +73,8 @@ namespace Framework {
             if (s.HasKey("g")) StreamRead(s, "g", g);
             if (s.HasKey("b")) StreamRead(s, "b", b);
             if (s.HasKey("a")) StreamRead(s, "a", a);
+            if (s.HasKey("texture_key")) StreamRead(s, "texture_key", texture_key);
+            if (s.HasKey("texture_path")) StreamRead(s, "texture_path", texture_path);
         }
 
         /*************************************************************************************
@@ -76,6 +93,9 @@ namespace Framework {
             copy->g = g;
             copy->b = b;
             copy->a = a;
+            copy->texture_key = texture_key;
+            copy->texture_id = texture_id;
+            copy->texture_path = texture_path;
 
             //Transfer ownership to whoever call clone()
             return copy;

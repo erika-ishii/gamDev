@@ -95,6 +95,10 @@ namespace mygame {
     static std::string sSpriteTexKey;
     /// OpenGL texture handle for quick preview (0 if none).
     static unsigned sSpriteTextureId = 0;
+    /// Texture key selected for rectangle-only prefabs.
+    static std::string sRectangleTexKey;
+    /// OpenGL texture handle preview for rectangle textures.
+    static unsigned sRectangleTextureId = 0;
     /// Canonical project assets root for resolving relative asset keys.
     static std::filesystem::path sAssetsRoot;
 
@@ -348,12 +352,19 @@ namespace mygame {
             }
         }
 
-        // Rectangle render: override size and color when requested
+        auto* spriteComp = obj->GetComponentType<SpriteComponent>(ComponentTypeId::CT_SpriteComponent);
+
+        // Rectangle render: override size, color, and optional texture when requested
         if (auto* rc = obj->GetComponentType<RenderComponent>(ComponentTypeId::CT_RenderComponent)) {
             if (s.overridePrefabSize) {
                 rc->w = s.w; rc->h = s.h;
             }
             rc->r = s.rgba[0]; rc->g = s.rgba[1]; rc->b = s.rgba[2]; rc->a = s.rgba[3];
+
+            if (!sRectangleTexKey.empty() && !spriteComp) {
+                rc->texture_key = sRectangleTexKey;
+                rc->texture_id = Resource_Manager::getTexture(sRectangleTexKey);
+            }
         }
 
         // Circle: inherit JSON unless override is ON
@@ -365,10 +376,11 @@ namespace mygame {
         }
 
         // Sprite: only override if a texture key has been chosen
-        if (auto* sp = obj->GetComponentType<SpriteComponent>(ComponentTypeId::CT_SpriteComponent)) {
+        if (spriteComp) {
             if (!sSpriteTexKey.empty()) {
-                sp->texture_key = sSpriteTexKey;
-                sp->texture_id = Resource_Manager::getTexture(sSpriteTexKey);
+               
+                spriteComp->texture_key = sSpriteTexKey;
+                spriteComp->texture_id = Resource_Manager::getTexture(sSpriteTexKey);
             }
         }
 
@@ -452,25 +464,28 @@ namespace mygame {
     }
 
     /*************************************************************************************
-      \brief  Use a texture from the Content Browser for sprite override.
-      \param  relativePath Path relative to the assets root (accepts absolute; will rebase).
-      \note   Loads the texture into Resource_Manager if not present; updates preview handle.
+     \brief  Internal helper to resolve a texture key + GL handle from a drag-drop path.
+      \param  relativePath Path relative to the assets root (absolute paths are rebased).
+      \param  outKey       Destination string for the resolved key.
+      \param  outHandle    Destination handle for the GL texture id.
+      \return true if a texture was successfully resolved/loaded; false otherwise.
     *************************************************************************************/
-    void UseSpriteFromAsset(const std::filesystem::path& relativePath) {
+    static bool LoadTextureSelection(const std::filesystem::path& relativePath,
+        std::string& outKey, unsigned& outHandle) {
         if (relativePath.empty() || sAssetsRoot.empty())
-            return;
+            return false;
 
         std::filesystem::path relative = relativePath;
         if (relative.is_absolute()) {
             std::error_code ec;
             auto canonical = std::filesystem::weakly_canonical(relative, ec);
             if (ec)
-                return;
+                return false;
             relative = canonical.lexically_relative(sAssetsRoot);
         }
 
         if (relative.empty())
-            return;
+            return false;
 
         std::error_code ec;
         auto absolute = std::filesystem::weakly_canonical(sAssetsRoot / relative, ec);
@@ -478,24 +493,43 @@ namespace mygame {
             absolute = sAssetsRoot / relative;
 
         if (!std::filesystem::exists(absolute))
-            return;
+            return false;
         if (!std::filesystem::is_regular_file(absolute))
-            return;
+            return false;
         if (!IsTextureFile(absolute))
-            return;
+            return false;
 
         std::string key = relative.generic_string();
         if (key.empty())
-            return;
+            return false;
 
         if (Resource_Manager::resources_map.find(key) == Resource_Manager::resources_map.end())
             Resource_Manager::load(key, absolute.string());
 
         unsigned handle = Resource_Manager::getTexture(key);
-        if (handle != 0) {
-            sSpriteTexKey = key;
-            sSpriteTextureId = handle;
-        }
+        if (handle == 0)
+            return false;
+
+        outKey = std::move(key);
+        outHandle = handle;
+        return true;
+    }
+
+    /*************************************************************************************
+      \brief  Use a texture from the Content Browser for sprite override.
+      \param  relativePath Path relative to the assets root (accepts absolute; will rebase).
+      \note   Loads the texture into Resource_Manager if not present; updates preview handle.
+    *************************************************************************************/
+    void UseSpriteFromAsset(const std::filesystem::path& relativePath) {
+        (void)LoadTextureSelection(relativePath, sSpriteTexKey, sSpriteTextureId);
+    }
+
+    /*************************************************************************************
+      \brief  Use a texture from the Content Browser for rectangle overrides.
+      \param  relativePath Path relative to the assets root (accepts absolute; will rebase).
+    *************************************************************************************/
+    static void UseRectangleTextureFromAsset(const std::filesystem::path& relativePath) {
+        (void)LoadTextureSelection(relativePath, sRectangleTexKey, sRectangleTextureId);
     }
 
     /*************************************************************************************
@@ -504,6 +538,14 @@ namespace mygame {
     void ClearSpriteTexture() {
         sSpriteTexKey.clear();
         sSpriteTextureId = 0;
+    }
+
+    /*************************************************************************************
+     \brief  Clear the current rectangle override (key + preview handle).
+   *************************************************************************************/
+    static void ClearRectangleTexture() {
+        sRectangleTexKey.clear();
+        sRectangleTextureId = 0;
     }
 
     /*************************************************************************************
@@ -808,6 +850,45 @@ namespace mygame {
             ImGui::DragFloat("w", &gS.w, 0.005f, 0.01f, 1.0f);
             ImGui::DragFloat("h", &gS.h, 0.005f, 0.01f, 1.0f);
             if (disableSizeControls) ImGui::EndDisabled();
+
+            if (!hasSprite) {
+                ImGui::SeparatorText("Texture");
+                const bool hasRectTexture = !sRectangleTexKey.empty();
+                const char* previewLabel = hasRectTexture ? sRectangleTexKey.c_str() : "<drop texture>";
+                ImGui::Text("Texture: %s", previewLabel);
+
+                ImVec2 avail = ImGui::GetContentRegionAvail();
+                float previewEdge = std::min(128.0f, avail.x);
+                ImVec2 previewSize(previewEdge, previewEdge);
+
+                ImGui::PushID("RectangleTexturePreview");
+                if (hasRectTexture && sRectangleTextureId != 0) {
+                    ImGui::Image((ImTextureID)(void*)(intptr_t)sRectangleTextureId, previewSize, ImVec2(0, 1), ImVec2(1, 0));
+                }
+                else {
+                    ImGui::Button("Drop Texture Here", previewSize);
+                }
+
+                if (ImGui::BeginDragDropTarget()) {
+                    if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_BROWSER_PATH")) {
+                        if (payload->Data && payload->DataSize > 0) {
+                            std::string relative(static_cast<const char*>(payload->Data), payload->DataSize - 1);
+                            UseRectangleTextureFromAsset(relative);
+                        }
+                    }
+                    ImGui::EndDragDropTarget();
+                }
+                ImGui::PopID();
+
+                if (hasRectTexture && sRectangleTextureId != 0) {
+                    if (ImGui::Button("Clear Rectangle Texture")) {
+                        ClearRectangleTexture();
+                    }
+                }
+                else {
+                    ImGui::TextDisabled("Drag from the Content Browser or drop files into the editor window.");
+                }
+            }
         }
 
         // === Circle Controls ===
