@@ -6,6 +6,9 @@
 #include "AI/DecisionTree.h"
 #include<iostream>
 #define NOMINMAX
+#if defined(APIENTRY)
+#  undef APIENTRY
+#endif
 #include <Windows.h>
 #ifdef SendMessage
 #undef SendMessage

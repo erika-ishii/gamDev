@@ -1,5 +1,8 @@
 // This one is to be removed or replaced
 #include "InputSystem.h"
+#if defined(APIENTRY)
+#  undef APIENTRY
+#endif
 #include <Windows.h>
 #include <GLFW/glfw3.h>
 #include <iostream>

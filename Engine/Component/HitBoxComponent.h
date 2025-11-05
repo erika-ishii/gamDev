@@ -17,9 +17,6 @@ namespace Framework
 		float spawnY = 0.0f;
 		GOC* owner = nullptr;
 		float damage = 1.0f;
-		// How long (in seconds) we should keep rendering the hurtbox for debug after a hit
-		float debugDrawTimer = 0.0f;
-
 
 		void initialize() override { active = false; }
 		void SendMessage(Message& m) override { (void)m; }
@@ -38,7 +35,6 @@ namespace Framework
 			copy->height = height;
 			copy->duration = duration;
 			copy->active = active;
-			copy->debugDrawTimer = debugDrawTimer;
 			return copy;
 		}
 

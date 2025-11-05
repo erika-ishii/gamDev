@@ -7,10 +7,13 @@
 			along with multiple states of a key, be it mouse or keyboard.
 
  \copyright
-			All content © 2025 DigiPen Institute of Technology Singapore.
+			All content ?2025 DigiPen Institute of Technology Singapore.
 			All rights reserved.
 *********************************************************************************************/
 #include "Input.h"
+#if defined(APIENTRY)
+#  undef APIENTRY
+#endif
 #include <Windows.h>
 #include <GLFW/glfw3.h>
 #include <iostream>

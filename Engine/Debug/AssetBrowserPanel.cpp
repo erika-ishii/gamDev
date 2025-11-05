@@ -1,3 +1,24 @@
+/*********************************************************************************************
+ \file      AssetBrowserPanel.cpp
+ \par       SofaSpuds
+ \author    erika.ishii (erika.ishii@digipen.edu) - Main Author, 100%
+ \brief     ImGui-based content browser for project assets (textures, audio, folders).
+ \details   This module implements a small, robust asset browser panel with the following:
+            - Navigation: displays folders/files under a configured assets root; safe relative
+              path handling across different drives/roots.
+            - Thumbnails: lazy texture preview cache for .png/.jpg/.jpeg with auto-pruning.
+            - Drag & Drop: exposes texture paths for external UI to consume.
+            - Import/Replace: queue OS files for import; replace a selected texture with
+              overwrite confirmation and status line feedback (success/error).
+            - Audio helper: modal that lists .wav/.mp3 files in the current folder.
+            - Status line: user feedback after operations (import/replace/no-op), colored by
+              success/error.
+           
+ \copyright
+            All content ©2025 DigiPen Institute of Technology Singapore.
+            All rights reserved.
+*********************************************************************************************/
+
 #include "Debug/AssetBrowserPanel.h"
 
 #include <algorithm>
@@ -10,6 +31,13 @@
 #include <sstream>
 
 #include "Graphics/Graphics.hpp"
+
+/*************************************************************************************
+  \brief  Canonicalize a path to a stable, human-readable string (generic form).
+  \param  p Filesystem path.
+  \return Generic (forward-slash) string of canonical or original (if canonicalization
+          fails). Ensures stable IDs for ImGui and preview cache keys.
+*************************************************************************************/
 static std::string SafePathString(const std::filesystem::path& p) {
     if (p.empty()) return {};
     std::error_code ec;
@@ -18,6 +46,14 @@ static std::string SafePathString(const std::filesystem::path& p) {
     // generic_string() is fine here; we avoid lexically_normal()
     return use.generic_string();
 }
+
+/*************************************************************************************
+  \brief  Compute a friendly relative path name from base->p, with fallbacks.
+  \param  base Base directory (e.g., assets root).
+  \param  p    Target path.
+  \return Relative string unless it would escape with ".." or crosses different roots;
+          falls back to filename() for safety and readability.
+*************************************************************************************/
 //This guarantees we never ask the STL to compute a weird relative path between 
 // incompatible roots, and we always fall back to a safe, human - readable string.
 static std::string SafeRelative(const std::filesystem::path& base,
@@ -53,7 +89,9 @@ namespace mygame {
         constexpr float kThumbnailSize = 96.0f;
         constexpr float kPadding = 16.0f;
 
-        // Non-overlapping transform to appease MSVC debug iterator checks.
+        /*************************************************************************************
+          \brief  Lowercase copy using non-overlapping output buffer (MSVC debug-friendly).
+        *************************************************************************************/
         std::string ToLower(std::string value)
         {
             std::string out;
@@ -63,7 +101,8 @@ namespace mygame {
             return out;
         }
 
-        // -------- Audio Library popup state (no header changes needed) --------
+        // -------- Audio Library modal -----------------------------------------------------
+
         struct AudioPopupState {
             bool openRequest = false;                              // request to open next frame
             std::filesystem::path folder;                          // current folder
@@ -71,7 +110,11 @@ namespace mygame {
         };
         static AudioPopupState gAudioPopup;
 
-        // Build list of audio files from current entries
+        /*************************************************************************************
+          \brief  Prepare and request to open the Audio Files modal for current folder.
+          \param  folder  The folder currently displayed by the browser.
+          \param  entries The list of directory entries already gathered for the UI.
+        *************************************************************************************/
         template <typename Entries>
         void OpenAudioPopupFrom(const std::filesystem::path& folder,
             const Entries& entries)
@@ -93,7 +136,11 @@ namespace mygame {
             gAudioPopup.openRequest = true;
         }
 
-        // Human-friendly size for display
+        /*************************************************************************************
+          \brief  Format byte sizes as a human-friendly string with units.
+          \param  sz File size in bytes.
+          \return e.g., "512 B", "12.8 KB", "3.4 MB", "1 GB".
+        *************************************************************************************/
         static std::string PrettySize(std::uintmax_t sz) {
             const char* units[] = { "B", "KB", "MB", "GB" };
             int u = 0;
@@ -104,7 +151,10 @@ namespace mygame {
             return oss.str();
         }
 
-        // Draw the modal once requested
+        /*************************************************************************************
+          \brief  Draw the modal window that lists audio files in the current folder.
+          \param  assetsRoot Root folder used for display of relative paths.
+        *************************************************************************************/
         static void DrawAudioPopup(const std::filesystem::path& assetsRoot)
         {
             if (gAudioPopup.openRequest) {
@@ -123,7 +173,7 @@ namespace mygame {
                 ImGui::TextDisabled("No .wav or .mp3 files in this folder.");
             }
             else {
-                // Simple table (name + size). You can add duration/sample rate once your audio system exposes it.
+                // Simple table (name + size). Add duration/sample rate when your audio system exposes it.
                 if (ImGui::BeginTable("audioTable", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
                     ImGui::TableSetupColumn("File");
                     ImGui::TableSetupColumn("Size");
@@ -158,14 +208,21 @@ namespace mygame {
             }
             ImGui::EndPopup();
         }
-        // ---------------------------------------------------------------------
-    } // anonymous namespace
+       
+    } 
 
+    /*************************************************************************************
+      \brief  Destroy preview textures and clear cache on panel destruction.
+    *************************************************************************************/
     AssetBrowserPanel::~AssetBrowserPanel()
     {
         ClearPreviewCache();
     }
 
+    /*************************************************************************************
+      \brief  Initialize the panel with an assets root; canonicalize and pre-scan entries.
+      \param  assetsRoot Path to the assets directory to browse.
+    *************************************************************************************/
     void AssetBrowserPanel::Initialize(const std::filesystem::path& assetsRoot)
     {
         ClearPreviewCache();
@@ -180,6 +237,11 @@ namespace mygame {
         RefreshEntries();
     }
 
+    /*************************************************************************************
+      \brief  Render the ImGui “Content Browser” window + all sub-popups/modals.
+      \details Handles navigation, selection, grid layout, status line, and the texture
+               Replace popup. Also triggers the Audio popup render.
+    *************************************************************************************/
     void AssetBrowserPanel::Draw()
     {
         if (m_assetsRoot.empty())
@@ -257,6 +319,13 @@ namespace mygame {
         ImGui::End();
     }
 
+    /*************************************************************************************
+      \brief  Queue a set of absolute OS file paths for import into the current assets dir.
+      \param  files Absolute file paths from the OS.
+      \return Number of files imported or replaced (sum).
+      \note   Copies files to ResolveImportTarget(file). Adds entries to pending-imports
+              list for external systems to process. Updates status line.
+    *************************************************************************************/
     std::size_t AssetBrowserPanel::QueueExternalFiles(const std::vector<std::filesystem::path>& files)
     {
         if (m_assetsRoot.empty())
@@ -337,6 +406,10 @@ namespace mygame {
         return imported + replaced;
     }
 
+    /*************************************************************************************
+      \brief  Return and clear the list of unique pending imports (relative to assets root).
+      \return Unique relative paths collected during the last import/replace operations.
+    *************************************************************************************/
     std::vector<std::filesystem::path> AssetBrowserPanel::ConsumePendingImports()
     {
         std::unordered_set<std::string> unique;
@@ -353,6 +426,11 @@ namespace mygame {
         return pending;
     }
 
+    /*************************************************************************************
+      \brief  Scan the current directory and populate sorted directory/file entries.
+      \note   Skips non-regular/non-directory entries. Also prunes preview cache to avoid
+              holding textures for files that are no longer visible.
+    *************************************************************************************/
     void AssetBrowserPanel::RefreshEntries()
     {
         m_entries.clear();
@@ -394,6 +472,15 @@ namespace mygame {
         PrunePreviewCache();
     }
 
+    /*************************************************************************************
+      \brief  Render one grid tile (folder/file). Handles selection, double-click nav,
+              drag-source for textures, and audio modal trigger.
+      \param  entry         Directory entry represented by the tile.
+      \param  cellSize      Square tile size (pixels).
+      \param  needsRefresh  Out flag: set when navigation is requested.
+      \param  newDir        Out: target directory when navigating into a folder.
+      \return true if navigation should occur (caller will handle it after the loop).
+    *************************************************************************************/
     bool AssetBrowserPanel::DrawEntry(const Entry& entry, float cellSize,
         bool& needsRefresh,
         std::filesystem::path& newDir)
@@ -555,6 +642,11 @@ namespace mygame {
         return false;
     }
 
+    /*************************************************************************************
+      \brief  Decide where an imported OS file should be placed (current dir by default).
+      \param  file Absolute source path from the OS.
+      \return Destination path within the assets root (or empty if invalid).
+    *************************************************************************************/
     std::filesystem::path AssetBrowserPanel::ResolveImportTarget(const std::filesystem::path& file) const
     {
         if (file.empty())
@@ -578,18 +670,29 @@ namespace mygame {
         return preferred;
     }
 
+    /*************************************************************************************
+      \brief  Heuristic: file extension check for supported previewable textures.
+      \param  path File path to test.
+      \return true if the path ends with .png/.jpg/.jpeg (case-insensitive).
+    *************************************************************************************/
     bool AssetBrowserPanel::IsTextureFile(const std::filesystem::path& path)
     {
         const auto lower = ToLower(path.extension().string());
         return lower == ".png" || lower == ".jpg" || lower == ".jpeg";
     }
 
+    /*************************************************************************************
+      \brief  Heuristic: file extension check for supported audio files (.wav/.mp3).
+    *************************************************************************************/
     bool AssetBrowserPanel::IsAudioFile(const std::filesystem::path& path)
     {
         const auto lower = ToLower(path.extension().string());
         return lower == ".wav" || lower == ".mp3";
     }
 
+    /*************************************************************************************
+      \brief  Trim whitespace from both ends and return a copy.
+    *************************************************************************************/
     std::string AssetBrowserPanel::TrimCopy(std::string value)
     {
         auto isSpace = [](unsigned char c) { return std::isspace(c) != 0; };
@@ -600,6 +703,11 @@ namespace mygame {
         return value;
     }
 
+    /*************************************************************************************
+      \brief  Parse newline/semicolons-separated input into absolute paths.
+      \param  buffer Null-terminated C-string buffer from ImGui input.
+      \return Vector of candidate paths (quotes around tokens are tolerated).
+    *************************************************************************************/
     std::vector<std::filesystem::path> AssetBrowserPanel::ParseInputPaths(const char* buffer)
     {
         std::vector<std::filesystem::path> paths;
@@ -625,6 +733,9 @@ namespace mygame {
         return paths;
     }
 
+    /*************************************************************************************
+      \brief  Check if a candidate path resides inside a given base directory.
+    *************************************************************************************/
     bool AssetBrowserPanel::IsPathInside(const std::filesystem::path& base, const std::filesystem::path& candidate)
     {
         if (base.empty() || candidate.empty())
@@ -647,6 +758,9 @@ namespace mygame {
         return !rel.empty() && rel.rfind("..", 0) != 0;
     }
 
+    /*************************************************************************************
+      \brief  Draw the "Import Assets" modal (multiline list of absolute file paths).
+    *************************************************************************************/
     void AssetBrowserPanel::DrawImportPopup()
     {
         if (!ImGui::BeginPopupModal("Import Assets", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
@@ -673,6 +787,11 @@ namespace mygame {
         ImGui::EndPopup();
     }
 
+    /*************************************************************************************
+      \brief  Draw the "Replace Texture Asset" modal + confirmation step.
+      \details Only allows replacing .png with .png. Performs path validation and shows
+               inline error messages. On success, updates previews and status line.
+    *************************************************************************************/
     void AssetBrowserPanel::DrawReplacePopup()
     {
         if (m_openReplacePopup)
@@ -775,6 +894,9 @@ namespace mygame {
         ImGui::EndPopup();
     }
 
+    /*************************************************************************************
+      \brief  Draw the transient status line (success=green, error=red).
+    *************************************************************************************/
     void AssetBrowserPanel::DrawStatusLine()
     {
         if (m_statusMessage.empty())
@@ -784,6 +906,10 @@ namespace mygame {
         ImGui::TextColored(color, "%s", m_statusMessage.c_str());
     }
 
+    /*************************************************************************************
+      \brief  If the current selection no longer exists or moved outside assets root,
+              clear it to avoid stale references.
+    *************************************************************************************/
     void AssetBrowserPanel::ClearSelectionIfInvalid()
     {
         if (m_selectedEntry.empty())
@@ -800,6 +926,9 @@ namespace mygame {
             m_selectedEntry.clear();
     }
 
+    /*************************************************************************************
+      \brief  Add a path (relative to assets root) to the pending-import list (deduped).
+    *************************************************************************************/
     void AssetBrowserPanel::AddPendingImport(const std::filesystem::path& relativePath)
     {
         if (relativePath.empty())
@@ -812,6 +941,12 @@ namespace mygame {
             m_pendingImports.push_back(relativePath);
     }
 
+    /*************************************************************************************
+      \brief  Replace an existing texture asset with a new .png; updates preview + status.
+      \param  target Existing project path (absolute).
+      \param  newFile New absolute source .png path.
+      \return true on success.
+    *************************************************************************************/
     bool AssetBrowserPanel::ReplaceTextureAsset(const std::filesystem::path& target, const std::filesystem::path& newFile)
     {
         if (m_assetsRoot.empty() || target.empty() || newFile.empty())
@@ -864,12 +999,20 @@ namespace mygame {
         return true;
     }
 
+    /*************************************************************************************
+      \brief  Set the status line message and style.
+      \param  message Text to display.
+      \param  isError If true, render in error color; otherwise success color.
+    *************************************************************************************/
     void AssetBrowserPanel::SetStatus(const std::string& message, bool isError)
     {
         m_statusMessage = message;
         m_statusIsError = isError;
     }
 
+    /*************************************************************************************
+      \brief  Check if a given path is the current selection (filesystem-equivalent).
+    *************************************************************************************/
     bool AssetBrowserPanel::IsSelected(const std::filesystem::path& path) const
     {
         if (m_selectedEntry.empty())
@@ -880,6 +1023,11 @@ namespace mygame {
         return !ec && equivalent;
     }
 
+    /*************************************************************************************
+      \brief  Fetch or lazily create a preview texture for an image file.
+      \param  path Absolute texture file path.
+      \return Pointer to cached preview (or nullptr if not previewable/failed).
+    *************************************************************************************/
     const AssetBrowserPanel::PreviewTexture* AssetBrowserPanel::GetTexturePreview(const std::filesystem::path& path)
     {
         if (path.empty())
@@ -916,6 +1064,9 @@ namespace mygame {
         return inserted ? &insertedIt->second : &m_previewCache[key];
     }
 
+    /*************************************************************************************
+      \brief  Remove preview textures for files that are no longer visible in m_entries.
+    *************************************************************************************/
     void AssetBrowserPanel::PrunePreviewCache()
     {
         std::unordered_set<std::string> active;
@@ -945,6 +1096,9 @@ namespace mygame {
         }
     }
 
+    /*************************************************************************************
+      \brief  Destroy all preview textures and clear the cache.
+    *************************************************************************************/
     void AssetBrowserPanel::ClearPreviewCache()
     {
         for (auto& entry : m_previewCache)
@@ -955,6 +1109,9 @@ namespace mygame {
         m_previewCache.clear();
     }
 
+    /*************************************************************************************
+      \brief  Remove (and destroy) any preview associated with a specific path.
+    *************************************************************************************/
     void AssetBrowserPanel::RemovePreviewForPath(const std::filesystem::path& path)
     {
         const std::string key = PathKey(path);
@@ -970,6 +1127,11 @@ namespace mygame {
         }
     }
 
+    /*************************************************************************************
+      \brief  Stable key for preview cache: canonicalized generic string.
+      \param  path Any path to normalize.
+      \return Canonical generic string (or original generic string if canonicalization fails).
+    *************************************************************************************/
     std::string AssetBrowserPanel::PathKey(const std::filesystem::path& path)
     {
         if (path.empty())

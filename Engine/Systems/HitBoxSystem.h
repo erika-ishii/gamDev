@@ -16,8 +16,8 @@ namespace Framework
 		struct ActiveHitBox
 		{
 			std::unique_ptr<HitBoxComponent> hitbox;
-			GameObjectComposition* owner;
-			float timer;
+			GameObjectComposition* owner{};
+			float timer{};
 		};
 		HitBoxSystem(LogicSystem& logic);
 		~HitBoxSystem();

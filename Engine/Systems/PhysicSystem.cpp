@@ -1,3 +1,18 @@
+/*********************************************************************************************
+ \file      PhysicSystem.cpp
+ \par       SofaSpuds
+ \author    
+ \brief     Lightweight 2D physics step: AABB moves/collisions + enemy hitbox damage.
+ \details   Updates Transform by RigidBody velocity (dt) with axis-separated AABB tests
+            against same-layer “rect” walls, then checks active EnemyAttack hitboxes
+            against player AABBs to apply damage (via PlayerHealthComponent) and
+            deactivate the hitbox after a successful hit. Includes simple layer filtering
+            and case-insensitive wall name checks; printing to stdout for quick debugging.
+ \copyright
+            All content ©2025 DigiPen Institute of Technology Singapore.
+            All rights reserved.
+*********************************************************************************************/
+
 #include "PhysicSystem.h"
 #include <iostream>
 #include <algorithm>
@@ -5,87 +20,103 @@
 #include <string>
 
 namespace Framework {
+
+    /*************************************************************************************
+      \brief  Construct the physics system with access to game logic/factory.
+      \param  logic  Reference to the LogicSystem for scene queries.
+    *************************************************************************************/
     PhysicSystem::PhysicSystem(LogicSystem& logic)
         : logic(logic) {
     }
+
+    /*************************************************************************************
+      \brief  Initialize physics state/resources (currently no-op).
+    *************************************************************************************/
     void PhysicSystem::Initialize() {
-
-
+        // Intentionally empty; kept for symmetry and future extensions.
     }
+
+    /*************************************************************************************
+      \brief  Advance physics one step: move bodies and resolve simple AABB collisions;
+              then process enemy hitboxes vs players and apply damage.
+      \param  dt  Delta time (seconds).
+      \note   Movement is axis-separated: X and Y are tested independently for wall hits.
+              Walls are identified by object name "rect" (case-insensitive) on the same layer.
+              Enemy hitboxes are one-shot: after a hit, the hurtbox is deactivated.
+    *************************************************************************************/
     void PhysicSystem::Update(float dt)
     {
-		/*
-        //for (GOC)
-        const auto& info = logic.Collision();
-        if (info.playerValid && info.targetValid)
-        {
-            if (Collision::CheckCollisionRectToRect(info.player, info.target))
-            {
-                std::cout << "Collision detected!" << std::endl;
-            }
-        }
+        /*
+        // Example for future collision service usage:
+        // const auto& info = logic.Collision();
+        // if (info.playerValid && info.targetValid)
+        // {
+        //     if (Collision::CheckCollisionRectToRect(info.player, info.target))
+        //         std::cout << "Collision detected!\n";
+        // }
         */
-		auto& objects = FACTORY->Objects();
-		//Physics System aabb
-		for (auto& [id, obj] : objects)
-		{
-			if (!obj)
-				continue;
 
-			auto* rb = obj->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);
-			auto* tr = obj->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
+        auto& objects = FACTORY->Objects();
 
-			if (!rb || !tr)
-				continue;
+        // --- Kinematic step with AABB collisions against walls on the same layer ----------
+        for (auto& [id, obj] : objects)
+        {
+            if (!obj)
+                continue;
 
-			// Update pos
-			float newX = tr->x + rb->velX * dt;
-			float newY = tr->y + rb->velY * dt;
+            auto* rb = obj->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);
+            auto* tr = obj->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
+            if (!rb || !tr)
+                continue;
 
-			AABB playerBoxX(newX, tr->y, rb->width, rb->height);
-			AABB playerBoxY(tr->x, newY, rb->width, rb->height);
+            // Integrate proposed new position
+            float newX = tr->x + rb->velX * dt;
+            float newY = tr->y + rb->velY * dt;
 
-			const std::string& objectLayer = obj->GetLayerName();
-			// Horizontal Collision
-			for (auto& [otherId, otherObj] : objects)
-			{
-				if (!otherObj || otherObj == obj)
-					continue;
-				// check layer
-				if (otherObj->GetLayerName() != objectLayer)
-					continue;
+            // Build trial AABBs for axis-separated collision checks
+            AABB playerBoxX(newX, tr->y, rb->width, rb->height);
+            AABB playerBoxY(tr->x, newY, rb->width, rb->height);
 
-				auto* rbO = otherObj->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);
-				auto* trO = otherObj->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
+            const std::string& objectLayer = obj->GetLayerName();
 
-				if (!rbO || !trO)
-					continue;
+            // Sweep all objects on the same layer, checking only “rect” walls
+            for (auto& [otherId, otherObj] : objects)
+            {
+                if (!otherObj || otherObj == obj)
+                    continue;
+                if (otherObj->GetLayerName() != objectLayer)
+                    continue;
 
-				// Only check walls (case-insensitive comparison)
-				std::string otherName = otherObj->GetObjectName();
-				std::transform(otherName.begin(), otherName.end(), otherName.begin(),
-					[](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
-				if (otherName != "rect")
-					continue;
+                auto* rbO = otherObj->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);
+                auto* trO = otherObj->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
+                if (!rbO || !trO)
+                    continue;
 
-				AABB wallBox(trO->x, trO->y, rbO->width, rbO->height);
+                // Case-insensitive name check for walls
+                std::string otherName = otherObj->GetObjectName();
+                std::transform(otherName.begin(), otherName.end(), otherName.begin(),
+                    [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+                if (otherName != "rect")
+                    continue;
 
-				if (Collision::CheckCollisionRectToRect(playerBoxX, wallBox))
-				{
-					newX = tr->x;
-				}
-				if (Collision::CheckCollisionRectToRect(playerBoxY, wallBox))
-				{
-					newY = tr->y;
-				}
-			}
+                AABB wallBox(trO->x, trO->y, rbO->width, rbO->height);
 
-			tr->x = newX;
-			tr->y = newY;
-		}
-        //HitBox Collision
-		for (auto& [id, obj] : objects)
-		{
+                // Resolve X then Y independently
+                if (Collision::CheckCollisionRectToRect(playerBoxX, wallBox))
+                    newX = tr->x;
+
+                if (Collision::CheckCollisionRectToRect(playerBoxY, wallBox))
+                    newY = tr->y;
+            }
+
+            // Commit final position
+            tr->x = newX;
+            tr->y = newY;
+        }
+
+        // --- Enemy hitbox vs player collision --------------------------------------------
+        for (auto& [id, obj] : objects)
+        {
             if (!obj)
                 continue;
 
@@ -93,7 +124,7 @@ namespace Framework {
             if (!enemyAttack || !enemyAttack->hitbox || !enemyAttack->hitbox->active)
                 continue;
 
-            // Build AABB for the hitbox
+            // Enemy hitbox AABB
             AABB enemyHitBox(
                 enemyAttack->hitbox->spawnX,
                 enemyAttack->hitbox->spawnY,
@@ -107,6 +138,7 @@ namespace Framework {
                 if (!playerObj)
                     continue;
 
+                // Only objects tagged as Player (by component)
                 auto* playerComp = playerObj->GetComponent(ComponentTypeId::CT_PlayerComponent);
                 if (!playerComp)
                     continue;
@@ -124,9 +156,8 @@ namespace Framework {
                         << " damage from enemy at ("
                         << enemyAttack->hitbox->spawnX << ", "
                         << enemyAttack->hitbox->spawnY << ")\n";
-                    // Keep the hurtbox visible in debug overlay for a short duration after the hit
-                    enemyAttack->hitbox->debugDrawTimer = 0.15f;
-                    // Reduce health if component exists
+
+                    // Apply damage if health component exists
                     if (auto* health = playerObj->GetComponentType<PlayerHealthComponent>(
                         ComponentTypeId::CT_PlayerHealthComponent))
                     {
@@ -135,16 +166,18 @@ namespace Framework {
                         std::cout << "Player Health: " << health->playerHealth << "\n";
                     }
 
-                    // Disable hitbox so it doesn’t deal damage every frame
+                    // One-shot: prevent damage every frame
                     enemyAttack->hitbox->DeactivateHurtBox();
                 }
             }
-		}
-		
+        }
     }
 
+    /*************************************************************************************
+      \brief  Release physics resources (currently no-op).
+    *************************************************************************************/
     void PhysicSystem::Shutdown() {
-        
+        // Intentionally empty; add resource teardown when needed.
     }
-}
 
+} // namespace Framework

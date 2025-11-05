@@ -2,7 +2,7 @@
  \file      Spawn.cpp
  \par       SofaSpuds
  \author    elvisshengjie.lim (elvisshengjie.lim@digipen.edu) - Primary Author, 80%
-            erika.ishii (erika.ishii@digipen.edu) - Author, 80%
+            erika.ishii (erika.ishii@digipen.edu) - Author, 20%
 
  \brief     Implements a debug ImGui panel for spawning prefabs at runtime. Provides
             interactive controls for position, size, color, texture, and batch spawning.
@@ -13,6 +13,15 @@
             (master_copies). The user selects a prefab type, configures its parameters
             (transform, render, circle, sprite), and spawns instances via ImGui. Supports
             batch spawning with configurable offsets.
+            Additionally:
+              - Layer-aware spawning and an “isolate layer” toggle for selective rendering.
+              - Sprite hookup via drag&drop from the Content Browser (texture key + handle).
+              - Level quick save/list/load, with on-disk layer discovery to pre-populate UI.
+
+            Design notes:
+              * All filesystem ops use error_code variants where possible (no exceptions).
+              * Never mutates master_copies; all spawns are clones into the live scene.
+              * UI state is kept in module-static variables to persist across frames.
 
  \copyright
             All content ©2025 DigiPen Institute of Technology Singapore.
@@ -30,7 +39,9 @@
 #ifndef NOMINMAX
 #  define NOMINMAX
 #endif
-
+#if defined(APIENTRY)
+#  undef APIENTRY
+#endif
 #include <Windows.h>
 
 #ifdef SendMessage
@@ -75,39 +86,77 @@
 #include "Serialization/JsonSerialization.h"
 
 namespace mygame {
-    /// Currently selected sprite texture key (shared across panel sessions).
+
+    //=====================================================================================
+    // Persistent panel state (module-level, survives across frames)
+    //=====================================================================================
+
+    /// Currently selected sprite texture key (dragged in from Content Browser).
     static std::string sSpriteTexKey;
+    /// OpenGL texture handle for quick preview (0 if none).
     static unsigned sSpriteTextureId = 0;
+    /// Canonical project assets root for resolving relative asset keys.
     static std::filesystem::path sAssetsRoot;
+
+    /// Whether we've built the level file list once this session.
     static bool gLevelFilesInitialized = false;
+    /// Sorted list of candidate level files.
     static std::vector<std::string> gLevelFiles;
+    /// Selected index into the level list.
     static int gSelectedLevelIndex = 0;
+    /// Input buffer for “Level Name”.
     static char gLevelNameBuffer[128] = "level";
+    /// Transient status line (text + isError flag) for level operations.
     static std::string gLevelStatusMessage;
     static bool gLevelStatusIsError = false;
+    /// Directory where level JSON files are located (relative to executable).
     static const std::filesystem::path kLevelDirectory("../../Data_Files");
+
+    /// Active layer name used for newly spawned objects.
     static std::string gActiveLayer = "Default";
+    /// If true, only render the active layer (downstream systems may consult ShouldRenderLayer()).
     static bool gIsolateActiveLayer = false;
+    /// Editable buffer for layer name.
     static char gLayerInputBuffer[64] = "Default";
 
-    // New: cache of layers detected in level files + last synced level
+    /// Cache of layer names discovered in level files: filename -> layers.
     static std::unordered_map<std::string, std::vector<std::string>> gLevelLayers;
+    /// Last level for which we synced the default active layer.
     static std::string gLastLayerSynchronizedLevel;
 
     using namespace Framework;
 
+    //=====================================================================================
+    // Anonymous helpers (formatting, normalization, IO-safe utilities)
+    //=====================================================================================
     namespace {
+
+        /*************************************************************************************
+          \brief  Lowercase-copy utility (ASCII).
+          \param  value Input string.
+          \return Lowercased copy.
+        *************************************************************************************/
         std::string ToLower(std::string value) {
             std::transform(value.begin(), value.end(), value.begin(),
                 [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
             return value;
         }
 
+        /*************************************************************************************
+          \brief  Heuristic check for texture file extensions.
+          \param  path Filesystem path to test.
+          \return true if extension is .png/.jpg/.jpeg (case-insensitive).
+        *************************************************************************************/
         bool IsTextureFile(const std::filesystem::path& path) {
             const auto lower = ToLower(path.extension().string());
             return lower == ".png" || lower == ".jpg" || lower == ".jpeg";
         }
 
+        /*************************************************************************************
+          \brief  Trim whitespace from both ends of a string (copying variant).
+          \param  value String to trim.
+          \return Trimmed copy.
+        *************************************************************************************/
         std::string TrimCopy(std::string value) {
             auto isSpace = [](unsigned char c) { return std::isspace(c) != 0; };
             value.erase(value.begin(), std::find_if(value.begin(), value.end(),
@@ -117,6 +166,9 @@ namespace mygame {
             return value;
         }
 
+        /*************************************************************************************
+          \brief  Normalize a layer name for UI + engine (trim; fallback to "Default").
+        *************************************************************************************/
         std::string NormalizeLayerUi(std::string_view name) {
             std::string trimmed = TrimCopy(std::string{ name });
             if (trimmed.empty())
@@ -124,6 +176,9 @@ namespace mygame {
             return trimmed;
         }
 
+        /*************************************************************************************
+          \brief  Quick filter: treat a file as a level only if its name contains "level".
+        *************************************************************************************/
         bool ContainsLevelKeyword(const std::string& name) {
             std::string lower;
             lower.resize(name.size());
@@ -132,7 +187,11 @@ namespace mygame {
             return lower.find("level") != std::string::npos;
         }
 
-        // Read unique layer names directly from a level JSON on disk (without spawning)
+        /*************************************************************************************
+          \brief  Read unique layer names directly from a level JSON file on disk.
+          \param  levelPath Full path to the level .json.
+          \return Sorted vector of unique layer names (always includes "Default").
+        *************************************************************************************/
         std::vector<std::string> ExtractLayersFromLevel(const std::filesystem::path& levelPath) {
             std::unordered_set<std::string> unique;
 
@@ -160,6 +219,9 @@ namespace mygame {
             return out;
         }
 
+        /*************************************************************************************
+          \brief  Scan level directory to refresh file list and per-file layer cache.
+        *************************************************************************************/
         void RefreshLevelFileList() {
             gLevelFiles.clear();
             gLevelLayers.clear();
@@ -177,7 +239,7 @@ namespace mygame {
                 if (!ContainsLevelKeyword(filename)) continue;
 
                 gLevelFiles.push_back(filename);
-                // cache layers for quick UI population
+                // Cache layers to pre-populate the UI.
                 gLevelLayers[filename] = ExtractLayersFromLevel(path);
             }
 
@@ -186,20 +248,29 @@ namespace mygame {
                 gSelectedLevelIndex = gLevelFiles.empty() ? 0 : static_cast<int>(gLevelFiles.size() - 1);
         }
 
-        // Keep gActiveLayer + input buffer consistent and ensure the layer exists in manager
+        /*************************************************************************************
+          \brief  Set active layer and ensure it exists in the LayerManager.
+          \param  name Desired layer name (will be normalized).
+        *************************************************************************************/
         void ApplyActiveLayer(std::string_view name) {
             gActiveLayer = NormalizeLayerUi(name);
             std::snprintf(gLayerInputBuffer, sizeof(gLayerInputBuffer), "%s", gActiveLayer.c_str());
             if (FACTORY) FACTORY->Layers().EnsureLayer(gActiveLayer);
         }
 
+        /*************************************************************************************
+          \brief  Populate cache for a level's layers if missing.
+        *************************************************************************************/
         void EnsureLevelLayersCached(const std::string& levelKey, const std::filesystem::path& levelPath) {
             if (levelKey.empty() || levelPath.empty()) return;
             if (gLevelLayers.find(levelKey) == gLevelLayers.end())
                 gLevelLayers[levelKey] = ExtractLayersFromLevel(levelPath);
         }
 
-        // Prefer a non-Default layer as the initial active layer
+        /*************************************************************************************
+          \brief  Choose a reasonable default UI layer for a given level.
+          \return "Default" if present; otherwise the first available layer name.
+        *************************************************************************************/
         std::string ChooseDefaultLayerForLevel(const std::string& key) {
             auto it = gLevelLayers.find(key);
             if (it == gLevelLayers.end()) return "Default";
@@ -208,6 +279,9 @@ namespace mygame {
             return hasDefault ? "Default" : (it->second.empty() ? "Default" : NormalizeLayerUi(it->second.front()));
         }
 
+        /*************************************************************************************
+          \brief  Sync the UI's active layer once per level selection.
+        *************************************************************************************/
         void SyncActiveLayerWithLevel(const std::string& levelKey) {
             if (levelKey.empty()) return;
             if (gLastLayerSynchronizedLevel == levelKey) return; // already synced
@@ -215,10 +289,16 @@ namespace mygame {
             gLastLayerSynchronizedLevel = levelKey;
         }
 
+        /*************************************************************************************
+          \brief  Construct absolute path to a level JSON from a filename.
+        *************************************************************************************/
         std::filesystem::path LevelFilePath(const std::string& filename) {
             return kLevelDirectory / filename;
         }
 
+        /*************************************************************************************
+          \brief  Check whether an object pointer refers to a master prefab template.
+        *************************************************************************************/
         bool IsMasterObject(GOC* obj) {
             for (auto const& kv : master_copies) {
                 if (kv.second.get() == obj)
@@ -227,6 +307,10 @@ namespace mygame {
             return false;
         }
 
+        /*************************************************************************************
+          \brief  Gather scene objects excluding master templates.
+          \return Vector of non-master GOC*.
+        *************************************************************************************/
         std::vector<GOC*> CollectNonMasterObjects() {
             std::vector<GOC*> result;
             if (!FACTORY)
@@ -245,15 +329,15 @@ namespace mygame {
 
 
     /*************************************************************************************
-      \brief Helper to spawn a single prefab and apply current SpawnSettings.
-      \param prefab The name of the prefab to clone.
-      \param s      The spawn settings (position, size, color, etc.).
-      \param index  Index used for batch offsets.
+      \brief  Helper to spawn a single prefab and apply current SpawnSettings.
+      \param  prefab Name of the prefab to clone (must exist in master_copies).
+      \param  s      Spawn settings (position/size/circle/sprite/rigidbody/player/enemy).
+      \param  index  Batch index (applied to stepX/stepY offsets).
+      \note   Newly spawned object is assigned to the current active layer.
     *************************************************************************************/
     static void SpawnOnePrefab(const char* prefab, SpawnSettings const& s, int index) {
         GOC* obj = ClonePrefab(prefab);
         if (!obj) return;
-
 
         // Transform: inherit JSON unless override is ON
         if (auto* tr = obj->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent)) {
@@ -264,12 +348,11 @@ namespace mygame {
             }
         }
 
-        // Rectangle render: you already do this via overridePrefabSize
+        // Rectangle render: override size and color when requested
         if (auto* rc = obj->GetComponentType<RenderComponent>(ComponentTypeId::CT_RenderComponent)) {
             if (s.overridePrefabSize) {
                 rc->w = s.w; rc->h = s.h;
             }
-            // tint: if you also want to inherit color by default, wrap color with a toggle too
             rc->r = s.rgba[0]; rc->g = s.rgba[1]; rc->b = s.rgba[2]; rc->a = s.rgba[3];
         }
 
@@ -278,19 +361,18 @@ namespace mygame {
             if (s.overridePrefabCircle) {
                 cc->radius = s.radius;
             }
-            // tint same note as above
             cc->r = s.rgba[0]; cc->g = s.rgba[1]; cc->b = s.rgba[2]; cc->a = s.rgba[3];
         }
 
-        // Sprite: only override if explicitly enabled
+        // Sprite: only override if a texture key has been chosen
         if (auto* sp = obj->GetComponentType<SpriteComponent>(ComponentTypeId::CT_SpriteComponent)) {
-            if ( !sSpriteTexKey.empty()) {
+            if (!sSpriteTexKey.empty()) {
                 sp->texture_key = sSpriteTexKey;
                 sp->texture_id = Resource_Manager::getTexture(sSpriteTexKey);
             }
         }
 
-        // RigidBody: collider stays as you had with overridePrefabCollider
+        // RigidBody: velocity and collider overrides
         if (auto* rb = obj->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent)) {
             if (s.overridePrefabVelocity) {
                 rb->velX = s.rbVelX;
@@ -302,7 +384,7 @@ namespace mygame {
             }
         }
 
-        // Enemy Attack: only override if enabled
+        // Enemy Attack override
         if (auto* atk = obj->GetComponentType<EnemyAttackComponent>(ComponentTypeId::CT_EnemyAttackComponent)) {
             if (s.overrideEnemyAttack) {
                 atk->damage = s.attackDamage;
@@ -310,41 +392,37 @@ namespace mygame {
             }
         }
 
-        // Enemy Health: only override if enabled
+        // Enemy Health override
         if (auto* eh = obj->GetComponentType<EnemyHealthComponent>(ComponentTypeId::CT_EnemyHealthComponent)) {
             if (s.overrideEnemyHealth) {
                 eh->enemyMaxhealth = s.enemyMaxhealth;
                 eh->enemyHealth = s.enemyHealth;
             }
             else {
-                // when spawning keep JSON max, set current= max
+                // keep JSON max, set current = max on spawn
                 eh->enemyHealth = eh->enemyMaxhealth;
             }
         }
 
-        // Player/Enemy bits (if present)
+        // Player components (if present)
         if (auto* player = obj->GetComponentType<PlayerComponent>(ComponentTypeId::CT_PlayerComponent)) { (void)player; }
-        if (auto* health = obj->GetComponentType<PlayerHealthComponent>(ComponentTypeId::CT_PlayerHealthComponent)) 
-        {
+        if (auto* health = obj->GetComponentType<PlayerHealthComponent>(ComponentTypeId::CT_PlayerHealthComponent)) {
             if (s.overridePlayerHealth) {
-                health->playerHealth =s.playerHealth;
+                health->playerHealth = s.playerHealth;
                 health->playerMaxhealth = s.playerMaxhealth;
             }
             else {
                 health->playerHealth = health->playerMaxhealth;
             }
         }
-        if (auto* attack = obj->GetComponentType<PlayerAttackComponent>(ComponentTypeId::CT_PlayerAttackComponent)) 
-        { 
+        if (auto* attack = obj->GetComponentType<PlayerAttackComponent>(ComponentTypeId::CT_PlayerAttackComponent)) {
             if (s.overridePlayerAttack) {
-                attack->damage = s.attackDamage; 
+                attack->damage = s.attackDamage;
                 attack->attack_speed = s.attack_speed;
             }
         }
 
         if (auto* enemy = obj->GetComponentType<EnemyComponent>(ComponentTypeId::CT_EnemyComponent)) { (void)enemy; }
-
-   
 
         if (auto* type = obj->GetComponentType<EnemyTypeComponent>(ComponentTypeId::CT_EnemyTypeComponent)) {
             type->Etype = Framework::EnemyTypeComponent::EnemyType::physical;
@@ -354,10 +432,15 @@ namespace mygame {
             if (!ai->tree) ai->tree = CreateDefaultEnemyTree(obj);
         }
 
-        // Important: set layer on the new object
+        // Assign layer on creation
         obj->SetLayerName(gActiveLayer);
     }
 
+    /*************************************************************************************
+      \brief  Set the assets root used to resolve relative sprite paths dropped into the UI.
+      \param  root Absolute or relative path to the project's assets directory.
+      \note   Path is canonicalized when possible (weakly_canonical).
+    *************************************************************************************/
     void SetSpawnPanelAssetsRoot(const std::filesystem::path& root) {
         if (root.empty()) {
             sAssetsRoot.clear();
@@ -368,6 +451,11 @@ namespace mygame {
         sAssetsRoot = ec ? root : canonical;
     }
 
+    /*************************************************************************************
+      \brief  Use a texture from the Content Browser for sprite override.
+      \param  relativePath Path relative to the assets root (accepts absolute; will rebase).
+      \note   Loads the texture into Resource_Manager if not present; updates preview handle.
+    *************************************************************************************/
     void UseSpriteFromAsset(const std::filesystem::path& relativePath) {
         if (relativePath.empty() || sAssetsRoot.empty())
             return;
@@ -391,10 +479,8 @@ namespace mygame {
 
         if (!std::filesystem::exists(absolute))
             return;
-
         if (!std::filesystem::is_regular_file(absolute))
             return;
-
         if (!IsTextureFile(absolute))
             return;
 
@@ -412,51 +498,88 @@ namespace mygame {
         }
     }
 
+    /*************************************************************************************
+      \brief  Clear the current sprite override (key + preview handle).
+    *************************************************************************************/
     void ClearSpriteTexture() {
         sSpriteTexKey.clear();
         sSpriteTextureId = 0;
     }
 
+    /*************************************************************************************
+      \brief  Get the currently selected sprite texture key.
+      \return Texture key string (empty if none).
+    *************************************************************************************/
     const std::string& CurrentSpriteTextureKey() {
         return sSpriteTexKey;
     }
 
+    /*************************************************************************************
+      \brief  Get the GL handle of the current sprite texture (for preview).
+      \return OpenGL texture id (0 if none).
+    *************************************************************************************/
     unsigned CurrentSpriteTextureHandle() {
         return sSpriteTextureId;
     }
 
+    /*************************************************************************************
+      \brief  Get the UI’s active layer name (used on spawn).
+    *************************************************************************************/
     const std::string& ActiveLayerName() {
         return gActiveLayer;
     }
 
+    /*************************************************************************************
+      \brief  Check if “isolate active layer” mode is enabled.
+      \return true to render only ActiveLayerName(); false to render all layers.
+    *************************************************************************************/
     bool IsLayerIsolationEnabled() {
         return gIsolateActiveLayer;
     }
 
+    /*************************************************************************************
+      \brief  Helper consulted by rendering systems to decide if a layer should draw.
+      \param  layerName Candidate layer for rendering.
+      \return true if drawing is permitted given the isolate toggle; false otherwise.
+    *************************************************************************************/
     bool ShouldRenderLayer(const std::string& layerName) {
         if (!gIsolateActiveLayer)
             return true;
         return NormalizeLayerUi(layerName) == NormalizeLayerUi(gActiveLayer);
     }
 
-    /// Panel state (persists across frames).
-    static std::string gSelectedPrefab = "Rect"; ///< Default prefab choice.
-    static SpawnSettings gS;                     ///< Live settings bound to ImGui controls.
-    static bool gPendingPrefabSizeSync = true;   ///< Sync flag to copy prefab dimensions into the panel.
-    bool opened = true;
+    //=====================================================================================
+    // Panel-local UI state
+    //=====================================================================================
+
+    /// Default prefab choice shown in the combo box.
+    static std::string gSelectedPrefab = "Rect";
+    /// Live settings bound to ImGui controls.
+    static SpawnSettings gS;
+    /// Sync flag to copy prefab dimensions into the panel once upon selection change.
+    static bool gPendingPrefabSizeSync = true;
+
+    // Window open flag and initial sizing anchors (optional).
+    bool  opened = true;
     float x = static_cast<float>(GetSystemMetrics(SM_CXSCREEN));
     float y = static_cast<float>(GetSystemMetrics(SM_CYSCREEN));
-    static std::string gClearPrefab = "Rect"; ///< Default prefab type to clear.
+
+    /// Prefab type to clear when “Clear Selected Prefab” is pressed.
+    static std::string gClearPrefab = "Rect";
+    /// Optional selected object reference (unused externally; kept for future tools).
     static GOC* gSelectedObject = nullptr;
+    /// Mirrors the prefab to clear in the dropdown.
     static std::string gSelectedPrefabToClear = gSelectedPrefab;
 
     /*************************************************************************************
-      \brief Draws the "Spawn" ImGui panel and handles prefab spawning actions.
+      \brief  Draw the Spawn panel UI and perform actions (spawn/clear/save/load).
+      \note   Must be called every frame while the tools UI is visible.
     *************************************************************************************/
     void DrawSpawnPanel() {
         //ImGui::SetNextWindowSize(ImVec2(x / 4, y/2.5 ), ImGuiCond_Once);
-
         ImGui::Begin("Spawn", &opened);
+
+        // One-time level list population and LastLevelName bootstrap.
         if (!gLevelFilesInitialized) {
             RefreshLevelFileList();
             gLevelFilesInitialized = true;
@@ -484,7 +607,7 @@ namespace mygame {
             }
         }
 
-        // Resolve master prefab...
+        // Resolve master prefab reference
         GOC* master = nullptr;
         if (auto it = master_copies.find(gSelectedPrefab); it != master_copies.end())
             master = it->second.get();
@@ -495,12 +618,8 @@ namespace mygame {
             return;
         }
 
-        // --- Layer UI ---
-
-        // Build a merged set of layer names:
-        // - From LayerManager (runtime)
-        // - From currently loaded level (if any)
-        // - From currently selected level in the combo (for preview before load)
+        // --- Layer UI -------------------------------------------------------
+        // Merge candidate layer names from runtime + on-disk levels + current selection
         std::unordered_set<std::string> layerSet;
 
         if (FACTORY) {
@@ -522,7 +641,7 @@ namespace mygame {
             }
         }
 
-        // From the currently selected level in dropdown (helps before any load)
+        // From the currently selected level in dropdown (before any load)
         if (layerSet.empty() && !gLevelFiles.empty()) {
             const std::string& sel = gLevelFiles[gSelectedLevelIndex];
             if (auto it = gLevelLayers.find(sel); it != gLevelLayers.end()) {
@@ -531,7 +650,7 @@ namespace mygame {
             }
         }
 
-        // Always include the current active + Default
+        // Ensure we have at least the active layer + Default
         layerSet.insert(NormalizeLayerUi(gActiveLayer));
         layerSet.insert("Default");
 
@@ -553,7 +672,7 @@ namespace mygame {
             ImGui::EndCombo();
         }
 
-        // Editable name field; applied by button press
+        // Editable layer field; applied by button press
         ImGui::InputTextWithHint("Layer Name", "Default", gLayerInputBuffer, sizeof(gLayerInputBuffer));
 
         if (ImGui::Button("Apply Layer")) {
@@ -569,6 +688,7 @@ namespace mygame {
 
         ImGui::Checkbox("Render only active layer", &gIsolateActiveLayer);
 
+        // Component presence flags for conditional UI
         const bool hasTransform =
             (master->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent) != nullptr);
         auto* masterRender = master->GetComponentType<RenderComponent>(ComponentTypeId::CT_RenderComponent);
@@ -577,10 +697,16 @@ namespace mygame {
         const bool hasCircle = (masterCircle != nullptr);
         const bool hasRigidBody =
             (master->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent) != nullptr);
-        const bool hasEnemyAttack = (master->GetComponentType<EnemyAttackComponent>(ComponentTypeId::CT_EnemyAttackComponent) != nullptr);
-        const bool hasEnemyHealth = (master->GetComponentType<EnemyHealthComponent>(ComponentTypeId::CT_EnemyHealthComponent) != nullptr);
-        const bool hasPlayerAttack = (master->GetComponentType<PlayerAttackComponent>(ComponentTypeId::CT_PlayerAttackComponent) != nullptr);
-        const bool hasPlayerHealth = (master->GetComponentType <PlayerHealthComponent>(ComponentTypeId::CT_PlayerHealthComponent) != nullptr);
+        const bool hasEnemyAttack =
+            (master->GetComponentType<EnemyAttackComponent>(ComponentTypeId::CT_EnemyAttackComponent) != nullptr);
+        const bool hasEnemyHealth =
+            (master->GetComponentType<EnemyHealthComponent>(ComponentTypeId::CT_EnemyHealthComponent) != nullptr);
+        const bool hasPlayerAttack =
+            (master->GetComponentType<PlayerAttackComponent>(ComponentTypeId::CT_PlayerAttackComponent) != nullptr);
+        const bool hasPlayerHealth =
+            (master->GetComponentType<PlayerHealthComponent>(ComponentTypeId::CT_PlayerHealthComponent) != nullptr);
+
+        // One-time sync from master to panel when prefab changes
         if (gPendingPrefabSizeSync) {
             if (auto* trm = master->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent)) {
                 gS.x = trm->x; gS.y = trm->y; gS.rot = trm->rot;
@@ -616,7 +742,7 @@ namespace mygame {
 
         const bool hasSprite =
             (master->GetComponentType<SpriteComponent>(ComponentTypeId::CT_SpriteComponent) != nullptr);
-     
+
         // === Sprite Controls ===
         if (hasSprite) {
             ImGui::SeparatorText("Sprite");
@@ -654,7 +780,7 @@ namespace mygame {
                 ImGui::TextDisabled("Drag from the Content Browser or drop files into the editor window.");
             }
         }
-       
+
         // === Transform Controls ===
         if (hasTransform) {
             ImGui::SeparatorText("Transform");
@@ -668,25 +794,19 @@ namespace mygame {
 
         // === Rectangle Controls ===
         if (hasRender) {
-            ImGui::SeparatorText("Size"); // Section header
-
-            // When the checkbox is toggled OFF, copy prefab size back
+            ImGui::SeparatorText("Size");
+            // When toggled OFF, copy prefab size back
             if (ImGui::Checkbox("Override prefab size", &gS.overridePrefabSize)) {
                 if (!gS.overridePrefabSize && masterRender) {
                     gS.w = masterRender->w;
                     gS.h = masterRender->h;
-                }            //ImGui::SeparatorText("RigidBody");
-            //ImGui::DragFloat("x", &gS.x, 0.005f, 0.0f, 1.0f);
-            //ImGui::DragFloat("y", &gS.y, 0.005f, 0.0f, 1.0f);
-            //ImGui::DragFloat("rot (rad)", &gS.rot, 0.01f, -3.14159f, 3.14159f);
+                }
             }
 
             const bool disableSizeControls = !gS.overridePrefabSize;
             if (disableSizeControls) ImGui::BeginDisabled();
-
-            ImGui::DragFloat("w", &gS.w, 0.005f, 0.01f, 1.0f); // Adjust rectangle width
-            ImGui::DragFloat("h", &gS.h, 0.005f, 0.01f, 1.0f); // Adjust rectangle height
-
+            ImGui::DragFloat("w", &gS.w, 0.005f, 0.01f, 1.0f);
+            ImGui::DragFloat("h", &gS.h, 0.005f, 0.01f, 1.0f);
             if (disableSizeControls) ImGui::EndDisabled();
         }
 
@@ -699,10 +819,11 @@ namespace mygame {
             if (!gS.overridePrefabCircle) ImGui::EndDisabled();
         }
 
+        // === RigidBody Controls ===
         if (hasRigidBody) {
             ImGui::SeparatorText("RigidBody");
 
-            // --- Collider override ---
+            // Collider override
             if (ImGui::Checkbox("Override prefab collider", &gS.overridePrefabCollider)) {
                 if (!gS.overridePrefabCollider) {
                     if (auto* mrb = master->GetComponentType<RigidBodyComponent>(
@@ -712,18 +833,15 @@ namespace mygame {
                     }
                 }
             }
-
-            // Collider fields depend on collider override only
             if (!gS.overridePrefabCollider) ImGui::BeginDisabled();
             ImGui::DragFloat("Collider Width", &gS.rbWidth, 0.005f, 0.01f, 2.0f);
             ImGui::DragFloat("Collider Height", &gS.rbHeight, 0.005f, 0.01f, 2.0f);
             if (!gS.overridePrefabCollider) ImGui::EndDisabled();
 
-            ImGui::Separator(); // visual separation
+            ImGui::Separator();
 
-            // --- Velocity override (independent from collider) ---
+            // Velocity override (independent)
             if (ImGui::Checkbox("Override prefab velocity", &gS.overridePrefabVelocity)) {
-                // If turning OFF, pull back master velocities
                 if (!gS.overridePrefabVelocity) {
                     if (auto* mrb = master->GetComponentType<RigidBodyComponent>(
                         ComponentTypeId::CT_RigidBodyComponent)) {
@@ -732,13 +850,13 @@ namespace mygame {
                     }
                 }
             }
-
             if (!gS.overridePrefabVelocity) ImGui::BeginDisabled();
             ImGui::DragFloat("Velocity X", &gS.rbVelX, 0.01f, -100.f, 100.f);
             ImGui::DragFloat("Velocity Y", &gS.rbVelY, 0.01f, -100.f, 100.f);
             if (!gS.overridePrefabVelocity) ImGui::EndDisabled();
         }
-        // === EnenmyAttack ===
+
+        // === Enemy Attack ===
         if (hasEnemyAttack) {
             ImGui::SeparatorText("Enemy Attack");
             ImGui::Checkbox("Override prefab attack", &gS.overrideEnemyAttack);
@@ -748,7 +866,8 @@ namespace mygame {
             if (!gS.overrideEnemyAttack) ImGui::EndDisabled();
             ImGui::SameLine(); ImGui::TextDisabled("(lower = faster)");
         }
-        // === EnenmyHealth ===
+
+        // === Enemy Health ===
         if (hasEnemyHealth) {
             ImGui::SeparatorText("Enemy Health");
             ImGui::Checkbox("Override prefab health", &gS.overrideEnemyHealth);
@@ -758,7 +877,7 @@ namespace mygame {
             if (!gS.overrideEnemyHealth) ImGui::EndDisabled();
         }
 
-        // === PlayerAttack ===
+        // === Player Attack ===
         if (hasPlayerAttack) {
             ImGui::SeparatorText("Player Attack");
             ImGui::Checkbox("Override prefab attack", &gS.overridePlayerAttack);
@@ -769,7 +888,7 @@ namespace mygame {
             ImGui::SameLine(); ImGui::TextDisabled("(lower = faster)");
         }
 
-        // === PlayerHealth ===
+        // === Player Health ===
         if (hasPlayerHealth) {
             ImGui::SeparatorText("Player Health");
             ImGui::Checkbox("Override prefab health", &gS.overridePlayerHealth);
@@ -779,21 +898,19 @@ namespace mygame {
             if (!gS.overridePlayerHealth) ImGui::EndDisabled();
         }
 
-
-
-        // === Color Controls ===
+        // === Color ===
         if (hasRender || hasCircle) {
             ImGui::SeparatorText("Color");
             ImGui::ColorEdit4("rgba", gS.rgba);
         }
 
-        // === Batch Settings ===
+        // === Batch ===
         ImGui::SeparatorText("Batch");
         ImGui::DragInt("count", &gS.count, 1, 1, 500);
         ImGui::DragFloat("stepX", &gS.stepX, 0.005f);
         ImGui::DragFloat("stepY", &gS.stepY, 0.005f);
 
-        // === Level Save / Load ===
+        // === Levels ===
         ImGui::SeparatorText("Levels");
         ImGui::InputText("Level Name", gLevelNameBuffer, IM_ARRAYSIZE(gLevelNameBuffer));
 
@@ -828,7 +945,7 @@ namespace mygame {
             RefreshLevelFileList();
         }
 
-        // If we have a last loaded level, ensure its layer cache is filled and sync active layer
+        // Fill cache and sync active layer with last loaded level
         if (FACTORY) {
             const auto& lastPath = FACTORY->LastLevelPath();
             if (!lastPath.empty()) {
@@ -898,13 +1015,14 @@ namespace mygame {
             ImGui::TextDisabled("No level files found in %s", kLevelDirectory.string().c_str());
         }
 
+        // Status line (green for success/info, red for error)
         if (!gLevelStatusMessage.empty()) {
             ImVec4 color = gLevelStatusIsError ? ImVec4(0.9f, 0.3f, 0.3f, 1.0f)
                 : ImVec4(0.3f, 0.8f, 0.3f, 1.0f);
             ImGui::TextColored(color, "%s", gLevelStatusMessage.c_str());
         }
 
-        // Keep the clear selection in sync if it references a prefab that no longer exists.
+        // Keep the clear selection valid
         if (!master_copies.empty()) {
             if (master_copies.find(gSelectedPrefabToClear) == master_copies.end())
                 gSelectedPrefabToClear = master_copies.begin()->first;
@@ -930,7 +1048,7 @@ namespace mygame {
             ImGui::TextDisabled("No prefabs available to clear");
         }
 
-        // === Action Buttons ===
+        // === Actions ===
         if (ImGui::Button("Spawn")) {
             for (int i = 0; i < gS.count; ++i)
                 SpawnOnePrefab(gSelectedPrefab.c_str(), gS, i);
