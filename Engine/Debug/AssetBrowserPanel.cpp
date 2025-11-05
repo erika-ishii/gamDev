@@ -10,6 +10,42 @@
 #include <sstream>
 
 #include "Graphics/Graphics.hpp"
+static std::string SafePathString(const std::filesystem::path& p) {
+    if (p.empty()) return {};
+    std::error_code ec;
+    auto canon = std::filesystem::weakly_canonical(p, ec);
+    const auto& use = ec ? p : canon;
+    // generic_string() is fine here; we avoid lexically_normal()
+    return use.generic_string();
+}
+//This guarantees we never ask the STL to compute a weird relative path between 
+// incompatible roots, and we always fall back to a safe, human - readable string.
+static std::string SafeRelative(const std::filesystem::path& base,
+    const std::filesystem::path& p)
+{
+    if (p.empty()) return {};
+
+    std::error_code ec;
+    auto b = std::filesystem::weakly_canonical(base, ec);
+    if (ec) b = base;
+
+    ec.clear();
+    auto c = std::filesystem::weakly_canonical(p, ec);
+    if (ec) c = p;
+
+    // Different drive letters / roots? Don’t try to make a relative path.
+    if (b.has_root_name() && c.has_root_name() && b.root_name() != c.root_name())
+        return p.filename().string();
+
+    auto rel = c.lexically_relative(b);
+    auto s = rel.generic_string();
+
+    // If the “relative” result is empty or escapes upwards, show a friendly name instead.
+    if (s.empty() || s.rfind("..", 0) == 0)
+        return p.filename().string();
+
+    return s;
+}
 
 namespace mygame {
 
@@ -46,8 +82,11 @@ namespace mygame {
             for (const auto& e : entries) {
                 if (!e.isDirectory) {
                     auto ext = ToLower(e.path.extension().string());
-                    if (ext == ".wav" || ext == ".mp3") {
-                        gAudioPopup.files.emplace_back(e.path);
+                    if ((ext == ".wav" || ext == ".mp3") && !e.path.empty()) {
+                        std::error_code ec;
+                        if (std::filesystem::is_regular_file(e.path, ec) && !ec) {
+                            gAudioPopup.files.emplace_back(e.path);
+                        }
                     }
                 }
             }
@@ -76,8 +115,7 @@ namespace mygame {
                 return;
 
             // Header
-            std::string relFolder = gAudioPopup.folder.lexically_relative(assetsRoot).generic_string();
-            if (relFolder.empty()) relFolder = gAudioPopup.folder.filename().string();
+            std::string relFolder = SafeRelative(assetsRoot, gAudioPopup.folder);
             ImGui::Text("Folder: %s", relFolder.c_str());
             ImGui::Separator();
 
@@ -99,8 +137,15 @@ namespace mygame {
 
                         ImGui::TableSetColumnIndex(1);
                         std::error_code ec;
-                        auto sz = std::filesystem::file_size(p, ec);
-                        ImGui::TextUnformatted(ec ? "-" : PrettySize(sz).c_str());
+                        if (p.empty()
+                            || !std::filesystem::exists(p, ec) || ec
+                            || !std::filesystem::is_regular_file(p, ec) || ec) {
+                            ImGui::TextUnformatted("-");
+                        }
+                        else {
+                            auto sz = std::filesystem::file_size(p, ec);
+                            ImGui::TextUnformatted(ec ? "-" : PrettySize(sz).c_str());
+                        }
                     }
 
                     ImGui::EndTable();
@@ -163,13 +208,13 @@ namespace mygame {
             ImGui::SameLine();
         }
 
-        const std::string header = m_currentDir == m_assetsRoot
+        const std::string header = (m_currentDir == m_assetsRoot)
             ? std::string("assets")
-            : m_currentDir.lexically_relative(m_assetsRoot).generic_string();
+            : SafeRelative(m_assetsRoot, m_currentDir);
         ImGui::TextUnformatted(header.c_str());
         if (!m_selectedEntry.empty())
         {
-            std::string relative = m_selectedEntry.lexically_relative(m_assetsRoot).generic_string();
+            std::string relative = SafeRelative(m_assetsRoot, m_selectedEntry);
             if (relative.empty())
                 relative = m_selectedEntry.filename().string();
             ImGui::TextDisabled("Selected: %s", relative.c_str());
@@ -183,10 +228,24 @@ namespace mygame {
 
         ImGui::Columns(columnCount, nullptr, false);
 
+        bool needsRefresh = false;
+        std::filesystem::path newDirectory;
+
         for (const auto& entry : m_entries)
         {
-            DrawEntry(entry, kThumbnailSize);
+            bool dirClicked = DrawEntry(entry, kThumbnailSize, needsRefresh, newDirectory);
             ImGui::NextColumn();
+
+            if (dirClicked)
+                break;  // Exit loop early if we need to navigate
+        }
+
+        // Handle navigation after the loop
+        if (needsRefresh && !newDirectory.empty())
+        {
+            m_currentDir = newDirectory;
+            m_selectedEntry.clear();
+            RefreshEntries();
         }
 
         ImGui::Columns(1);
@@ -303,19 +362,21 @@ namespace mygame {
 
         std::vector<Entry> directories;
         std::vector<Entry> files;
-
-        for (const auto& dirEntry : std::filesystem::directory_iterator(m_currentDir, ec))
-        {
-            if (ec)
-                break;
+        std::error_code ecIt;
+        for (const auto& dirEntry : std::filesystem::directory_iterator(m_currentDir, ecIt)) {
+            if (ecIt) break;
 
             Entry entry;
             entry.path = dirEntry.path();
-            entry.isDirectory = dirEntry.is_directory();
-            if (entry.isDirectory)
-                directories.push_back(entry);
-            else
-                files.push_back(entry);
+
+            std::error_code ecDir, ecReg;
+            const bool isDir = dirEntry.is_directory(ecDir) && !ecDir;
+            const bool isReg = dirEntry.is_regular_file(ecReg) && !ecReg;
+
+            entry.isDirectory = isDir;
+            if (isDir) directories.push_back(entry);
+            else if (isReg) files.push_back(entry); // only real files go to files
+            // else: skip everything else (symlinks, pipes, reparse points, etc.)
         }
 
         auto sortByName = [](const Entry& a, const Entry& b) {
@@ -333,10 +394,16 @@ namespace mygame {
         PrunePreviewCache();
     }
 
-    void AssetBrowserPanel::DrawEntry(const Entry& entry, float cellSize)
+    bool AssetBrowserPanel::DrawEntry(const Entry& entry, float cellSize,
+        bool& needsRefresh,
+        std::filesystem::path& newDir)
     {
+        if (entry.path.empty()) {
+            ImGui::TextDisabled("<invalid>");
+            return false;
+        }
         // Unique, stable ID per tile based on full path.
-        const std::string idStr = entry.path.lexically_normal().generic_string();
+        const std::string idStr = SafePathString(entry.path);
         ImGui::PushID(idStr.c_str());
 
         const std::string label = entry.path.filename().string();
@@ -421,8 +488,8 @@ namespace mygame {
         // Drag-drop: keep for textures only (by design)
         if (isTexture)
         {
-            std::string payloadPath = entry.path.lexically_relative(m_assetsRoot).generic_string();
-            if (payloadPath.empty() || payloadPath == "." || payloadPath.rfind("..", 0) == 0)
+            std::string payloadPath = SafeRelative(m_assetsRoot, entry.path);
+            if (payloadPath.empty())
                 payloadPath = entry.path.generic_string();
 
             if (!payloadPath.empty()
@@ -450,9 +517,10 @@ namespace mygame {
         // Navigate into directory
         if (isDirectory && (pressed || textClicked || textDoubleClick))
         {
-            m_currentDir = entry.path;
-            m_selectedEntry.clear();
-            RefreshEntries();
+            needsRefresh = true;
+            newDir = entry.path;
+            ImGui::PopID();
+            return true;  // Signal that we're navigating
         }
 
         // Clicking on an audio tile opens the Audio Files modal (listing all audio in the folder)
@@ -484,6 +552,7 @@ namespace mygame {
         }
 
         ImGui::PopID();
+        return false;
     }
 
     std::filesystem::path AssetBrowserPanel::ResolveImportTarget(const std::filesystem::path& file) const
@@ -911,7 +980,7 @@ namespace mygame {
         if (ec)
             canonical = path;
 
-        return canonical.lexically_normal().generic_string();
+        return canonical.generic_string();
     }
 
 } // namespace mygame

@@ -161,7 +161,7 @@ namespace Framework {
         RegisterComponent(PlayerComponent);
         RegisterComponent(PlayerAttackComponent);
         RegisterComponent(PlayerHealthComponent);
-        RegisterComponent(HurtBoxComponent);
+        RegisterComponent(HitBoxComponent);
 
         RegisterComponent(EnemyComponent);
         RegisterComponent(EnemyAttackComponent);
@@ -182,6 +182,10 @@ namespace Framework {
         WindowConfig cfg = LoadWindowConfig("../../Data_Files/window.json");
         screenW = cfg.width;
         screenH = cfg.height;
+
+        
+        hitBoxSystem = new HitBoxSystem(*this); 
+        hitBoxSystem->Initialize(); 
 
         std::cout << "\n=== Controls ===\n"
             << "WASD: Move | Q/E: Rotate | Z/X: Scale | R: Reset\n"
@@ -210,6 +214,8 @@ namespace Framework {
                 factory->Update(dt);
 
             RefreshLevelReferences();
+            if (hitBoxSystem)
+                hitBoxSystem->Update(dt); 
 
             if (!player)
                 return;
@@ -291,48 +297,33 @@ namespace Framework {
                 collisionInfo.player = AABB(tr->x, tr->y, rb->width, rb->height);
                 collisionInfo.playerValid = true;
 
-                auto* hurtbox = player->GetComponentType<Framework::HurtBoxComponent>(
-                    Framework::ComponentTypeId::CT_HurtBoxComponent);
-
-                static float hurtTimer = hurtbox->duration; // Cooldown timer for attack
-
-                if (hurtbox && tr && rc)
+                if (input.IsMousePressed(GLFW_MOUSE_BUTTON_LEFT) && hitBoxSystem)
                 {
-                    if (input.IsMousePressed(GLFW_MOUSE_BUTTON_LEFT))
+                    float dx = normalizedX - tr->x;
+                    float dy = normalizedY - tr->y;
+
+                    float len = std::sqrt(dx * dx + dy * dy);
+                    if (len > 0.0001f)
                     {
-                        float dx = normalizedX - tr->x;
-                        float dy = normalizedY - tr->y;
-
-                        float len = std::sqrt(dx * dx + dy * dy);
-                        if (len > 0.0001f)
-                        {
-                            dx /= len;
-                            dy /= len;
-                        }
-
-                        float offset = 0.05f; // This is the offset of where the hurtbox will spawn
-                        float spawnX = tr->x + dx * (std::abs(rc->w) * 0.5f + hurtbox->width * 0.5f + offset);
-                        float spawnY = tr->y + dy * (rc->h * 0.5f + hurtbox->height * 0.5f + offset);
-
-                        hurtbox->spawnX = spawnX;
-                        hurtbox->spawnY = spawnY;
-
-                        hurtbox->ActivateHurtBox();
-
-                        // for debugging
-                        std::cout << "Hurtbox spawned at (" << spawnX << ", " << spawnY << ")\n";
+                        dx /= len;
+                        dy /= len;
                     }
 
-                    if (hurtbox->active)
-                    {
-                        hurtTimer -= dt;
-                        if (hurtTimer <= 0.0f)
-                        {
-                            hurtbox->DeactivateHurtBox();
-                            hurtTimer = hurtbox->duration;
-                        }
-                    }
+                    float offset = 0.05f; // This is the offset of where the hurtbox will spawn
+                    float spawnX = tr->x + dx * (std::abs(rc->w) * 0.5f + 0.25f + offset);
+                    float spawnY = tr->y + dy * (rc->h * 0.5f + 0.25f + offset);
+
+                    float hitboxWidth = 0.5f;
+                    float hitboxHeight = 0.5f;
+                    float hitboxDamage = 1.0f;
+                    float hitboxDuration = 0.1f;
+
+                    hitBoxSystem->SpawnHitBox(player, spawnX, spawnY, hitboxWidth, hitboxHeight, hitboxDamage, hitboxDuration);
+
+                    // for debugging
+                    std::cout << "Hurtbox spawned at (" << spawnX << ", " << spawnY << ")\n";
                 }
+                
             }
 
             if (collisionTarget)
@@ -349,6 +340,7 @@ namespace Framework {
             }
             }, "LogicSystem::Update");
     }
+    
     void LogicSystem::ReloadLevel()
     {
         if (!factory)
@@ -400,6 +392,13 @@ namespace Framework {
         {
             g_crashLogger = nullptr;
             crashLogger.reset();
+        }
+
+        if (hitBoxSystem)
+        {
+            hitBoxSystem->Shutdown();
+            delete hitBoxSystem;
+            hitBoxSystem = nullptr;
         }
     }
 }

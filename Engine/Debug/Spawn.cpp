@@ -254,8 +254,6 @@ namespace mygame {
         GOC* obj = ClonePrefab(prefab);
         if (!obj) return;
 
-        const float x = s.x + s.stepX * index;
-        const float y = s.y + s.stepY * index;
 
         // Transform: inherit JSON unless override is ON
         if (auto* tr = obj->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent)) {
@@ -319,7 +317,7 @@ namespace mygame {
                 eh->enemyHealth = s.enemyHealth;
             }
             else {
-                // Typical behavior: when spawning keep JSON max, set current= max
+                // when spawning keep JSON max, set current= max
                 eh->enemyHealth = eh->enemyMaxhealth;
             }
         }
@@ -327,9 +325,22 @@ namespace mygame {
         // Player/Enemy bits (if present)
         if (auto* player = obj->GetComponentType<PlayerComponent>(ComponentTypeId::CT_PlayerComponent)) { (void)player; }
         if (auto* health = obj->GetComponentType<PlayerHealthComponent>(ComponentTypeId::CT_PlayerHealthComponent)) 
-        {health->playerHealth = health->playerMaxhealth;}
+        {
+            if (s.overridePlayerHealth) {
+                health->playerHealth =s.playerHealth;
+                health->playerMaxhealth = s.playerMaxhealth;
+            }
+            else {
+                health->playerHealth = health->playerMaxhealth;
+            }
+        }
         if (auto* attack = obj->GetComponentType<PlayerAttackComponent>(ComponentTypeId::CT_PlayerAttackComponent)) 
-        { attack->damage = s.attackDamage; attack->attack_speed = s.attack_speed;}
+        { 
+            if (s.overridePlayerAttack) {
+                attack->damage = s.attackDamage; 
+                attack->attack_speed = s.attack_speed;
+            }
+        }
 
         if (auto* enemy = obj->GetComponentType<EnemyComponent>(ComponentTypeId::CT_EnemyComponent)) { (void)enemy; }
 
@@ -568,7 +579,8 @@ namespace mygame {
             (master->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent) != nullptr);
         const bool hasEnemyAttack = (master->GetComponentType<EnemyAttackComponent>(ComponentTypeId::CT_EnemyAttackComponent) != nullptr);
         const bool hasEnemyHealth = (master->GetComponentType<EnemyHealthComponent>(ComponentTypeId::CT_EnemyHealthComponent) != nullptr);
-
+        const bool hasPlayerAttack = (master->GetComponentType<PlayerAttackComponent>(ComponentTypeId::CT_PlayerAttackComponent) != nullptr);
+        const bool hasPlayerHealth = (master->GetComponentType <PlayerHealthComponent>(ComponentTypeId::CT_PlayerHealthComponent) != nullptr);
         if (gPendingPrefabSizeSync) {
             if (auto* trm = master->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent)) {
                 gS.x = trm->x; gS.y = trm->y; gS.rot = trm->rot;
@@ -590,6 +602,14 @@ namespace mygame {
             }
             if (auto* rc = master->GetComponentType<RenderComponent>(ComponentTypeId::CT_RenderComponent)) {
                 gS.w = rc->w; gS.h = rc->h;
+            }
+            if (auto* atm = master->GetComponentType<PlayerAttackComponent>(ComponentTypeId::CT_PlayerAttackComponent)) {
+                gS.attackDamagep = atm->damage;
+                gS.attack_speedp = atm->attack_speed;
+            }
+            if (auto* ehm = master->GetComponentType<PlayerHealthComponent>(ComponentTypeId::CT_PlayerHealthComponent)) {
+                gS.playerMaxhealth = ehm->playerMaxhealth;
+                gS.playerHealth = ehm->playerMaxhealth; // start current at max
             }
             gPendingPrefabSizeSync = false;
         }
@@ -728,7 +748,7 @@ namespace mygame {
             if (!gS.overrideEnemyAttack) ImGui::EndDisabled();
             ImGui::SameLine(); ImGui::TextDisabled("(lower = faster)");
         }
-
+        // === EnenmyHealth ===
         if (hasEnemyHealth) {
             ImGui::SeparatorText("Enemy Health");
             ImGui::Checkbox("Override prefab health", &gS.overrideEnemyHealth);
@@ -737,6 +757,29 @@ namespace mygame {
             ImGui::DragInt("HealthMax", &gS.enemyMaxhealth, 1, 0, 100000);
             if (!gS.overrideEnemyHealth) ImGui::EndDisabled();
         }
+
+        // === PlayerAttack ===
+        if (hasPlayerAttack) {
+            ImGui::SeparatorText("Player Attack");
+            ImGui::Checkbox("Override prefab attack", &gS.overridePlayerAttack);
+            if (!gS.overridePlayerAttack) ImGui::BeginDisabled();
+            ImGui::DragInt("Damage", &gS.attackDamagep, 1, 0, 100000);
+            ImGui::DragFloat("Attack Speed (s)", &gS.attack_speedp, 0.01f, 0.01f, 10.0f);
+            if (!gS.overridePlayerAttack) ImGui::EndDisabled();
+            ImGui::SameLine(); ImGui::TextDisabled("(lower = faster)");
+        }
+
+        // === PlayerHealth ===
+        if (hasPlayerHealth) {
+            ImGui::SeparatorText("Player Health");
+            ImGui::Checkbox("Override prefab health", &gS.overridePlayerHealth);
+            if (!gS.overridePlayerHealth) ImGui::BeginDisabled();
+            ImGui::DragInt("Health", &gS.playerHealth, 1, 0, 100000);
+            ImGui::DragInt("HealthMax", &gS.playerMaxhealth, 1, 0, 100000);
+            if (!gS.overridePlayerHealth) ImGui::EndDisabled();
+        }
+
+
 
         // === Color Controls ===
         if (hasRender || hasCircle) {

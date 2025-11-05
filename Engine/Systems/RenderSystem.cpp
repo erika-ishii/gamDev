@@ -1292,9 +1292,9 @@ namespace Framework {
 
                     gfx::Graphics::renderCircle(tr->x, tr->y, cc->radius, cc->r, cc->g, cc->b, cc->a);
                 }
-
+                
                 // Optional: physics debug overlay
-                if (showPhysicsHitboxes)
+                if (showPhysicsHitboxes && logic.hitBoxSystem)
                 {
                     for (auto& [id, objPtr] : FACTORY->Objects())
                     {
@@ -1314,14 +1314,19 @@ namespace Framework {
                             2.f);
 
                         // Check hurtboxcomponennt for hurtboxes
-                        if (auto* hb = obj->GetComponentType<Framework::HurtBoxComponent>(
-                            ComponentTypeId::CT_HurtBoxComponent))
+                        for (const auto& activeHit : logic.hitBoxSystem->GetActiveHitBoxes())
                         {
-                            if (hb->active)
+                            if (activeHit.hitbox && activeHit.hitbox->active)
                             {
-                                gfx::Graphics::renderRectangleOutline(hb->spawnX, hb->spawnY, 0.0f,
-                                    hb->width, hb->height,
-                                    0.f, 1.f, 0.f, 1.f, 2.f);
+                                gfx::Graphics::renderRectangleOutline(
+                                    activeHit.hitbox->spawnX,
+                                    activeHit.hitbox->spawnY,
+                                    0.0f,
+                                    activeHit.hitbox->width,
+                                    activeHit.hitbox->height,
+                                    0.0f, 1.0f, 0.0f, 1.0f, // green outline for enemy attacks
+                                    2.0f
+                                );
                             }
                         }
                     }

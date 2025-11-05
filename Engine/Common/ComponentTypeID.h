@@ -49,7 +49,7 @@ namespace Framework
         CT_RigidBodyComponent,
 
         /// HurtBoxComponent: The hitbox for the attacks
-        CT_HurtBoxComponent,
+        CT_HitBoxComponent,
 
         /// SpriteComponent: textured sprite rendering
         CT_SpriteComponent,

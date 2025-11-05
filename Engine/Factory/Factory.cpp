@@ -46,7 +46,7 @@
 #include "Component/PlayerComponent.h"
 #include "Component/PlayerHealthComponent.h"
 #include "Component/PlayerAttackComponent.h"
-
+#include "Component/HitBoxComponent.h"
 #include "Component/EnemyComponent.h"
 #include "Component/EnemyAttackComponent.h"
 #include "Component/EnemyDecisionTreeComponent.h"
@@ -324,7 +324,9 @@ namespace Framework {
             };
         }
         case ComponentTypeId::CT_InputComponents:
+            return json::object();
         case ComponentTypeId::CT_PlayerComponent:
+            return json::object();
         case ComponentTypeId::CT_PlayerHealthComponent:
         {
             auto const& hp = static_cast<PlayerHealthComponent const&>(component);
@@ -352,6 +354,15 @@ namespace Framework {
             if (type.Etype == EnemyTypeComponent::EnemyType::ranged)
                 typeStr = "ranged";
             return json{ {"type", typeStr} };
+        }
+        case ComponentTypeId::CT_HitBoxComponent: {
+            auto const& hit = static_cast<HitBoxComponent const&>(component);
+            return json{
+            {"hitwidth",   hit.width},
+            {"hitheight",  hit.height},
+            {"hitduration",hit.duration}
+     
+            };
         }
         default:
             break;

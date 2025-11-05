@@ -4,6 +4,7 @@
 #include "Component/RenderComponent.h"
 #include "Component/SpriteComponent.h"
 #include "Component/TransformComponent.h"
+#include "Component/EnemyAttackComponent.h"
 #include "Config/WindowConfig.h"
 #include "Debug/ImGuiLayer.h"
 #include "Debug/Perf.h"

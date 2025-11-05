@@ -176,43 +176,56 @@ namespace Framework
             if (!player) return;
             
             auto*trplayer= player->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
-            float speed = 0.3f;
-            float dx = trplayer->x -tr->x;
-            float dy = trplayer->y -tr->y;
+            
+            float dx = trplayer->x - tr->x;
+            float dy = trplayer->y - tr->y;
             float distance = std::sqrt(dx*dx + dy*dy);
+            const float speed = 0.3f;
+            const float nudge = 0.2f;
+            float vx = 0.0f, vy = 0.0f;
+            
             if (distance > 0.1f)
             {
-                float vx = 0.0f;
-                float vy = 0.0f;
-                const float nudge = 0.2f;
-                if (std::fabs(dx) > 0.01f)  
-                {
-                    vx = (dx > 0.0f ? speed : -speed);
-                    vy = 0.0f;
-                }
-                else if (std::fabs(dy) > 0.01f)  
-                {
-                    vx = 0.0f;
-                    vy = (dy > 0.0f ? speed : -speed);
-                }
-                if (std::fabs(vx) < 0.01f && std::fabs(vy) < 0.01f)
-                {
-                    vx = (dx > 0.0f ? -nudge : nudge);
-                    vy = (dy > 0.0f ? -nudge : nudge);
-                }
-
-                rb->velX = vx;
-                rb->velY = vy;
-                bool collision = false; 
-                tr->x += rb->velX * dt;
-                tr->y += rb->velY * dt;
+                if (std::fabs(dx) > 0.01f) { vx = (dx > 0.0f ? speed : -speed); vy = 0.0f; }
+                else if (std::fabs(dy) > 0.01f) { vx = 0.0f; vy = (dy > 0.0f ? speed : -speed); }
+                if (std::fabs(vx) < 0.01f && std::fabs(vy) < 0.01f) { vx = (dx > 0.0f ? -nudge : nudge); vy = (dy > 0.0f ? -nudge : nudge); }
             }
 
-            static float attackTimer = 0.0f;
-            const float attackInterval = 1.5f;
-            attackTimer += dt;
-            if (attackTimer >= attackInterval)
-            {attackTimer=0.0f; std::cout << "Enemy attacks with " << attack->damage << " damage!\n"; }
+            rb->velX = vx;
+            rb->velY = vy;
+            tr->x += rb->velX * dt;
+            tr->y += rb->velY * dt;
+            
+            attack->attack_timer += dt;
+
+            if (attack->attack_timer >= attack->attack_speed)
+            {
+                attack->attack_timer = 0.0f;
+                attack->hitbox->active = true;
+                // Spawn hitbox based on enemy direction
+                float offsetX = (vx > 0.0f) ? attack->hitbox->width : (vx < 0.0f ? -attack->hitbox->width : 0.0f);
+                float offsetY = (vy > 0.0f) ? attack->hitbox->height : (vy < 0.0f ? -attack->hitbox->height : 0.0f);
+                attack->hitbox->spawnX = tr->x + offsetX;
+                attack->hitbox->spawnY = tr->y + offsetY;
+                attack->hitbox->duration = 0.15f;
+                std::cout << "Enemy attacks! HitBox active at ("
+                    << attack->hitbox->spawnX << ", " << attack->hitbox->spawnY
+                    << ") with damage " << attack->damage
+                    << " and size (" << attack->hitbox->width << "x" << attack->hitbox->height << ")\n";
+
+            }
+            
+            if (attack->hitbox->active)
+            {
+                attack->hitbox->duration -=dt;
+                if (attack->hitbox->duration <= 0.0f)
+                {
+                    attack->hitbox->active = false;
+                    attack->hitbox->duration = 1.0f;
+                }
+            }
+        
+            
             ai->chaseTimer += dt;
             if (ai->chaseTimer >= ai->maxChaseDuration) {
                 ai->hasSeenPlayer = false;

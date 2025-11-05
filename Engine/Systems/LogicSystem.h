@@ -20,6 +20,7 @@
 #include "Physics/Dynamics/RigidBodyComponent.h"
 #include <Serialization/JsonSerialization.h>
 #include "InputSystem.h"
+#include "HitBoxSystem.h"
 
 
 #include "Config/WindowConfig.h"
@@ -27,7 +28,7 @@
 
 #include "Graphics/Window.hpp"
 #include "Physics/Collision/Collision.h"
-#include "Component/HurtBoxComponent.h"
+#include "Component/HitBoxComponent.h"
 
 #include "../../Sandbox/MyGame/MathUtils.hpp"
 
@@ -46,7 +47,7 @@ namespace Framework {
 
 	class InputsSyetm;
 	class GameObjectFactory;
-	
+	class HitBoxSystem; 
 
 	class LogicSystem :public Framework::ISystem {
 	public:
@@ -87,6 +88,7 @@ namespace Framework {
 		int ScreenWidth() const { return screenW; }
 		int ScreenHeight() const { return screenH; }
 
+		HitBoxSystem* hitBoxSystem = nullptr;
 
 		std::string GetName() override{ return "LogicSystem"; }
 

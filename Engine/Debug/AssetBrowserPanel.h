@@ -28,7 +28,9 @@ namespace mygame {
         };
 
         void RefreshEntries();
-        void DrawEntry(const Entry& entry, float cellSize);
+        bool DrawEntry(const Entry& entry, float cellSize,
+            bool& needsRefresh,
+            std::filesystem::path& newDir);
         std::filesystem::path ResolveImportTarget(const std::filesystem::path& file) const;
         static bool IsTextureFile(const std::filesystem::path& path);
         static bool IsAudioFile(const std::filesystem::path& path);

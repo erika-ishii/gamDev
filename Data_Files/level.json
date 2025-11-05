@@ -52,10 +52,10 @@
             "damage": 50,
             "attack_speed": 1.0
           },
-          "HurtBoxComponent": {
-            "hurtwidth": 0.15,
-            "hurtheight": 0.15,
-            "hurtduration": 0.15
+          "HitBoxComponent": {
+            "width": 0.15,
+            "height": 0.15,
+            "duration": 0.15
           }
         }
       },
