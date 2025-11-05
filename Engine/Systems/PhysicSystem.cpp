@@ -124,7 +124,8 @@ namespace Framework {
                         << " damage from enemy at ("
                         << enemyAttack->hitbox->spawnX << ", "
                         << enemyAttack->hitbox->spawnY << ")\n";
-
+                    // Keep the hurtbox visible in debug overlay for a short duration after the hit
+                    enemyAttack->hitbox->debugDrawTimer = 0.15f;
                     // Reduce health if component exists
                     if (auto* health = playerObj->GetComponentType<PlayerHealthComponent>(
                         ComponentTypeId::CT_PlayerHealthComponent))

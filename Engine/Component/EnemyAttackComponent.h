@@ -55,6 +55,13 @@ namespace Framework
                         hitbox->duration = 0.1f;
                     }
                 }
+                if (hitbox->debugDrawTimer > 0.0f)
+                {
+                    hitbox->debugDrawTimer -= dt;
+                    if (hitbox->debugDrawTimer < 0.0f)
+                        hitbox->debugDrawTimer = 0.0f;
+                }
+
 
             }
     };

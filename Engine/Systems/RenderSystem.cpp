@@ -1292,7 +1292,7 @@ namespace Framework {
 
                     gfx::Graphics::renderCircle(tr->x, tr->y, cc->radius, cc->r, cc->g, cc->b, cc->a);
                 }
-                
+
                 // Optional: physics debug overlay
                 if (showPhysicsHitboxes && logic.hitBoxSystem)
                 {
@@ -1324,14 +1324,38 @@ namespace Framework {
                                     0.0f,
                                     activeHit.hitbox->width,
                                     activeHit.hitbox->height,
-                                    0.0f, 1.0f, 0.0f, 1.0f, // green outline for enemy attacks
+                                    0.0f, 1.0f, 0.0f, 1.0f, // green outline for player hitboxes
                                     2.0f
                                 );
                             }
                         }
-                    }
 
-                    
+                        // Enemy hurtboxes sourced from their attack component
+                        if (auto* enemyAttack = obj->GetComponentType<Framework::EnemyAttackComponent>(
+                            Framework::ComponentTypeId::CT_EnemyAttackComponent))
+                        {
+                            const auto* hitbox = enemyAttack->hitbox.get();
+                            if (hitbox)
+                            {
+                                const bool highlightOnHit = hitbox->debugDrawTimer > 0.0f;
+                                if (hitbox->active || highlightOnHit)
+                                {
+                                    const float r = highlightOnHit ? 1.0f : 1.0f;
+                                    const float g = highlightOnHit ? 0.25f : 0.0f;
+                                    const float b = highlightOnHit ? 0.25f : 1.0f;
+                                    gfx::Graphics::renderRectangleOutline(
+                                        hitbox->spawnX,
+                                        hitbox->spawnY,
+                                        0.0f,
+                                        hitbox->width,
+                                        hitbox->height,
+                                        r, g, b, 1.0f,
+                                        2.0f
+                                    );
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
