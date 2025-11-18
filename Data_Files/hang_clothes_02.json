@@ -1,0 +1,23 @@
+{
+  "GameObject": {
+    "name": "Hang_Clothes_02",
+    "Components": {
+      "TransformComponent": { "x": 0.0, "y": 0.0, "rot": 0.0 },
+      "RenderComponent": { "w": 0.3, "h": 0.3, "r": 1.0, "g": 1.0, "b": 1.0, "a": 1.0 },
+      "SpriteComponent": { "texture_key": "clothes02f0" },
+      "SpriteAnimationComponent": {
+        "fps": 6.0,
+        "loop": 1,
+        "play": 1,
+        "frames": [
+          { "texture_key": "clothes02f0", "path": "../../assets/Textures/Environment/lvl 1_Hawker/Clothes 02/clothes02f0.png" },
+          { "texture_key": "clothes02f1", "path": "../../assets/Textures/Environment/lvl 1_Hawker/Clothes 02/clothes02f1.png" },
+          { "texture_key": "clothes02f2", "path": "../../assets/Textures/Environment/lvl 1_Hawker/Clothes 02/clothes02f2.png" },
+          { "texture_key": "clothes02f3", "path": "../../assets/Textures/Environment/lvl 1_Hawker/Clothes 02/clothes02f3.png" },
+          { "texture_key": "clothes02f4", "path": "../../assets/Textures/Environment/lvl 1_Hawker/Clothes 02/clothes02f4.png" },
+          { "texture_key": "clothes02f5", "path": "../../assets/Textures/Environment/lvl 1_Hawker/Clothes 02/clothes02f5.png" }
+        ]
+      }
+    }
+  }
+}

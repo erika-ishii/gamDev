@@ -14,7 +14,7 @@
             behaviors dynamically at runtime.
 
  \copyright
-            All content © 2025 DigiPen Institute of Technology Singapore.
+            All content Â© 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 #pragma once
@@ -27,7 +27,7 @@
  \details
     The DecisionTree maintains a single root node (`rootNode`) and provides a method (`run`)
     to evaluate the tree. When `run` is called, the tree starts evaluation from the root
-    node and traverses through child nodes based on each node’s conditional logic, executing
+    node and traverses through child nodes based on each nodeï¿½s conditional logic, executing
     actions as defined.
 
     This structure allows AI behaviors to be defined modularly and executed dynamically

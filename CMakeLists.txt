@@ -4,7 +4,10 @@ set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT MyGame)
 
 project(giraphics VERSION 0.1 LANGUAGES C CXX)
-
+# Enable /MP for all targets globally
+if(MSVC)
+    add_compile_options(/MP)
+endif()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 

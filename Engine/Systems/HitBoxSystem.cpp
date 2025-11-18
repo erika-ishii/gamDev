@@ -1,7 +1,7 @@
 /*********************************************************************************************
  \file      HitBoxSystem.cpp
  \par       SofaSpuds
- \author    
+ \author    Ho Jun (h.jun@digipen.edu) - Primary Author, 100%
  \brief     Spawns and updates short-lived hit boxes for attack interactions.
  \details   This lightweight system manages transient attack volumes (HitBoxComponent):
 			- Creation: SpawnHitBox() attaches owner/context and a lifetime timer.
@@ -94,6 +94,14 @@ namespace Framework
 		newhitbox->damage = damage;
 		newhitbox->duration = duration;
 		newhitbox->owner = attacker;
+
+		if (attacker->GetComponentType<PlayerComponent>(ComponentTypeId::CT_PlayerComponent))
+			newhitbox->team = HitBoxComponent::Team::Player;
+		else if (attacker->GetComponentType<EnemyComponent>(ComponentTypeId::CT_EnemyComponent))
+			newhitbox->team = HitBoxComponent::Team::Enemy;
+		else
+			newhitbox->team = HitBoxComponent::Team::Neutral;
+
 		newhitbox->ActivateHurtBox(); // reuse flag: treat as active volume for collisions
 
 		ActiveHitBox active;
@@ -101,7 +109,55 @@ namespace Framework
 		active.owner = attacker;
 		active.timer = duration;
 
-		activeHitBoxes.push_back(std::move(active));
+		activeHitBoxes.push_back(std::move(active)); 
+	}
+
+	void HitBoxSystem::SpawnProjectile(GameObjectComposition* attacker,
+		float targetX, float targetY,
+		float dirX, float dirY,
+		float speed,
+		float width, float height,
+		float damage,
+		float duration)
+	{
+		if (!attacker)
+			return;
+
+		// Normalized direction
+		float len = std::sqrt(dirX * dirX + dirY * dirY);
+		if (len < 0.0001f)
+			return;
+		dirX /= len;
+		dirY /= len;
+
+		auto newhitbox = std::make_unique<HitBoxComponent>();
+		newhitbox->spawnX = targetX; 
+		newhitbox->spawnY = targetY; 
+		newhitbox->width = width; 
+		newhitbox->height = height; 
+		newhitbox->damage = damage; 
+		newhitbox->duration = duration; 
+		newhitbox->owner = attacker;
+
+		// Set the team / make sure friendly fire doesnt happen
+		if (attacker->GetComponentType<PlayerComponent>(ComponentTypeId::CT_PlayerComponent))
+			newhitbox->team = HitBoxComponent::Team::Player; 
+		else if (attacker->GetComponentType<EnemyComponent>(ComponentTypeId::CT_EnemyComponent))
+			newhitbox->team = HitBoxComponent::Team::Enemy;
+
+		newhitbox->ActivateHurtBox();
+
+		ActiveHitBox projectile; 
+		projectile.hitbox = std::move(newhitbox);
+		projectile.owner = attacker;
+		projectile.timer = duration;
+
+		// Movement
+		projectile.velX = dirX * speed;
+		projectile.velY = dirY * speed;
+		projectile.isProjectile = true;
+
+		activeHitBoxes.push_back(std::move(projectile));
 	}
 
 	/*****************************************************************************************
@@ -120,8 +176,21 @@ namespace Framework
 	{
 		for (auto it = activeHitBoxes.begin(); it != activeHitBoxes.end();)
 		{
-			bool hit = false;
 			it->timer -= dt;
+			auto* attacker = it->owner;
+			auto* HB = it->hitbox.get();
+
+			if (!attacker || !HB || !HB->active)
+			{
+				it = activeHitBoxes.erase(it);
+				continue;
+			}
+
+			if (it->isProjectile)
+			{
+				it->hitbox->spawnX += it->velX * dt;
+				it->hitbox->spawnY += it->velY * dt;
+			}
 
 			AABB hitboxAABB(
 				it->hitbox->spawnX,
@@ -129,6 +198,7 @@ namespace Framework
 				it->hitbox->width,
 				it->hitbox->height
 			);
+			bool hit = false;
 
 			// Scan all level objects to find active hurt boxes to test against.
 			for (auto* obj : logic.LevelObjects())
@@ -136,25 +206,43 @@ namespace Framework
 				if (!obj || obj == it->owner)
 					continue;
 
-				auto* hitbox = obj->GetComponentType<HitBoxComponent>(ComponentTypeId::CT_HitBoxComponent);
+				// Determine if player or enemy
+				bool isPlayerTarget = obj->GetComponentType<PlayerComponent>(ComponentTypeId::CT_PlayerComponent) != nullptr;
+				bool isEnemyTarget = obj->GetComponentType<EnemyComponent>(ComponentTypeId::CT_EnemyComponent) != nullptr;
 
-				if (hitbox && hitbox->active)
+				// Prevent friendly fire
+				if ((HB->team == HitBoxComponent::Team::Player && isPlayerTarget) ||
+					(HB->team == HitBoxComponent::Team::Enemy && isEnemyTarget))
+					continue;
+
+				// Build AABB for collision check
+				auto* tr = obj->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
+				auto* rb = obj->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);
+				if (!(tr && rb))
+					continue;
+
+				AABB targetAABB(tr->x, tr->y, rb->width, rb->height);
+
+				if (Collision::CheckCollisionRectToRect(hitboxAABB, targetAABB))
 				{
-		/*			AABB hitboxAABB(it->hitbox->spawnX, it->hitbox->spawnY,
-									it->hitbox->width, it->hitbox->height);*/
-
-					AABB hurtboxAABB(hitbox->spawnX, hitbox->spawnY,
-						hitbox->width, hitbox->height);
-
-					if (Collision::CheckCollisionRectToRect(hitboxAABB, hurtboxAABB))
+					if (HB->team == HitBoxComponent::Team::Player)
 					{
-						std::cout << "Hit detected! ("
-							<< hitboxAABB.min.getX() << ", " << hitboxAABB.min.getY() << ") vs ("
-							<< hurtboxAABB.min.getX() << ", " << hurtboxAABB.min.getY() << ")\n";
-						hit = true;
-						break; // stop after first contact
+						auto* health = obj->GetComponentType<EnemyHealthComponent>(ComponentTypeId::CT_EnemyHealthComponent);
+						if (health)
+						health->TakeDamage(static_cast<int>(HB->damage));
 					}
+					else if (HB->team == HitBoxComponent::Team::Enemy)
+					{
+						auto* health = obj->GetComponentType<PlayerHealthComponent>(ComponentTypeId::CT_PlayerHealthComponent);
+						if (health)
+						health->TakeDamage(static_cast<int>(HB->damage));
+					}
+
+					hit = true;
+					break;
 				}
+
+				
 			}
 
 			// Remove immediately if hit or expired; otherwise keep ticking.
@@ -169,3 +257,34 @@ namespace Framework
 		}
 	}
 } // namespace Framework
+/*
+				auto* hitbox = obj->GetComponentType<HitBoxComponent>(ComponentTypeId::CT_HitBoxComponent);
+
+				if (hitbox)
+				{
+					if (!hitbox->active)
+						hitbox->ActivateHurtBox(); // ensure it's active
+
+					AABB playerHit(it->hitbox->spawnX, it->hitbox->spawnY,
+						it->hitbox->width, it->hitbox->height);
+
+					AABB hurtboxAABB(hitbox->spawnX, hitbox->spawnY,
+						hitbox->width, hitbox->height);
+
+					AABB enemyHit(hitbox->spawnX, hitbox->spawnY,
+						hitbox->width, hitbox->height);
+
+					//if (Collision::CheckCollisionRectToRect(playerHit, enemyHit))
+						std::cout << "a";
+					if (Collision::CheckCollisionRectToRect(playerHit, enemyHit))
+					{
+						auto* health = obj->GetComponentType<EnemyHealthComponent>(ComponentTypeId::CT_EnemyHealthComponent);
+						if (health)
+						{
+							health->TakeDamage(static_cast<int>(it->hitbox->damage));
+							std::cout << "Enemy hit! Remaining HP: " << health->enemyHealth << "\n";
+						}
+						hit = true;
+						break; // stop after first contact
+					}
+				}*/

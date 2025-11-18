@@ -29,4 +29,13 @@ namespace mygame {
     /// Convenience helper to test whether an object is selected.
     bool HasSelectedObject();
 
+    /// Remember the object currently hovered in editor panels (0 clears).
+    void SetHoverObjectId(Framework::GOCId id);
+
+    /// Retrieve the currently hovered object id (0 when none).
+    Framework::GOCId GetHoverObjectId();
+
+    /// Convenience helper to test hover presence.
+    bool HasHoverObject();
+
 } // namespace mygame

@@ -1,7 +1,7 @@
 /*********************************************************************************************
  \file      PhysicSystem.cpp
  \par       SofaSpuds
- \author    
+ \author    Ho Jun (h.jun@digipen.edu) - Primary Author, 100%
  \brief     Lightweight 2D physics step: AABB moves/collisions + enemy hitbox damage.
  \details   Updates Transform by RigidBody velocity (dt) with axis-separated AABB tests
             against same-layer “rect” walls, then checks active EnemyAttack hitboxes
@@ -96,7 +96,7 @@ namespace Framework {
                 std::string otherName = otherObj->GetObjectName();
                 std::transform(otherName.begin(), otherName.end(), otherName.begin(),
                     [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
-                if (otherName != "rect")
+                if (otherName != "rect" && otherName != "invisiblehitbox")
                     continue;
 
                 AABB wallBox(trO->x, trO->y, rbO->width, rbO->height);
@@ -160,11 +160,7 @@ namespace Framework {
                     // Apply damage if health component exists
                     if (auto* health = playerObj->GetComponentType<PlayerHealthComponent>(
                         ComponentTypeId::CT_PlayerHealthComponent))
-                    {
-                        health->playerHealth -= enemyAttack->damage;
-                        if (health->playerHealth < 0) health->playerHealth = 0;
-                        std::cout << "Player Health: " << health->playerHealth << "\n";
-                    }
+                    {health->TakeDamage(enemyAttack->damage);}
 
                     // One-shot: prevent damage every frame
                     enemyAttack->hitbox->DeactivateHurtBox();

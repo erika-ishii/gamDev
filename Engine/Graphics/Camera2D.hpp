@@ -1,14 +1,13 @@
-/*********************************************************************************************
+﻿/*********************************************************************************************
  \file      Camera2D.hpp
  \par       SofaSpuds
- \author    you (your.email@digipen.edu) - Main Author, 70%
-            erika.ishii (erika.ishii@digipen.edu) - Author, 30%
+ \author    yimo.kong ( yimo.kong@digipen.edu) - Primary Author, 100%
  \brief     Orthographic 2D camera with focus, view height, and aspect-aware projection.
  \details   Tracks a world-space focus point and builds view/projection matrices sized by
             viewHeight and aspect (set from the viewport). Exposes the combined matrix for
             convenience in 2D render pipelines.
  \copyright
-            All content �2025 DigiPen Institute of Technology Singapore.
+            All content ©2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 

@@ -57,6 +57,19 @@ namespace Framework {
         if (auto* b = FACTORY->CreateTemplate("../../Data_Files/boss.json")) {
             master_copies["Boss"].reset(b);
         }
+        if (auto* h1 = FACTORY->CreateTemplate("../../Data_Files/hang_clothes_01.json")) {
+            master_copies["Hang_Clothes_01"].reset(h1);
+        }
+
+        if (auto* h2 = FACTORY->CreateTemplate("../../Data_Files/hang_clothes_02.json")) {
+            master_copies["Hang_Clothes_02"].reset(h2);
+        }
+        
+        if (auto* flag = FACTORY->CreateTemplate("../../Data_Files/hawker_flag.json")) {
+            master_copies["Hawker_Flag"].reset(flag);
+        }
+
+       
         else {
             std::cerr << "[Prefab] Failed to create 'boss' from boss.json\n";
         }

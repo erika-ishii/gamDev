@@ -1,7 +1,10 @@
 ﻿/*********************************************************************************************
  \file      RenderSystem.cpp
  \par       SofaSpuds
- \author    erika.ishii (erika.ishii@digipen.edu) - Author, 30%
+ \author    yimo.kong ( yimo.kong@digipen.edu) - Primary Author, 50%
+            erika.ishii (erika.ishii@digipen.edu) - Author, 30%
+            elvisshengjie.lim (elvisshengjie.lim@digipen.edu) - Primary Author, 10%
+            h.jun (h.jun@digipen.edu) - Author, 10%
 
  \brief     Editor/game viewport orchestration: camera control, picking/dragging,
             split-view docking, ImGui panels, asset import plumbings, and frame submit.
@@ -61,6 +64,10 @@
 namespace Framework {
 
     RenderSystem* RenderSystem::sInstance = nullptr;
+    RenderSystem* RenderSystem::Get()
+    {
+        return sInstance;
+    }
 
     namespace {
         using clock = std::chrono::high_resolution_clock;
@@ -431,7 +438,13 @@ namespace Framework {
             draggingSelection = false;
             return;
         }
-
+        if (!showEditor)
+        {
+            // no picking/dragging when editor UI is hidden
+            leftMouseDownPrev = false;
+            draggingSelection = false;
+            return;
+        }
         GLFWwindow* native = window->raw();
         if (!native)
         {
@@ -1021,64 +1034,70 @@ namespace Framework {
             bool editorEnabled = showEditor;
             if (ImGui::Checkbox("Editor Enabled (F10)", &editorEnabled))
                 showEditor = editorEnabled;
+
             if (!showEditor)
             {
                 ImGui::TextDisabled("Editor panels hidden. Press F10 or re-enable above.");
+                // No more controls when editor is off
+                ImGui::End();
+                return;
             }
-            else
+
+            // ---- everything below this only shows when editor is ON ----
+
+            bool fullWidth = gameViewportFullWidth;
+            if (ImGui::Checkbox("Game Full Width (F11)", &fullWidth))
+                gameViewportFullWidth = fullWidth;
+            if (!gameViewportFullWidth)
             {
-                bool fullWidth = gameViewportFullWidth;
-                if (ImGui::Checkbox("Game Full Width (F11)", &fullWidth))
-                    gameViewportFullWidth = fullWidth;
-                if (!gameViewportFullWidth)
-                {
-                    float splitPercent = editorSplitRatio * 100.0f;
-                    if (ImGui::SliderFloat("Game Width", &splitPercent, 30.0f, 70.0f, "%.0f%%", ImGuiSliderFlags_AlwaysClamp))
-                        editorSplitRatio = splitPercent / 100.0f;
-                }
-
-                bool fullHeight = gameViewportFullHeight;
-                if (ImGui::Checkbox("Game Full Height", &fullHeight))
-                    gameViewportFullHeight = fullHeight;
-
-                if (!gameViewportFullHeight) {
-                    float hPercent = heightRatio * 100.0f;
-                    if (ImGui::SliderFloat("Game Height", &hPercent, 30.0f, 100.0f, "%.0f%%", ImGuiSliderFlags_AlwaysClamp))
-                        heightRatio = hPercent / 100.0f;
-                    ImGui::TextDisabled("Viewport is centered vertically");
-                }
-                ImGui::Separator();
-                ImGui::TextUnformatted("Simulation");
-                bool isPlaying = mygame::IsEditorSimulationRunning();
-
-                const bool wasPlaying = isPlaying;
-                if (wasPlaying)
-                    ImGui::BeginDisabled();
-                if (ImGui::Button("Play"))
-                {
-                    mygame::EditorPlaySimulation();
-                    isPlaying = mygame::IsEditorSimulationRunning();
-                }
-                if (wasPlaying)
-                    ImGui::EndDisabled();
-
-                ImGui::SameLine();
-
-                const bool wasStopped = !isPlaying;
-                if (wasStopped)
-                    ImGui::BeginDisabled();
-                if (ImGui::Button("Stop"))
-                {
-                    mygame::EditorStopSimulation();
-                    isPlaying = mygame::IsEditorSimulationRunning();
-                }
-                if (wasStopped)
-                    ImGui::EndDisabled();
-
-                ImGui::SameLine();
-                ImGui::Text("State: %s", isPlaying ? "Playing" : "Stopped");
+                float splitPercent = editorSplitRatio * 100.0f;
+                if (ImGui::SliderFloat("Game Width", &splitPercent, 30.0f, 70.0f, "%.0f%%", ImGuiSliderFlags_AlwaysClamp))
+                    editorSplitRatio = splitPercent / 100.0f;
             }
 
+            bool fullHeight = gameViewportFullHeight;
+            if (ImGui::Checkbox("Game Full Height", &fullHeight))
+                gameViewportFullHeight = fullHeight;
+
+            if (!gameViewportFullHeight) {
+                float hPercent = heightRatio * 100.0f;
+                if (ImGui::SliderFloat("Game Height", &hPercent, 30.0f, 100.0f, "%.0f%%", ImGuiSliderFlags_AlwaysClamp))
+                    heightRatio = hPercent / 100.0f;
+                ImGui::TextDisabled("Viewport is centered vertically");
+            }
+
+            ImGui::Separator();
+            ImGui::TextUnformatted("Simulation");
+            bool isPlaying = mygame::IsEditorSimulationRunning();
+
+            const bool wasPlaying = isPlaying;
+            if (wasPlaying)
+                ImGui::BeginDisabled();
+            if (ImGui::Button("Play"))
+            {
+                mygame::EditorPlaySimulation();
+                isPlaying = mygame::IsEditorSimulationRunning();
+            }
+            if (wasPlaying)
+                ImGui::EndDisabled();
+
+            ImGui::SameLine();
+
+            const bool wasStopped = !isPlaying;
+            if (wasStopped)
+                ImGui::BeginDisabled();
+            if (ImGui::Button("Stop"))
+            {
+                mygame::EditorStopSimulation();
+                isPlaying = mygame::IsEditorSimulationRunning();
+            }
+            if (wasStopped)
+                ImGui::EndDisabled();
+
+            ImGui::SameLine();
+            ImGui::Text("State: %s", isPlaying ? "Playing" : "Stopped");
+
+            // ---- Camera section (editor-only) ----
             ImGui::Separator();
             ImGui::TextUnformatted("Camera");
 
@@ -1087,12 +1106,13 @@ namespace Framework {
 
             if (ImGui::SliderFloat("View Height (world units)", &cameraViewHeight, 0.4f, 2.5f, "%.2f"))
             {
-                // Smaller height => closer zoom. Keep camera updated immediately.
                 camera.SetViewHeight(cameraViewHeight);
             }
             if (!cameraEnabled)
                 ImGui::EndDisabled();
+
             ImGui::TextDisabled("Smaller values zoom the camera closer to the player.");
+
             if (ImGui::Checkbox("Camera Enabled", &cameraEnabled))
             {
                 if (!cameraEnabled)
@@ -1338,13 +1358,25 @@ namespace Framework {
                         float sx = 1.f, sy = 1.f;
                         float r = 1.f, g = 1.f, b = 1.f, a = 1.f;
 
+                        // If a RenderComponent is present, use its size/tint AND visibility
                         if (auto* rc = obj->GetComponentType<Framework::RenderComponent>(
                             Framework::ComponentTypeId::CT_RenderComponent))
                         {
-                            sx = rc->w; sy = rc->h; r = rc->r; g = rc->g; b = rc->b; a = rc->a;
+                            // Skip invisible sprites
+                            if (!rc->visible || rc->a <= 0.0f)
+                                continue;
+
+                            sx = rc->w;
+                            sy = rc->h;
+                            r = rc->r;
+                            g = rc->g;
+                            b = rc->b;
+                            a = rc->a;
                         }
+
                         unsigned tex = sp->texture_id;
                         glm::vec4 uvRect(0.0f, 0.0f, 1.0f, 1.0f);
+
                         if (IsPlayerObject(obj) && idleTex && runTex)
                         {
                             tex = CurrentPlayerTexture();
@@ -1361,12 +1393,12 @@ namespace Framework {
                                     sxUV, syUV);
                             }
                         }
-
                         else if (!tex && !sp->texture_key.empty())
                         {
                             tex = Resource_Manager::getTexture(sp->texture_key);
                             sp->texture_id = tex;
                         }
+
                         if (!tex)
                             continue;
 
@@ -1382,11 +1414,13 @@ namespace Framework {
                         spriteBatches[tex].push_back(instance);
                     }
                 }
+
                 for (auto& [tex, batch] : spriteBatches)
                 {
                     if (!batch.empty())
                         gfx::Graphics::renderSpriteBatchInstanced(tex, batch);
                 }
+
                 // Pass 2: Rectangles (non-sprite quads)
                 for (auto& [id, objPtr] : FACTORY->Objects())
                 {
@@ -1401,9 +1435,14 @@ namespace Framework {
                         Framework::ComponentTypeId::CT_RenderComponent);
                     if (!tr || !rc) continue;
 
+                    // NEW: skip invisible rect-only renderables
+                    if (!rc->visible || rc->a <= 0.0f)
+                        continue;
+
                     if (obj->GetComponentType<Framework::SpriteComponent>(
                         Framework::ComponentTypeId::CT_SpriteComponent))
                         continue;
+
                     unsigned rectTex = rc->texture_id;
                     if (!rectTex && !rc->texture_key.empty())
                     {
@@ -1442,45 +1481,99 @@ namespace Framework {
                     gfx::Graphics::renderCircle(tr->x, tr->y, cc->radius, cc->r, cc->g, cc->b, cc->a);
                 }
 
-                //physics debug overlay
-                if (showPhysicsHitboxes && logic.hitBoxSystem)
-                {
-                    for (auto& [id, objPtr] : FACTORY->Objects())
+                // Pass 4: Hover/Selection highlight outlines (editor)
+                // Drawn in world space, using same VP as the object passes above.
+                // physics debug overlay
+                if (showEditor) {
+                    const auto hoveredId = mygame::GetHoverObjectId();
+                    const auto selectedId = mygame::GetSelectedObjectId();
+                    if ((hoveredId != 0) || (selectedId != 0))
                     {
-                        (void)id;
-                        auto* obj = objPtr.get();
-                        if (!obj) continue;
-
-                        auto* tr = obj->GetComponentType<Framework::TransformComponent>(
-                            Framework::ComponentTypeId::CT_TransformComponent);
-                        auto* rb = obj->GetComponentType<Framework::RigidBodyComponent>(
-                            Framework::ComponentTypeId::CT_RigidBodyComponent);
-                        if (!tr || !rb) continue;
-
-                        gfx::Graphics::renderRectangleOutline(tr->x, tr->y, 0.0f,
-                            rb->width, rb->height,
-                            1.f, 0.f, 0.f, 1.f,
-                            2.f);
-
-                        // Check hurtboxcomponennt for hurtboxes
-                        for (const auto& activeHit : logic.hitBoxSystem->GetActiveHitBoxes())
-                        {
-                            if (activeHit.hitbox && activeHit.hitbox->active)
+                        auto drawOutline = [](float x, float y, float rot, float w, float h, bool selected)
                             {
-                                gfx::Graphics::renderRectangleOutline(
-                                    activeHit.hitbox->spawnX,
-                                    activeHit.hitbox->spawnY,
-                                    0.0f,
-                                    activeHit.hitbox->width,
-                                    activeHit.hitbox->height,
-                                    0.0f, 1.0f, 0.0f, 1.0f, // green outline for enemy attacks
-                                    2.0f
-                                );
+                                // Selected: thicker cyan; Hover: thinner yellow
+                                if (selected)
+                                    gfx::Graphics::renderRectangleOutline(x, y, rot, w, h, 0.f, 1.f, 1.f, 1.f, 6.f);
+                                else
+                                    gfx::Graphics::renderRectangleOutline(x, y, rot, w, h, 1.f, 1.f, 0.f, 1.f, 2.f);
+                            };
+
+                        for (auto& [id, objPtr] : FACTORY->Objects())
+                        {
+                            (void)id;
+                            auto* obj = objPtr.get();
+                            if (!obj) continue;
+                            if (!mygame::ShouldRenderLayer(obj->GetLayerName())) continue;
+
+                            const bool isHovered = (id == hoveredId);
+                            const bool isSelected = (id == selectedId);
+                            if (!isHovered && !isSelected) continue;
+
+                            auto* tr = obj->GetComponentType<Framework::TransformComponent>(
+                                Framework::ComponentTypeId::CT_TransformComponent);
+                            if (!tr) continue;
+
+                            if (auto* rc = obj->GetComponentType<Framework::RenderComponent>(
+                                Framework::ComponentTypeId::CT_RenderComponent))
+                            {
+                                float w = std::abs(rc->w);
+                                float h = std::abs(rc->h);
+                                if (w <= 0.f) w = 1.f;
+                                if (h <= 0.f) h = 1.f;
+                                drawOutline(tr->x, tr->y, tr->rot, w, h, isSelected);
+                            }
+                            else if (obj->GetComponentType<Framework::SpriteComponent>(
+                                Framework::ComponentTypeId::CT_SpriteComponent))
+                            {
+                                // Sprites use RenderComponent for size in this engine; if missing, give a safe default box
+                                drawOutline(tr->x, tr->y, tr->rot, 1.f, 1.f, isSelected);
+                            }
+                            else if (auto* cc = obj->GetComponentType<Framework::CircleRenderComponent>(
+                                Framework::ComponentTypeId::CT_CircleRenderComponent))
+                            {
+                                const float d = std::max(0.1f, cc->radius * 2.f);
+                                drawOutline(tr->x, tr->y, 0.f, d, d, isSelected);
                             }
                         }
                     }
 
+                    if (showPhysicsHitboxes && logic.hitBoxSystem)
+                    {
+                        for (auto& [id, objPtr] : FACTORY->Objects())
+                        {
+                            (void)id;
+                            auto* obj = objPtr.get();
+                            if (!obj) continue;
 
+                            auto* tr = obj->GetComponentType<Framework::TransformComponent>(
+                                Framework::ComponentTypeId::CT_TransformComponent);
+                            auto* rb = obj->GetComponentType<Framework::RigidBodyComponent>(
+                                Framework::ComponentTypeId::CT_RigidBodyComponent);
+                            if (!tr || !rb) continue;
+
+                            gfx::Graphics::renderRectangleOutline(tr->x, tr->y, 0.0f,
+                                rb->width, rb->height,
+                                1.f, 0.f, 0.f, 1.f,
+                                2.f);
+
+                            // Check hurtboxcomponennt for hurtboxes
+                            for (const auto& activeHit : logic.hitBoxSystem->GetActiveHitBoxes())
+                            {
+                                if (activeHit.hitbox && activeHit.hitbox->active)
+                                {
+                                    gfx::Graphics::renderRectangleOutline(
+                                        activeHit.hitbox->spawnX,
+                                        activeHit.hitbox->spawnY,
+                                        0.0f,
+                                        activeHit.hitbox->width,
+                                        activeHit.hitbox->height,
+                                        0.0f, 1.0f, 0.0f, 1.0f, // green outline for enemy attacks
+                                        2.0f
+                                    );
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -1556,6 +1649,7 @@ namespace Framework {
             Framework::setImGui(imguiMs);
             }, "RenderSystem::draw");
     }
+
 /*************************************************************************************
   \brief  Persist ImGui layout, detach callbacks, and release any per-frame resources.
 *************************************************************************************/

@@ -1,13 +1,13 @@
-/*********************************************************************************************
+﻿/*********************************************************************************************
  \file      Camera2D.cpp
  \par       SofaSpuds
- \author    
+ \author    yimo.kong ( yimo.kong@digipen.edu) - Primary Author, 100%
  \brief     Orthographic 2D camera with focus, view height, and aspect-aware projection.
  \details   Maintains a focus point in world space and an orthographic frustum sized by
             viewHeight and aspect (set via viewport size). Provides view, projection, and
             combined view-projection matrices for 2D rendering pipelines.
  \copyright
-            All content �2025 DigiPen Institute of Technology Singapore.
+            All content ©2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 

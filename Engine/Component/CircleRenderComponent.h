@@ -8,7 +8,7 @@
             serialization for data-driven initialization and cloning for prefab instancing.
 
  \copyright
-            All content © 2025 DigiPen Institute of Technology Singapore.
+            All content 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 

@@ -1,7 +1,8 @@
 /*********************************************************************************************
  \file      Selection.cpp
  \par       SofaSpuds
- \author    erika.ishii (erika.ishii@digipen.edu) - Main Author, 100%
+ \author    erika.ishii (erika.ishii@digipen.edu),  - Main Author, 80%
+             elvisshengjie.lim ( elvisshengjie.lim@digipen.edu) - Primary Author, 20%
  \brief     Implements the shared editor selection helpers declared in Selection.h.
             Stores the currently selected game object id in a single translation unit so
             that both ImGui panels and the viewport picking logic can keep each other in
@@ -18,6 +19,7 @@ namespace mygame {
     namespace {
         /// Global editor selection (0 means "no selection").
         Framework::GOCId gSelectedObjectId = 0;
+        Framework::GOCId gHoverObjectId = 0;
     }
 
     void ClearSelection()
@@ -39,5 +41,10 @@ namespace mygame {
     {
         return gSelectedObjectId != 0;
     }
+   
+
+    void SetHoverObjectId(Framework::GOCId id) { gHoverObjectId = id; }
+    Framework::GOCId GetHoverObjectId() { return gHoverObjectId; }
+    bool HasHoverObject() { return gHoverObjectId != 0; }
 
 } // namespace mygame

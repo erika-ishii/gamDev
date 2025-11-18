@@ -19,10 +19,10 @@
 
  \note
             This system relies on AudioImGui for runtime debugging of sound assets and
-            uses the framework’s messaging system for communication with other systems.
+            uses the framework's messaging system for communication with other systems.
 
  \copyright
-            All content © 2025 DigiPen Institute of Technology Singapore.
+            All content Â© 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 #pragma once

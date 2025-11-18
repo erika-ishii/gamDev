@@ -91,6 +91,8 @@ namespace mygame {
         bool overridePrefabVelocity{ false };     // velocities 
         bool overridePlayerAttack{ false };
         bool overridePlayerHealth{ false };
+        bool  overridePrefabVisible = false;  // if true, use SpawnSettings::visible
+        bool  visible = true;   // desired visibility state
     };
 
     /*****************************************************************************************

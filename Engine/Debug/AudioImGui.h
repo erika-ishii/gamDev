@@ -16,7 +16,7 @@
             and Resource_Manager for accessing and controlling audio assets.
 
  \copyright
-            All content © 2025 DigiPen Institute of Technology Singapore.
+            All content Â© 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 #pragma once

@@ -1,7 +1,7 @@
 ﻿/*********************************************************************************************
  \file      PhysicSystem.h
  \par       SofaSpuds
- \author   
+ \author    Ho Jun (h.jun@digipen.edu) - Primary Author, 100%
  \brief     Declares a lightweight 2D physics system (AABB moves/collisions + hitboxes).
  \details   Steps rigid bodies with velocity-based integration, resolves simple AABB
             collisions (axis-separated) against scene geometry, and processes enemy

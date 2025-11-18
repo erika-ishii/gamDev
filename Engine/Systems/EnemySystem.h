@@ -1,13 +1,13 @@
 /*********************************************************************************************
  \file      EnemySystem.h
  \par       SofaSpuds
- \author    
+ \author    jianwei.c (jianwei.c@digipen.edu)
  \brief     Interface and state for enemy lifecycle control (init, update, draw, shutdown).
  \details   Holds a window reference for size-aware logic and a working list of enemy objects.
             Actual behaviors are implemented in the corresponding .cpp using registered
             enemy components (render, sprite, transform, AI, health, type, attack).
  \copyright
-            All content ©2025 DigiPen Institute of Technology Singapore.
+            All content Â© 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 
@@ -39,7 +39,7 @@ namespace Framework {
      */
     class EnemySystem : public Framework::ISystem {
     public:
-        // Bind to the active window for resolution/DPI–aware logic.
+        // Bind to the active window for resolution/DPIï¿½aware logic.
         explicit EnemySystem(gfx::Window& window);
 
         // Allocate resources, discover/register enemy entities, and prime state.

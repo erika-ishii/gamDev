@@ -2,7 +2,10 @@
  \file      LogicSystem.cpp
  \par       SofaSpuds
  \author    erika.ishii (erika.ishii@digipen.edu) - Author, 10%
-           
+            elvisshengjie.lim (elvisshengjie.lim@digipen.edu) - Primary Author, 20%
+            yimo kong (yimo.kong@digipen.edu)      - Author, 10%
+            Ho Jun (h.jun@digipen.edu) - Author, 20%
+
  \brief     Core gameplay loop and input-driven logic for the sample sandbox.
  \details   This module owns high-level game state orchestration:
             - Factory lifetime: component registration, prefab loading/unloading, level create/destroy.
@@ -10,7 +13,7 @@
             - Input mapping: WASD movement, Q/E rotation, Z/X scale, R reset, Shift accelerator.
             - HitBoxSystem integration: spawns short-lived attack boxes towards cursor on LMB.
             - Crash logging utilities: F9 forces a safe, logged crash for robustness testing.
-            - Collision �debug info�: builds AABBs for player/target to visualize or check overlap.
+            - Collision "debug info": builds AABBs for player/target to visualize or check overlap.
 
             Performance & stability:
             * Uses TryGuard::Run to isolate Update() logic and attribute errors with a tag.
@@ -18,18 +21,25 @@
             * Time-based animation frame stepping decoupled from render rate via fps in AnimConfig.
 
             Conventions:
-            * Screen coordinates are in normalized device space (-1..+1) for mouse mapping.
+            * Screen coordinates are mapped to world space via RenderSystem::ScreenToWorld().
             * Layering, physics, and rendering are handled by their respective systems; LogicSystem
               manipulates components (Transform/Render/RigidBody) but does not own them.
  \copyright
-            All content �2025 DigiPen Institute of Technology Singapore.
+            All content ©2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 
 #include "Systems/LogicSystem.h"
+#include "Systems/RenderSystem.h"      // <-- NEW: for ScreenToWorld / camera-based world mapping
+#include "Debug/Selection.h"
 #include <cctype>
+#include <string>
 #include <string_view>
 #include <csignal>
+#include <cmath>
+#include <algorithm>
+#include <filesystem>
+#include <iostream>
 
 namespace Framework {
 
@@ -74,8 +84,7 @@ namespace Framework {
     }
 
     /*****************************************************************************************
-      \brief Cache the player�s base rectangle width/height once for scale operations.
-      \note  Called after player is discovered; resets rectScale to 1.f and marks captured=true.
+      \brief Find the first alive object with a PlayerComponent.
     *****************************************************************************************/
     GOC* LogicSystem::FindAnyAlivePlayer()
     {
@@ -86,19 +95,20 @@ namespace Framework {
         {
             if (auto* obj = ptr.get())
             {
-                // Check if this object has a PlayerComponent
-                if (obj->GetComponentType<PlayerComponent>(
-                    ComponentTypeId::CT_PlayerComponent))
-                {
-                    return obj; // return the first alive player found
-                }
+                if (obj->GetComponentType<PlayerComponent>(ComponentTypeId::CT_PlayerComponent))
+                    return obj;
             }
         }
         return nullptr;
     }
+
+    /*****************************************************************************************
+      \brief Cache the player's base rectangle width/height once for scale operations.
+      \note  Called after player is discovered; resets rectScale to 1.f and marks captured=true.
+    *****************************************************************************************/
     void LogicSystem::CachePlayerSize()
     {
-        if (!player)
+        if (!IsAlive(player))
             return;
 
         if (auto* rc = player->GetComponentType<Framework::RenderComponent>(
@@ -108,6 +118,8 @@ namespace Framework {
             rectBaseH = rc->h;
             rectScale = 1.f;
             captured = true;
+            if (player)
+                scaleStates.erase(player->GetId()); // reset per-object scaling cache for player
         }
     }
 
@@ -179,10 +191,6 @@ namespace Framework {
       \brief Step the sprite-sheet animation based on desired run/idle state.
       \param dt      Delta time (seconds).
       \param wantRun Whether the input implies running (vs idle).
-      \details
-        - Switching state resets frame and local clock.
-        - frameClock accumulates fps-scaled time; increments frame when >= 1.0.
-        - animInfo is updated for the renderer to pick the correct UV cell.
     *****************************************************************************************/
     void LogicSystem::UpdateAnimation(float dt, bool wantRun)
     {
@@ -216,7 +224,7 @@ namespace Framework {
     *****************************************************************************************/
     bool LogicSystem::GetPlayerWorldPosition(float& outX, float& outY) const
     {
-        if (!player)
+        if (!IsAlive(player))
             return false;
 
         auto* tr = player->GetComponentType<Framework::TransformComponent>(
@@ -260,12 +268,14 @@ namespace Framework {
         RegisterComponent(PlayerAttackComponent);
         RegisterComponent(PlayerHealthComponent);
         RegisterComponent(HitBoxComponent);
-
+        RegisterComponent(SpriteAnimationComponent);
         RegisterComponent(EnemyComponent);
         RegisterComponent(EnemyAttackComponent);
         RegisterComponent(EnemyDecisionTreeComponent);
         RegisterComponent(EnemyHealthComponent);
         RegisterComponent(EnemyTypeComponent);
+
+        RegisterComponent(AudioComponent);
         FACTORY = factory.get();
         LoadPrefabs();
 
@@ -297,14 +307,6 @@ namespace Framework {
       \brief Per-frame update: input handling, physics intent, animation stepping, hitbox spawn,
              collision AABB bookkeeping, and crash-test handling.
       \param dt Delta time (seconds).
-      \details
-        - Press F9 to generate a deliberate, logged crash (latched to prevent spam).
-        - Delegates physics/AI progression to factory->Update(dt).
-        - Player rotation: Q/E (�90 deg/s), clamp to [-pi, +pi], R to reset.
-        - Player scale: Z/X (�rate), clamped to [0.25, 4.0], R to reset.
-        - Velocity intent from WASD mapped into RigidBody (actual motion elsewhere).
-        - Sprite �flip� via rc->w sign compared against mouse X for simple facing.
-        - LMB spawns a timed HitBox in the look direction (towards cursor).
     *****************************************************************************************/
     void LogicSystem::Update(float dt)
     {
@@ -326,13 +328,93 @@ namespace Framework {
             if (factory)
                 factory->Update(dt);
 
+            // Keep references fresh each frame in case of spawns/deletions.
             RefreshLevelReferences();
+
+            auto AdvanceSpriteAnimations = [&](float step)
+                {
+                    if (!factory)
+                        return;
+
+                    for (auto& [id, objPtr] : factory->Objects())
+                    {
+                        (void)id;
+                        auto* obj = objPtr.get();
+                        if (!obj)
+                            continue;
+
+                        auto* anim = obj->GetComponentType<Framework::SpriteAnimationComponent>(
+                            Framework::ComponentTypeId::CT_SpriteAnimationComponent);
+                        if (!anim || !anim->HasFrames())
+                            continue;
+
+                        anim->Advance(step);
+                        size_t frameIndex = anim->CurrentFrameIndex();
+                        if (frameIndex >= anim->frames.size())
+                            continue;
+
+                        const auto& frame = anim->frames[frameIndex];
+                        auto* sprite = obj->GetComponentType<Framework::SpriteComponent>(
+                            Framework::ComponentTypeId::CT_SpriteComponent);
+                        if (!sprite)
+                            continue;
+
+                        sprite->texture_key = frame.texture_key;
+                        unsigned tex = anim->ResolveFrameTexture(frameIndex);
+                        if (tex)
+                            sprite->texture_id = tex;
+                    }
+                };
+
+            AdvanceSpriteAnimations(dt);
+
+            // --- Enemy loop: reacts to player's ACTIVE hitbox if both sides are valid ---
+            for (auto* obj : levelObjects)
+            {
+                if (!obj) continue;
+
+                if (obj->GetObjectName() == "Enemy")
+                {
+                    auto* rb = obj->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);
+                    auto* tr = obj->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
+                    if (!(rb && tr)) continue;
+
+                    AABB enemyBox(tr->x, tr->y, rb->width, rb->height);
+
+                    if (IsAlive(player))
+                    {
+                        auto* attack = player->GetComponentType<PlayerAttackComponent>(ComponentTypeId::CT_PlayerAttackComponent);
+                        if (attack && attack->hitbox && attack->hitbox->active)
+                        {
+                            AABB playerHitBox(
+                                attack->hitbox->spawnX,
+                                attack->hitbox->spawnY,
+                                attack->hitbox->width,
+                                attack->hitbox->height
+                            );
+
+                            if (Collision::CheckCollisionRectToRect(playerHitBox, enemyBox))
+                            {
+                                std::cout << "Enemy hit by player at (" << tr->x << ", " << tr->y << ")\n";
+                                if (auto* health = obj->GetComponentType<EnemyHealthComponent>(ComponentTypeId::CT_EnemyHealthComponent))
+                                {
+                                    health->TakeDamage(attack->damage);
+                                }
+                                attack->hitbox->DeactivateHurtBox();
+                            }
+                        }
+                    }
+                }
+            }
 
             if (hitBoxSystem)
                 hitBoxSystem->Update(dt);
 
-            if (!player)
+            // If player pointer is gone this frame, bail out from player-driven logic.
+            if (!IsAlive(player)) {
+                player = nullptr;
                 return;
+            }
 
             auto mouse = input.Manager().GetMouseState();
 
@@ -342,6 +424,8 @@ namespace Framework {
                 Framework::ComponentTypeId::CT_RenderComponent);
             auto* rb = player->GetComponentType<Framework::RigidBodyComponent>(
                 Framework::ComponentTypeId::CT_RigidBodyComponent);
+            auto* attack = player->GetComponentType<Framework::PlayerAttackComponent>(
+                Framework::ComponentTypeId::CT_PlayerAttackComponent);
 
             const float rotSpeed = DegToRad(90.f);
             const float scaleRate = 1.5f;
@@ -349,39 +433,161 @@ namespace Framework {
                 input.IsKeyPressed(GLFW_KEY_RIGHT_SHIFT);
             const float accel = shift ? 3.f : 1.f;
 
+            // Determine which object we are editing/transforming: selected object or player
+            Framework::TransformComponent* targetTr = tr;
+            Framework::RenderComponent* targetRc = rc;
+            Framework::RigidBodyComponent* targetRb = rb;
+            Framework::GOCId targetId = player ? player->GetId() : 0;
+
+            if (factory && mygame::HasSelectedObject())
+            {
+                Framework::GOCId selectedId = mygame::GetSelectedObjectId();
+                if (auto* selected = factory->GetObjectWithId(selectedId))
+                {
+                    targetId = selectedId;
+                    targetTr = selected->GetComponentType<Framework::TransformComponent>(
+                        Framework::ComponentTypeId::CT_TransformComponent);
+                    targetRc = selected->GetComponentType<Framework::RenderComponent>(
+                        Framework::ComponentTypeId::CT_RenderComponent);
+                    targetRb = selected->GetComponentType<Framework::RigidBodyComponent>(
+                        Framework::ComponentTypeId::CT_RigidBodyComponent);
+                }
+            }
+
             // Rotation controls (Q/E), clamped to [-pi, +pi], R to reset.
+            if (targetTr)
+            {
+                if (input.IsKeyPressed(GLFW_KEY_Q)) targetTr->rot += rotSpeed * dt * accel;
+                if (input.IsKeyPressed(GLFW_KEY_E)) targetTr->rot -= rotSpeed * dt * accel;
+                if (targetTr->rot > 3.14159265f)  targetTr->rot -= 6.28318530f;
+                if (targetTr->rot < -3.14159265f) targetTr->rot += 6.28318530f;
+                if (input.IsKeyPressed(GLFW_KEY_R)) targetTr->rot = 0.f;
+            }
+
+            // Scaling controls (Z/X), clamped; R resets scale and size. Works for selected object or player.
+            if ((targetRc || targetRb) && targetId != 0)
+            {
+                auto& scaleState = scaleStates[targetId];
+                if (!scaleState.initialized)
+                {
+                    const bool isPlayerTarget = (player && targetId == player->GetId());
+
+                    if (isPlayerTarget)
+                    {
+                        scaleState.baseRenderW = std::abs(rectBaseW);
+                        scaleState.baseRenderH = std::abs(rectBaseH);
+                        scaleState.scale = rectScale;
+                    }
+                    else if (targetRc)
+                    {
+                        scaleState.baseRenderW = std::abs(targetRc->w);
+                        scaleState.baseRenderH = std::abs(targetRc->h);
+                        scaleState.scale = 1.f;
+                    }
+
+                    if (targetRb)
+                    {
+                        scaleState.baseColliderW = targetRb->width;
+                        scaleState.baseColliderH = targetRb->height;
+                    }
+                    else
+                    {
+                        scaleState.baseColliderW = scaleState.baseRenderW;
+                        scaleState.baseColliderH = scaleState.baseRenderH;
+                    }
+
+                    if (!targetRc && !isPlayerTarget)
+                    {
+                        // No render component: fall back to collider dims to visualize scale
+                        scaleState.baseRenderW = scaleState.baseColliderW;
+                        scaleState.baseRenderH = scaleState.baseColliderH;
+                    }
+
+                    scaleState.initialized = true;
+                }
+
+                bool scaleChanged = false;
+                if (input.IsKeyPressed(GLFW_KEY_X))
+                {
+                    scaleState.scale *= (1.f + scaleRate * dt * accel);
+                    scaleChanged = true;
+                }
+                if (input.IsKeyPressed(GLFW_KEY_Z))
+                {
+                    scaleState.scale *= (1.f - scaleRate * dt * accel);
+                    scaleChanged = true;
+                }
+                if (input.IsKeyPressed(GLFW_KEY_R))
+                {
+                    scaleState.scale = 1.f;
+                    scaleChanged = true;
+                }
+
+                scaleState.scale = std::clamp(scaleState.scale, 0.25f, 4.0f);
+
+                if (scaleChanged)
+                {
+                    if (targetRc)
+                    {
+                        const float widthSign = (targetRc->w >= 0.f) ? 1.f : -1.f;
+                        const float baseW = scaleState.baseRenderW;
+                        const float baseH = scaleState.baseRenderH;
+                        targetRc->w = widthSign * baseW * scaleState.scale;
+                        targetRc->h = baseH * scaleState.scale;
+                    }
+
+                    if (targetRb)
+                    {
+                        targetRb->width = scaleState.baseColliderW * scaleState.scale;
+                        targetRb->height = scaleState.baseColliderH * scaleState.scale;
+                    }
+
+                    if (player && targetId == player->GetId())
+                    {
+                        rectScale = scaleState.scale;
+                        rectBaseW = scaleState.baseRenderW;
+                        rectBaseH = scaleState.baseRenderH;
+                    }
+                }
+            }
+
+            // --- Mouse to world: use RenderSystem camera for consistent world-space aiming ---
+            float mouseWorldX = 0.0f;
+            float mouseWorldY = 0.0f;
+            bool  mouseInsideViewport = false;
+
+            // Direction from player -> mouse in world space (normalized)
+            float aimDirX = 0.0f;
+            float aimDirY = 0.0f;
+
             if (tr)
             {
-                if (input.IsKeyPressed(GLFW_KEY_Q)) tr->rot += rotSpeed * dt * accel;
-                if (input.IsKeyPressed(GLFW_KEY_E)) tr->rot -= rotSpeed * dt * accel;
-                if (tr->rot > 3.14159265f)  tr->rot -= 6.28318530f;
-                if (tr->rot < -3.14159265f) tr->rot += 6.28318530f;
-                if (input.IsKeyPressed(GLFW_KEY_R)) tr->rot = 0.f;
-            }
+                if (auto* rs = RenderSystem::Get())
+                {
+                    if (rs->ScreenToWorld(mouse.x, mouse.y,
+                        mouseWorldX, mouseWorldY, mouseInsideViewport)
+                        && mouseInsideViewport)
+                    {
+                        const float dx = mouseWorldX - tr->x;
+                        const float dy = mouseWorldY - tr->y;
+                        const float lenSq = dx * dx + dy * dy;
+                        if (lenSq > 1e-6f)
+                        {
+                            const float invLen = 1.0f / std::sqrt(lenSq);
+                            aimDirX = dx * invLen;
+                            aimDirY = dy * invLen;
+                        }
 
-            // Scaling controls (Z/X), clamped; R resets scale and size.
-            if (rc)
-            {
-                if (input.IsKeyPressed(GLFW_KEY_X)) rectScale *= (1.f + scaleRate * dt * accel);
-                if (input.IsKeyPressed(GLFW_KEY_Z)) rectScale *= (1.f - scaleRate * dt * accel);
-                rectScale = std::clamp(rectScale, 0.25f, 4.0f);
-                if (input.IsKeyPressed(GLFW_KEY_R)) rectScale = 1.f;
-                rc->w = rectBaseW * rectScale;
-                rc->h = rectBaseH * rectScale;
-            }
-
-            // Map mouse to NDC (-1..+1) for simple facing/aiming computations.
-            float normalizedX{};
-            float normalizedY{};
-            if (tr && rc) {
-                normalizedX = (float)((mouse.x / window->Width()) * 2.0 - 1.0);
-                normalizedY = (float)((mouse.y / window->Height()) * -2.0 + 1.0);
-
-                // Flip sprite by width sign based on mouse relative position.
-                if (normalizedX > tr->x)
-                    rc->w = std::abs(rc->w);
-                else if (normalizedX < tr->x)
-                    rc->w = -std::abs(rc->w);
+                        // Flip sprite by width sign based on world-space direction.
+                        if (rc && aimDirX != 0.0f)
+                        {
+                            if (aimDirX >= 0.0f)
+                                rc->w = std::abs(rc->w);
+                            else
+                                rc->w = -std::abs(rc->w);
+                        }
+                    }
+                }
             }
 
             // Velocity intent set on RigidBody; an external system integrates it.
@@ -408,6 +614,58 @@ namespace Framework {
 
             UpdateAnimation(dt, wantRun);
 
+            // Update PlayerAttackComponent (handles hitbox lifetime)
+            if (attack && tr)
+            {
+                attack->Update(dt, tr);
+            }
+
+            // Handle attack input: spawn through PlayerAttackComponent only (single source of truth).
+            if (input.IsMousePressed(GLFW_MOUSE_BUTTON_LEFT) && attack && tr && rc)
+            {
+                // Only spawn if we have a valid direction (mouse in viewport & not exactly on player).
+                if (aimDirX != 0.0f || aimDirY != 0.0f)
+                {
+                    auto attackTr = *tr;
+                    const float offset = 0.05f;
+                    const float halfW = std::abs(rc->w) * 0.5f;
+                    const float halfH = rc->h * 0.5f;
+
+                    attackTr.x = tr->x + aimDirX * (halfW + offset);
+                    attackTr.y = tr->y + aimDirY * (halfH + offset);
+
+                    hitBoxSystem->SpawnHitBox(player,
+                        attackTr.x, attackTr.y,
+                        0.1f, 0.1f,
+                        10.0f, 0.2f);
+
+                    std::cout << "Hurtbox spawned at (" << attackTr.x << ", " << attackTr.y << ")\n";
+                }
+            }
+            else if (input.IsMousePressed(GLFW_MOUSE_BUTTON_RIGHT) && attack && tr && rc)
+            {
+                // Only spawn if we have a valid direction (mouse in viewport & not exactly on player).
+                if (aimDirX != 0.0f || aimDirY != 0.0f)
+                {
+                    auto attackTr = *tr;
+                    const float offset = 0.05f;
+                    const float halfW = std::abs(rc->w) * 0.5f;
+                    const float halfH = rc->h * 0.5f;
+
+                    attackTr.x = tr->x + aimDirX * (halfW + offset);
+                    attackTr.y = tr->y + aimDirY * (halfH + offset);
+
+                    hitBoxSystem->SpawnProjectile(player,
+                        attackTr.x, attackTr.y,
+                        aimDirX, aimDirY,
+                        0.1f,
+                        0.1f, 0.1f,
+                        10.0f, 5.f);
+
+                    std::cout << "Hurtbox spawned at (" << attackTr.x << ", " << attackTr.y << ")\n";
+                }
+            }
+
             // Collision debug info (player vs a target rect)
             collisionInfo.playerValid = false;
             collisionInfo.targetValid = false;
@@ -416,38 +674,9 @@ namespace Framework {
             {
                 collisionInfo.player = AABB(tr->x, tr->y, rb->width, rb->height);
                 collisionInfo.playerValid = true;
-
-                // LMB spawns a short-lived hit box in the facing direction (towards cursor).
-                if (input.IsMousePressed(GLFW_MOUSE_BUTTON_LEFT) && hitBoxSystem)
-                {
-                    float dx = normalizedX - tr->x;
-                    float dy = normalizedY - tr->y;
-
-                    float len = std::sqrt(dx * dx + dy * dy);
-                    if (len > 0.0001f)
-                    {
-                        dx /= len;
-                        dy /= len;
-                    }
-
-                    // Offset places the hitbox slightly ahead of the player bounds.
-                    float offset = 0.05f;
-                    float spawnX = tr->x + dx * (std::abs(rc->w) * 0.5f + 0.25f + offset);
-                    float spawnY = tr->y + dy * (rc->h * 0.5f + 0.25f + offset);
-
-                    float hitboxWidth = 0.5f;
-                    float hitboxHeight = 0.5f;
-                    float hitboxDamage = 1.0f;
-                    float hitboxDuration = 0.1f;
-
-                    hitBoxSystem->SpawnHitBox(player, spawnX, spawnY, hitboxWidth, hitboxHeight, hitboxDamage, hitboxDuration);
-
-                    // Debug print for visibility.
-                    std::cout << "Hurtbox spawned at (" << spawnX << ", " << spawnY << ")\n";
-                }
             }
 
-            if (collisionTarget)
+            if (IsAlive(collisionTarget))
             {
                 auto* tr2 = collisionTarget->GetComponentType<Framework::TransformComponent>(
                     Framework::ComponentTypeId::CT_TransformComponent);
@@ -488,6 +717,7 @@ namespace Framework {
 
         player = nullptr;
         collisionTarget = nullptr;
+        scaleStates.clear();
         captured = false;
         rectScale = 1.f;
         rectBaseW = 0.5f;
@@ -518,6 +748,8 @@ namespace Framework {
             factory.reset();
         }
         UnloadPrefabs();
+
+        scaleStates.clear();
 
         if (crashLogger)
         {

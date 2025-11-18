@@ -350,6 +350,9 @@ namespace mygame {
                 tr->y = s.y + s.stepY * index;
                 tr->rot = s.rot;
             }
+
+            tr->x += s.stepX * index;
+            tr->y += s.stepY * index;
         }
 
         auto* spriteComp = obj->GetComponentType<SpriteComponent>(ComponentTypeId::CT_SpriteComponent);
@@ -360,6 +363,10 @@ namespace mygame {
                 rc->w = s.w; rc->h = s.h;
             }
             rc->r = s.rgba[0]; rc->g = s.rgba[1]; rc->b = s.rgba[2]; rc->a = s.rgba[3];
+
+            if (s.overridePrefabVisible) {
+                rc->visible = s.visible;
+            }
 
             if (!sRectangleTexKey.empty() && !spriteComp) {
                 rc->texture_key = sRectangleTexKey;
@@ -438,10 +445,6 @@ namespace mygame {
 
         if (auto* type = obj->GetComponentType<EnemyTypeComponent>(ComponentTypeId::CT_EnemyTypeComponent)) {
             type->Etype = Framework::EnemyTypeComponent::EnemyType::physical;
-        }
-
-        if (auto* ai = obj->GetComponentType<EnemyDecisionTreeComponent>(ComponentTypeId::CT_EnemyDecisionTreeComponent)) {
-            if (!ai->tree) ai->tree = CreateDefaultEnemyTree(obj);
         }
 
         // Assign layer on creation
@@ -770,6 +773,8 @@ namespace mygame {
             }
             if (auto* rc = master->GetComponentType<RenderComponent>(ComponentTypeId::CT_RenderComponent)) {
                 gS.w = rc->w; gS.h = rc->h;
+                gS.visible = rc->visible;
+                gS.overridePrefabVisible = false;
             }
             if (auto* atm = master->GetComponentType<PlayerAttackComponent>(ComponentTypeId::CT_PlayerAttackComponent)) {
                 gS.attackDamagep = atm->damage;
@@ -850,6 +855,18 @@ namespace mygame {
             ImGui::DragFloat("w", &gS.w, 0.005f, 0.01f, 1.0f);
             ImGui::DragFloat("h", &gS.h, 0.005f, 0.01f, 1.0f);
             if (disableSizeControls) ImGui::EndDisabled();
+            //Visibility controls-
+                ImGui::SeparatorText("Visibility");
+            if (ImGui::Checkbox("Override prefab visibility", &gS.overridePrefabVisible)) {
+                if (!gS.overridePrefabVisible && masterRender) {
+                    // When turning override OFF, reset to prefab's visibility
+                    gS.visible = masterRender->visible;
+                }
+            }
+
+            if (!gS.overridePrefabVisible) ImGui::BeginDisabled();
+            ImGui::Checkbox("Visible", &gS.visible);
+            if (!gS.overridePrefabVisible) ImGui::EndDisabled();
 
             if (!hasSprite) {
                 ImGui::SeparatorText("Texture");

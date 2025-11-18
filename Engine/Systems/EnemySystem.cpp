@@ -1,7 +1,7 @@
 /*********************************************************************************************
  \file      EnemySystem.cpp
  \par       SofaSpuds
- \author  
+ \author    jianwei.c (jianwei.c@digipen.edu)
  \brief     Skeleton system for enemy lifecycle control (init, per-frame update, draw, shutdown).
  \details   This module is the staging point for enemy-related logic. It currently stubs out
             the standard system hooks and keeps a pointer to the active window for any
@@ -16,7 +16,7 @@
               - Saving/loading enemy state across levels.
 
  \copyright
-            All content ©2025 DigiPen Institute of Technology Singapore.
+            All content Â© 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 
@@ -57,7 +57,7 @@ void EnemySystem::Update(float dt)
 
 /*****************************************************************************************
   \brief Optional debug visualization hook for enemies.
-         Keep this lightweight—avoid gameplay mutations here.
+         Keep this lightweightï¿½avoid gameplay mutations here.
 *****************************************************************************************/
 void EnemySystem::draw()
 {

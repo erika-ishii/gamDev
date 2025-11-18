@@ -1,32 +1,22 @@
 /*********************************************************************************************
  \file      HierarchyPanel.cpp
  \par       SofaSpuds
- \author    
- \brief     ImGui hierarchy panel listing live objects with selection and tooltips.
- \details   Builds a scrollable Name/ID table from Factory::Objects(). Keeps the global
-            selection valid (clears it if the object was removed) and shows basic info
-            in a tooltip. Display names prefer object names, falling back to placeholders.
- \copyright
-            All content ©2025 DigiPen Institute of Technology Singapore.
-            All rights reserved.
+ \author    elvisshengjie.lim (elvisshengjie.lim@digipen.edu) - Primary Author, 100%
+
+ \brief     Implements the ImGui hierarchy panel that lists all active GameObjects
+            with selection, hover, and context menu functionality.
 *********************************************************************************************/
 
 #include "HierarchyPanel.h"
 #include "Factory/Factory.h"
 #include "Composition/Composition.h"
-
 #include "Selection.h"
+
 #include <imgui.h>
 #include <string>
 
 namespace
 {
-    /*****************************************************************************************
-      \brief Produce a stable C-string for an object's display name.
-      \param obj     Object to name (may be null).
-      \param storage Scratch buffer that owns the returned memory.
-      \return const char* backed by \p storage; "<null object>" or "<unnamed>" if needed.
-    *****************************************************************************************/
     [[nodiscard]] const char* DisplayName(const Framework::GOC* obj, std::string& storage)
     {
         if (!obj)
@@ -34,28 +24,13 @@ namespace
             storage = "<null object>";
             return storage.c_str();
         }
+
         const std::string& name = obj->GetObjectName();
-        if (!name.empty())
-        {
-            storage = name;
-        }
-        else
-        {
-            storage.clear();
-            storage += "<unnamed>";
-        }
+        storage = name.empty() ? "<unnamed>" : name;
         return storage.c_str();
     }
 }
 
-/*****************************************************************************************
-  \brief Draw the Hierarchy panel window (Name/ID table + selection maintenance).
-  \details
-    - Verifies the current global selection still exists; clears it if not.
-    - Renders a 2-column table (Name, ID) with selectable rows.
-    - Updates global selection via Selection.h helpers when a row is clicked.
-    - Shows a tooltip with Name and ID on hover.
-*****************************************************************************************/
 void mygame::DrawHierarchyPanel()
 {
     using namespace Framework;
@@ -63,12 +38,13 @@ void mygame::DrawHierarchyPanel()
     if (!FACTORY)
         return;
 
+    mygame::SetHoverObjectId(0);
+
     const auto& objects = FACTORY->Objects();
 
-    // Keep global selection consistent with current factory contents.
     if (mygame::HasSelectedObject())
     {
-        Framework::GOCId selectedId = mygame::GetSelectedObjectId();
+        GOCId selectedId = mygame::GetSelectedObjectId();
         if (objects.find(selectedId) == objects.end())
             mygame::ClearSelection();
     }
@@ -80,15 +56,15 @@ void mygame::DrawHierarchyPanel()
 
         if (objects.empty())
         {
-            ImGui::TextDisabled("No object");
+            ImGui::TextDisabled("No objects available.");
         }
         else if (ImGui::BeginTable("HierarchyTable", 2,
             ImGuiTableFlags_RowBg |
             ImGuiTableFlags_Resizable |
             ImGuiTableFlags_BordersInnerV |
-            ImGuiTableFlags_ScrollY, ImVec2(0.0f, 0.0f)))
+            ImGuiTableFlags_ScrollY))
         {
-            ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_None);
+            ImGui::TableSetupColumn("Name");
             ImGui::TableSetupColumn("ID", ImGuiTableColumnFlags_WidthFixed, 80.0f);
             ImGui::TableHeadersRow();
 
@@ -100,7 +76,6 @@ void mygame::DrawHierarchyPanel()
                 const GOC* obj = objPtr.get();
                 const char* displayName = DisplayName(obj, nameBuffer);
 
-                // Column 0: name + selectable row
                 ImGui::TableSetColumnIndex(0);
                 ImGui::PushID(static_cast<int>(id));
 
@@ -110,15 +85,30 @@ void mygame::DrawHierarchyPanel()
 
                 if (ImGui::IsItemHovered())
                 {
+                    mygame::SetHoverObjectId(id);
+
                     ImGui::BeginTooltip();
                     ImGui::Text("Name : %s", displayName);
                     ImGui::Text("ID   : %u", id);
                     ImGui::EndTooltip();
                 }
 
+                // Right-click context menu (renamed variable to avoid shadowing)
+                if (ImGui::BeginPopupContextItem("##hier_ctx"))
+                {
+                    if (ImGui::MenuItem("Delete"))
+                    {
+                        if (auto* target = FACTORY->GetObjectWithId(id))
+                            FACTORY->Destroy(target);
+
+                        if (mygame::GetSelectedObjectId() == id)
+                            mygame::ClearSelection();
+                    }
+                    ImGui::EndPopup();
+                }
+
                 ImGui::PopID();
 
-                // Column 1: ID
                 ImGui::TableSetColumnIndex(1);
                 ImGui::Text("%u", id);
             }

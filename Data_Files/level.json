@@ -16,7 +16,7 @@
         "Components": 
         {
           "TransformComponent": { "x":-0.5, "y": 0.0, "rot": 0.0 },
-          "RenderComponent":    { "w": 0.5, "h": 0.5, "r": 0.95, "g": 0.75, "b": 0.25, "a": 1.0 },
+          "RenderComponent":    { "w": 0.5, "h": 0.5, "r": 0.95, "g": 0.75, "b": 0.25, "a": 1.0, "visible": 0 },
           "RigidBodyComponent": { "velocity_x": 0, "velocity_y": 0, "width": 0.5, "height": 0.5 }
         }
       },
@@ -34,7 +34,8 @@
             "r": 1,
             "g": 1,
             "b": 1,
-            "a": 1
+            "a": 1,
+            "visible": 1
           },
           "SpriteComponent": { "texture_key": "player" },
           "RigidBodyComponent": {

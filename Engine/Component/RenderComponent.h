@@ -39,6 +39,8 @@ namespace Framework {
         std::string  texture_key;      
         std::string  texture_path;     
 
+        bool visible{ true };
+
         /*************************************************************************************
           \brief Initializes the component.
                  Default implementation does nothing but may be extended if needed.
@@ -75,6 +77,12 @@ namespace Framework {
             if (s.HasKey("a")) StreamRead(s, "a", a);
             if (s.HasKey("texture_key")) StreamRead(s, "texture_key", texture_key);
             if (s.HasKey("texture_path")) StreamRead(s, "texture_path", texture_path);
+
+            if (s.HasKey("visible")) {
+                int visibleInt = static_cast<int>(visible);
+                StreamRead(s, "visible", visibleInt);
+                visible = (visibleInt != 0);
+            }
         }
 
         /*************************************************************************************
@@ -96,6 +104,7 @@ namespace Framework {
             copy->texture_key = texture_key;
             copy->texture_id = texture_id;
             copy->texture_path = texture_path;
+            copy->visible = visible;
 
             //Transfer ownership to whoever call clone()
             return copy;

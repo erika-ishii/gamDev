@@ -108,22 +108,22 @@ bool Resource_Manager::load(const std::string& id, const std::string& path)
 *****************************************************************************************/
 void Resource_Manager::loadAll(const std::string& directory)
 {
-    for (auto& entry : fs::directory_iterator(directory)) 
+    for (auto& entry : fs::recursive_directory_iterator(directory))
     {
         if (!entry.is_regular_file()) continue;
+
         fs::path path = entry.path();
         std::string ext = GetExtension(path.string());
-        std::string name = path.stem().string(); // filename without extension
-        std::string stem = path.stem().string();
+        std::string stem = path.stem().string();      // filename without extension
         size_t pos = stem.find_first_of("-_.");
         std::string id = (pos == std::string::npos) ? stem : stem.substr(0, pos);
-        if (isTexture(ext) || isSound(ext)) 
+
+        if (isTexture(ext) || isSound(ext))
         {
-            if (load(id, path.string())) 
+            if (load(id, path.string()))
             {
-                std::cout << "[Resource_Manager] Loaded: " << id
-                    << " (" << path.string() << ")"
-                    << std::endl;
+                std::cout << "[Resource_Manager] Loaded: "
+                    << id << " from " << path.string() << "\n";
             }
         }
     }

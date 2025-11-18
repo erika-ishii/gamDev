@@ -2,15 +2,15 @@
  \file      LogicSystem.h
  \par       SofaSpuds
  \author    erika.ishii (erika.ishii@digipen.edu) - Author, 10%
+            yimo kong (yimo.kong@digipen.edu)      - Author, 10%
  \brief     Game logic coordinator: level load/refresh, input-driven updates, animation.
  \details   Owns the GameObjectFactory and level objects, advances player/enemy state each
             frame, updates sprite animation, exposes simple collision snapshots, and
             bridges to HitBoxSystem.
  \copyright
-            All content �2025 DigiPen Institute of Technology Singapore.
+            All content ©2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
-
 
 #pragma once
 
@@ -20,6 +20,7 @@
 #include "Component/RenderComponent.h"
 #include "Component/CircleRenderComponent.h"
 #include "Component/SpriteComponent.h"
+#include "Component/SpriteAnimationComponent.h"
 #include "Component/PlayerComponent.h"
 #include "Component/PlayerAttackComponent.h"
 #include "Component/PlayerHealthComponent.h"
@@ -45,6 +46,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <unordered_map>
 
 namespace gfx { class Window; }
 class CrashLogger;
@@ -118,6 +120,17 @@ namespace Framework {
         enum class AnimState { Idle, Run };
         struct AnimConfig { int cols; int rows; int frames; float fps; };
 
+       
+        struct ScaleState
+        {
+            float baseRenderW{ 1.f };
+            float baseRenderH{ 1.f };
+            float baseColliderW{ 1.f };
+            float baseColliderH{ 1.f };
+            float scale{ 1.f };
+            bool  initialized{ false };
+        };
+
         const AnimConfig& CurrentConfig() const;
         bool  IsAlive(GOC* obj) const;
         void  CachePlayerSize();
@@ -152,6 +165,8 @@ namespace Framework {
         bool                             captured{ false };
         bool                             crashTestLatched{ false };
         std::unique_ptr<CrashLogger>     crashLogger;
+
+        std::unordered_map<GOCId, ScaleState> scaleStates;
     };
 
 } // namespace Framework

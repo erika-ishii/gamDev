@@ -17,7 +17,7 @@
             - Dynamic listing of all loaded sound resources.
 
  \copyright
-            All content © 2025 DigiPen Institute of Technology Singapore.
+            All content Â© 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 #include "AudioImGui.h"

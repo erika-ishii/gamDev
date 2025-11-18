@@ -1,7 +1,7 @@
 /*********************************************************************************************
  \file      SystemManager.h
  \par       SofaSpuds
- \author  
+ \author     elvisshengjie.lim (elvisshengjie.lim@digipen.edu) - Primary Author, 100%
  \brief     Declares the frame orchestrator that drives all engine systems.
  \details   Owns an ordered list of ISystem instances and coordinates their lifecycle:
             IntializeAll(), per-frame UpdateAll(dt), DrawAll(), and ShutdownAll().

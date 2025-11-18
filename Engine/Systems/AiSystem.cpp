@@ -14,7 +14,7 @@
             functionality.
 
  \copyright
-            All content © 2025 DigiPen Institute of Technology Singapore.
+            All content Â© 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 #include "AiSystem.h"
@@ -28,7 +28,12 @@ namespace Framework
      \param window
         Reference to the game's graphics window, used for optional debug rendering.
     *****************************************************************************************/
-   AiSystem::AiSystem(gfx::Window& window) : window(&window) {}
+    AiSystem::AiSystem(gfx::Window& window,
+        LogicSystem& logicSystem)
+        : window(&window),
+        logic(&logicSystem)
+    {}
+
    /*****************************************************************************************
      \brief
         Initializes the AI system.
@@ -52,20 +57,26 @@ namespace Framework
         Iterates through all game objects retrieved from the Factory. For each object,
         it attempts to run the default enemy decision tree safely using the provided delta time.
     *****************************************************************************************/
-    void AiSystem::Update(float dt)
+void AiSystem::Update(float dt)
+{
+    for (auto& [id, gocPtr] : FACTORY->Objects())
     {
-        auto& objects = FACTORY->Objects();
-
-        for (auto& [id, gocPtr] : objects)
+        if (!gocPtr) continue;
+        GOC* goc = gocPtr.get();
+        auto* ai = goc->GetComponentType<EnemyDecisionTreeComponent>(
+            ComponentTypeId::CT_EnemyDecisionTreeComponent);
+        if (!ai) continue;
+        // Lazy initialize decision tree
+        if (!ai->tree)
         {
-            if (!gocPtr) continue;
-            GOC* goc = gocPtr.get();
-
-            // Run AI tree safely with dt
-            UpdateDefaultEnemyTree(goc, dt);
+            ai->tree = CreateDefaultEnemyTree(goc, logic); // Pass LogicSystem pointer from AiSystem
+            std::cout << "[AiSystem] Initialized decision tree for enemy ID: " << id << "\n";
         }
-
+        if (ai->tree)
+            ai->tree->run(dt);
+        UpdateDefaultEnemyTree(goc, dt, logic);
     }
+}
 
     /*****************************************************************************************
      \brief

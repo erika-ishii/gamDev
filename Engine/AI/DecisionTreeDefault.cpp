@@ -18,7 +18,7 @@
             and execution of context-specific actions such as movement or attack logic.
 
  \copyright
-            All content � 2025 DigiPen Institute of Technology Singapore.
+            All content © 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 #include "DecisionTreeDefault.h"
@@ -67,7 +67,7 @@ namespace Framework
     \return
     A unique pointer to a newly created DecisionTree containing patrol and attack logic.
     *****************************************************************************************/
-    std::unique_ptr<DecisionTree> CreateDefaultEnemyTree(GOC* enemy)
+    std::unique_ptr<DecisionTree> CreateDefaultEnemyTree(GOC* enemy, LogicSystem* logic)
     {
         if (!enemy) return nullptr;
         const GOCId enemyID = enemy->GetId();
@@ -147,7 +147,7 @@ namespace Framework
        
         //Attack Leaf
         auto AttackLeaf = std::make_unique<DecisionNode>
-        (nullptr, nullptr,nullptr,[enemyID](float dt)
+        (nullptr, nullptr,nullptr,[enemyID,logic](float dt)
         { 
             GOC* enemy = FACTORY->GetObjectWithId(enemyID);
             if (!enemy) return;
@@ -202,17 +202,29 @@ namespace Framework
             {
                 attack->attack_timer = 0.0f;
                 attack->hitbox->active = true;
-                // Spawn hitbox based on enemy direction
-                float offsetX = (vx > 0.0f) ? attack->hitbox->width : (vx < 0.0f ? -attack->hitbox->width : 0.0f);
-                float offsetY = (vy > 0.0f) ? attack->hitbox->height : (vy < 0.0f ? -attack->hitbox->height : 0.0f);
-                attack->hitbox->spawnX = tr->x + offsetX;
-                attack->hitbox->spawnY = tr->y + offsetY;
-                attack->hitbox->duration = 0.15f;
-                std::cout << "Enemy attacks! HitBox active at ("
-                    << attack->hitbox->spawnX << ", " << attack->hitbox->spawnY
-                    << ") with damage " << attack->damage
-                    << " and size (" << attack->hitbox->width << "x" << attack->hitbox->height << ")\n";
 
+                // Spawn hitbox based on enemy direction
+                float offsetX = (ai->facing == Facing::RIGHT) ? attack->hitbox->width :
+                    (ai->facing == Facing::LEFT) ? -attack->hitbox->width : 0.0f;
+                float offsetY = 0.0f;
+
+                float spawnX = tr->x + offsetX;
+                float spawnY = tr->y + offsetY;
+
+                logic->hitBoxSystem->SpawnHitBox(
+                    enemy,
+                    spawnX,
+                    spawnY,
+                    static_cast<float>(attack->hitbox->width),
+                    static_cast<float>(attack->hitbox->height),
+                    static_cast<float>(attack->damage),
+                    static_cast<float>(attack->hitbox->duration)
+                );
+
+                std::cout << "[DEBUG] Enemy ID " << enemy->GetId()
+                    << " spawned hitbox at (" << spawnX << ", " << spawnY << ")"
+                    << " with damage " << attack->damage
+                    << " and size (" << attack->hitbox->width << "x" << attack->hitbox->height << ")\n";
             }
             
             if (attack->hitbox->active)
@@ -270,7 +282,7 @@ namespace Framework
     Initializes the decision tree if it does not yet exist, then runs it to determine
     and perform the appropriate behavior.
     *****************************************************************************************/
-    void UpdateDefaultEnemyTree(GOC* enemy, float dt)
+    void UpdateDefaultEnemyTree(GOC* enemy, float dt, LogicSystem* logic)
     {
         if (!enemy) return;
 
@@ -279,7 +291,7 @@ namespace Framework
 
         // Lazy initialization
         if (!enemyDecisionTree->tree)
-            enemyDecisionTree->tree = CreateDefaultEnemyTree(enemy);
+            enemyDecisionTree->tree = CreateDefaultEnemyTree(enemy, logic);
 
         // Run the tree with delta time
         if (enemyDecisionTree->tree)

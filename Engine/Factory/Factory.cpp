@@ -42,6 +42,7 @@
 #include "Component/RenderComponent.h"
 #include "Component/CircleRenderComponent.h"
 #include "Component/SpriteComponent.h"
+#include "Component/SpriteAnimationComponent.h"
 
 #include "Component/PlayerComponent.h"
 #include "Component/PlayerHealthComponent.h"
@@ -283,6 +284,15 @@ namespace Framework {
         return out;
     }
 
+    /*************************************************************************************
+    \brief Look up the JSON component name string from a ComponentTypeId.
+    \param id The concrete ComponentTypeId to resolve.
+    \return The registered JSON key (e.g., "TransformComponent") if found; empty string otherwise.
+    \details
+      - Iterates the ComponentMap registry (name → ComponentCreator).
+      - Matches by comparing the stored creator->TypeId against the given id.
+      - Safe on missing/unknown ids and null creators.
+   *************************************************************************************/
     std::string GameObjectFactory::ComponentNameFromId(ComponentTypeId id) const
     {
         for (auto const& [name, creator] : ComponentMap) {
@@ -292,6 +302,17 @@ namespace Framework {
         return {};
     }
 
+
+    /*************************************************************************************
+     \brief Serialize a single attached component into a JSON object.
+     \param component The component to serialize (polymorphic GameComponent&).
+     \return A json::object() containing only the relevant fields for that component type.
+     \details
+       - Switches on component.GetTypeId() and static_casts to the concrete type.
+       - Emits a compact JSON blob with stable keys per component (e.g., Transform: x,y,rot).
+       - Unknown/unhandled types default to an empty JSON object.
+       - Pure tag/marker components (e.g., PlayerComponent) serialize to an empty object.
+    *************************************************************************************/
     json GameObjectFactory::SerializeComponentToJson(const GameComponent& component) const
     {
         switch (component.GetTypeId()) {
@@ -301,7 +322,7 @@ namespace Framework {
         }
         case ComponentTypeId::CT_RenderComponent: {
             auto const& rc = static_cast<RenderComponent const&>(component);
-            return json{ {"w", rc.w}, {"h", rc.h}, {"r", rc.r}, {"g", rc.g}, {"b", rc.b}, {"a", rc.a} };
+            return json{ {"w", rc.w}, {"h", rc.h}, {"r", rc.r}, {"g", rc.g}, {"b", rc.b}, {"a", rc.a}, {"visible", rc.visible} };
         }
         case ComponentTypeId::CT_CircleRenderComponent: {
             auto const& cc = static_cast<CircleRenderComponent const&>(component);
@@ -313,6 +334,22 @@ namespace Framework {
             if (!sp.texture_key.empty()) out["texture_key"] = sp.texture_key;
             if (!sp.path.empty()) out["path"] = sp.path;
             return out;
+        }
+        case ComponentTypeId::CT_SpriteAnimationComponent: {
+            auto const& anim = static_cast<SpriteAnimationComponent const&>(component);
+            json frames = json::array();
+            for (const auto& frame : anim.frames) {
+                json entry = json::object();
+                if (!frame.texture_key.empty()) entry["texture_key"] = frame.texture_key;
+                if (!frame.path.empty()) entry["path"] = frame.path;
+                frames.push_back(entry);
+            }
+            return json{
+                {"fps", anim.fps},
+                {"loop", anim.loop},
+                {"play", anim.play},
+                {"frames", frames}
+            };
         }
         case ComponentTypeId::CT_RigidBodyComponent: {
             auto const& rb = static_cast<RigidBodyComponent const&>(component);
@@ -330,12 +367,12 @@ namespace Framework {
         case ComponentTypeId::CT_PlayerHealthComponent:
         {
             auto const& hp = static_cast<PlayerHealthComponent const&>(component);
-            return json{ {"health", hp.playerHealth}, {"maxhealth", hp.playerMaxhealth} };
+            return json{ {"playerHealth", hp.playerHealth}, {"playerMaxhealth", hp.playerMaxhealth} };
         }
         case ComponentTypeId::CT_PlayerAttackComponent:
         {
-          auto const& atk = static_cast<PlayerAttackComponent const&>(component);
-          return json{ {"damage", atk.damage}, {"attack_speed", atk.attack_speed} };
+            auto const& atk = static_cast<PlayerAttackComponent const&>(component);
+            return json{ {"damage", atk.damage}, {"attack_speed", atk.attack_speed} };
         }
         case ComponentTypeId::CT_EnemyComponent:
         case ComponentTypeId::CT_EnemyDecisionTreeComponent:
@@ -346,7 +383,7 @@ namespace Framework {
         }
         case ComponentTypeId::CT_EnemyHealthComponent: {
             auto const& hp = static_cast<EnemyHealthComponent const&>(component);
-            return json{ {"health", hp.enemyHealth}, {"maxhealth", hp.enemyMaxhealth} };
+            return json{ {"enemyHealth", hp.enemyHealth}, {"enemyMaxhealth", hp.enemyMaxhealth} };
         }
         case ComponentTypeId::CT_EnemyTypeComponent: {
             auto const& type = static_cast<EnemyTypeComponent const&>(component);
@@ -358,10 +395,9 @@ namespace Framework {
         case ComponentTypeId::CT_HitBoxComponent: {
             auto const& hit = static_cast<HitBoxComponent const&>(component);
             return json{
-            {"hitwidth",   hit.width},
-            {"hitheight",  hit.height},
-            {"hitduration",hit.duration}
-     
+                {"width",   hit.width},
+                {"height",  hit.height},
+                {"duration",hit.duration}
             };
         }
         default:
@@ -370,16 +406,33 @@ namespace Framework {
         return json::object();
     }
 
+
+    /*************************************************************************************
+     \brief Save a set of GOCs to a level JSON file.
+     \param filename  Target JSON path to write to (folders are created if missing).
+     \param objects   Non-owning pointers to GOCs to serialize (must still be owned by the factory).
+     \param levelName Optional level name; if empty, the filename stem is used.
+     \return true on successful write; false if file I/O fails.
+     \details
+       - Builds the JSON structure:
+           { "Level": { "name": "<levelName>", "GameObjects": [ { ... }, ... ] } }
+       - Skips objects not owned by the factory or those pending deletion.
+       - For each object:
+           - Writes "name" (if non-empty) and "layer".
+           - Serializes each component via SerializeComponentToJson().
+       - Pretty-prints with 2-space indentation.
+       - Caches last-saved level metadata (path/name/object list) for editor convenience.
+    *************************************************************************************/
     bool GameObjectFactory::SaveLevelInternal(const std::string& filename, const std::vector<GOC*>& objects,
         const std::string& levelName)
     {
-         json root = json::object();                 // Create the root JSON object: { }
-         auto& level = root["Level"];                // Create/access child "Level" node (creates it if missing)
+        json root = json::object();                 // Create the root JSON object: { }
+        auto& level = root["Level"];                // Create/access child "Level" node (creates it if missing)
         level = json::object();                     // Ensure "Level" itself is an object: { "Level": { } }
 
         std::string finalName = levelName;          // Copy the provided level name
-        if (finalName.empty()) {                    
-            std::filesystem::path p(filename);      
+        if (finalName.empty()) {
+            std::filesystem::path p(filename);
             finalName = p.stem().string();          //  default to its stem (filename without extension)
         }
         if (!finalName.empty())                     // If we have a non-empty name by now…
@@ -420,32 +473,53 @@ namespace Framework {
             array.push_back(std::move(objJson));      // Append object to "GameObjects" array
         }
 
-            std::filesystem::path outputPath(filename);   // Normalize/hold output path
-            std::error_code ec;                           // Non-throwing error code holder
-            if (outputPath.has_parent_path())
+        std::filesystem::path outputPath(filename);   // Normalize/hold output path
+        std::error_code ec;                           // Non-throwing error code holder
+        if (outputPath.has_parent_path())
             std::filesystem::create_directories(outputPath.parent_path(), ec); // Ensure folders exist
 
-            std::ofstream out(outputPath);                // Open the output file for write
-            if (!out.is_open())
-                return false;                             // Fail if we couldn't open it
+        std::ofstream out(outputPath);                // Open the output file for write
+        if (!out.is_open())
+            return false;                             // Fail if we couldn't open it
 
-            out << std::setw(2) << root;                  // Pretty-print JSON with 2-space indent
-            if (!out.good())
-                return false;                             // Fail if stream went bad during write
+        out << std::setw(2) << root;                  // Pretty-print JSON with 2-space indent
+        if (!out.good())
+            return false;                             // Fail if stream went bad during write
 
-            LastLevelCache = objects;                     // Cache snapshot of the objects we just saved (non-owning)
-            LastLevelNameCache = finalName;               // Cache the level name
-            LastLevelPathCache = outputPath;              // Cache the level path
-                return true;                                  // Success
+        LastLevelCache = objects;                     // Cache snapshot of the objects we just saved (non-owning)
+        LastLevelNameCache = finalName;               // Cache the level name
+        LastLevelPathCache = outputPath;              // Cache the level path
+        return true;                                  // Success
     }
 
-
+    /*************************************************************************************
+ \brief Save a specific subset of game objects into a level file.
+ \param filename  Target JSON file path to write to.
+ \param objects   List of non-owning GOC* pointers to serialize (must belong to the factory).
+ \param levelName Optional level name; overrides the default filename stem.
+ \return true if the level was successfully saved; false on failure.
+ \details
+   - Acts as a convenience wrapper for SaveLevelInternal().
+   - The caller explicitly specifies which objects to write (e.g., a selection or layer subset).
+   - SaveLevelInternal handles JSON formatting, component serialization, and directory creation.
+*************************************************************************************/
     bool GameObjectFactory::SaveLevel(const std::string& filename, const std::vector<GOC*>& objects,
         const std::string& levelName)
     {
         return SaveLevelInternal(filename, objects, levelName);
     }
 
+
+    /*************************************************************************************
+     \brief Save all active (non-deleted) game objects currently owned by the factory.
+     \param filename  Target JSON file path to write to.
+     \param levelName Optional level name; defaults to filename stem if empty.
+     \return true if save succeeded; false if file I/O failed.
+     \details
+       - Iterates through GameObjectIdMap and collects all valid, non-pending-deletion GOCs.
+       - Builds a temporary vector of pointers to pass to SaveLevelInternal().
+       - Useful for autosaving or full-level export operations from the editor/runtime.
+    *************************************************************************************/
     bool GameObjectFactory::SaveLevel(const std::string& filename, const std::string& levelName)
     {
         std::vector<GOC*> active;
@@ -458,7 +532,6 @@ namespace Framework {
         }
         return SaveLevelInternal(filename, active, levelName);
     }
-
 
     /*************************************************************************************
       \brief Assigns a unique ID to the GOC and registers it in the id→object map.

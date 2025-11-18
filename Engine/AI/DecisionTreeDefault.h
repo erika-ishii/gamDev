@@ -17,7 +17,7 @@
             basic reactive decision-making.
 
  \copyright
-            All content � 2025 DigiPen Institute of Technology Singapore.
+            All content 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 #pragma once
@@ -33,11 +33,13 @@
 #include "Component/PlayerComponent.h"
 #include "Physics/Dynamics/RigidBodyComponent.h"
 #include "Physics/System/Physics.h"
+#include "Systems/LogicSystem.h"
 #include <cstdio>
 #include <random>
 namespace Framework 
 {
+ class LogicSystem;
  bool IsPlayerNear(GOC* enemy, float radius = 0.1f); 
- std::unique_ptr<DecisionTree> CreateDefaultEnemyTree(GOC* enemy);
- void UpdateDefaultEnemyTree(GOC* enemy, float dt);
+ std::unique_ptr<DecisionTree> CreateDefaultEnemyTree(GOC* enemy, LogicSystem* logic);
+ void UpdateDefaultEnemyTree(GOC* enemy, float dt, LogicSystem* logic);
 }

@@ -18,33 +18,12 @@
             an action (e.g., "Attack") or evaluate further sub-decisions recursively.
 
  \copyright
-            All content © 2025 DigiPen Institute of Technology Singapore.
+            All content Â© 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 #pragma once
 #include <memory>
 #include <functional>
-/*********************************************************************************************
- \class DecisionNode
- \brief
-    Represents a single node in a decision tree used for AI or behavior logic.
-
- \details
-    Each DecisionNode contains:
-      - A conditional function (`mainqns`) that evaluates a boolean decision based on input.
-      - Two child nodes (`ifTrue` and `ifFalse`) representing the next branch of logic.
-      - An optional action (`action`) to perform when the node is evaluated.
-
-    DecisionNodes can be combined to form complex decision trees where each node
-    dynamically chooses the next branch or executes an action. This allows flexible,
-    runtime-configurable AI or game logic without hardcoding branching behavior.
-
- \note
-    - The class supports move semantics but deletes copy semantics to ensure unique
-      ownership of child nodes.
-    - The `evaluate` function should be called with a relevant context (e.g., delta time)
-      to execute the node's logic recursively.
-*********************************************************************************************/
 class DecisionNode
 {
     public:

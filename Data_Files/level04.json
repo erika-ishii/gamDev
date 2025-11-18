@@ -1,0 +1,338 @@
+{
+  "Level": {
+    "GameObjects": [
+      {
+        "Components": {
+          "CircleRenderComponent": {
+            "a": 1.0,
+            "b": 0.30000001192092896,
+            "g": 0.20000000298023224,
+            "r": 0.8999999761581421,
+            "radius": 0.20000000298023224
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": -0.699999988079071,
+            "y": -0.699999988079071
+          }
+        },
+        "layer": "layer1",
+        "name": "Circle"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 0.25,
+            "g": 0.75,
+            "h": 0.5,
+            "r": 0.949999988079071,
+            "visible": false,
+            "w": 0.5
+          },
+          "RigidBodyComponent": {
+            "height": 0.5,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 0.5
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": -0.5,
+            "y": 0.0
+          }
+        },
+        "layer": "Default",
+        "name": "Rect"
+      },
+      {
+        "Components": {
+          "HitBoxComponent": {
+            "duration": 0.15000000596046448,
+            "height": 0.15000000596046448,
+            "width": 0.15000000596046448
+          },
+          "PlayerAttackComponent": {
+            "attack_speed": 1.0,
+            "damage": 50
+          },
+          "PlayerComponent": {},
+          "PlayerHealthComponent": {
+            "playerHealth": 0,
+            "playerMaxhealth": 100
+          },
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.25,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.25
+          },
+          "RigidBodyComponent": {
+            "height": 0.20999999344348907,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 0.10000000149011612
+          },
+          "SpriteComponent": {
+            "texture_key": "player"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": 0.26041701436042786,
+            "y": -0.06504606455564499
+          }
+        },
+        "layer": "Default",
+        "name": "Player"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.5,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.5
+          },
+          "RigidBodyComponent": {
+            "height": 0.5,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 0.5
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": 0.6918981671333313,
+            "y": 0.14004631340503693
+          }
+        },
+        "layer": "Default",
+        "name": "Rect"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.30000001192092896,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.30000001192092896
+          },
+          "SpriteAnimationComponent": {
+            "fps": 6.0,
+            "frames": [
+              {
+                "path": "../../assets/Textures/Environment/lvl 1_Hawker/Clothes 01/clothes01f0.png",
+                "texture_key": "clothes01f0"
+              },
+              {
+                "path": "../../assets/Textures/Environment/lvl 1_Hawker/Clothes 01/clothes01f1.png",
+                "texture_key": "clothes01f1"
+              },
+              {
+                "path": "../../assets/Textures/Environment/lvl 1_Hawker/Clothes 01/clothes01f2.png",
+                "texture_key": "clothes01f2"
+              },
+              {
+                "path": "../../assets/Textures/Environment/lvl 1_Hawker/Clothes 01/clothes01f3.png",
+                "texture_key": "clothes01f3"
+              },
+              {
+                "path": "../../assets/Textures/Environment/lvl 1_Hawker/Clothes 01/clothes01f4.png",
+                "texture_key": "clothes01f4"
+              },
+              {
+                "path": "../../assets/Textures/Environment/lvl 1_Hawker/Clothes 01/clothes01f5.png",
+                "texture_key": "clothes01f5"
+              }
+            ],
+            "loop": true,
+            "play": true
+          },
+          "SpriteComponent": {
+            "texture_key": "clothes01f2"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": 0.009259248152375221,
+            "y": -0.4409722089767456
+          }
+        },
+        "layer": "Default",
+        "name": "Hang_Clothes_01"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.30000001192092896,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.30000001192092896
+          },
+          "SpriteAnimationComponent": {
+            "fps": 6.0,
+            "frames": [
+              {
+                "path": "../../assets/Textures/Environment/lvl 1_Hawker/Flag/flagf0.png",
+                "texture_key": "flagf0"
+              },
+              {
+                "path": "../../assets/Textures/Environment/lvl 1_Hawker/Flag/flagf1.png",
+                "texture_key": "flagf1"
+              },
+              {
+                "path": "../../assets/Textures/Environment/lvl 1_Hawker/Flag/flagf2.png",
+                "texture_key": "flagf2"
+              },
+              {
+                "path": "../../assets/Textures/Environment/lvl 1_Hawker/Flag/flagf3.png",
+                "texture_key": "flagf3"
+              },
+              {
+                "path": "../../assets/Textures/Environment/lvl 1_Hawker/Flag/flagf4.png",
+                "texture_key": "flagf4"
+              },
+              {
+                "path": "../../assets/Textures/Environment/lvl 1_Hawker/Flag/flagf5.png",
+                "texture_key": "flagf5"
+              }
+            ],
+            "loop": true,
+            "play": true
+          },
+          "SpriteComponent": {
+            "texture_key": "flagf5"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": 0.21990740299224854,
+            "y": 0.5300925970077515
+          }
+        },
+        "layer": "Default",
+        "name": "Hawker_Flag"
+      },
+      {
+        "Components": {
+          "EnemyAttackComponent": {
+            "attack_speed": 1.2000000476837158,
+            "damage": 15
+          },
+          "EnemyComponent": {},
+          "EnemyDecisionTreeComponent": {},
+          "EnemyHealthComponent": {
+            "enemyHealth": 1,
+            "enemyMaxhealth": 1
+          },
+          "EnemyTypeComponent": {
+            "type": "physical"
+          },
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.30000001192092896,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.30000001192092896
+          },
+          "RigidBodyComponent": {
+            "height": 0.10000000149011612,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 0.10000000149011612
+          },
+          "SpriteComponent": {
+            "texture_key": "boss"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": 0.17500001192092896,
+            "y": -0.020000003278255463
+          }
+        },
+        "layer": "Default",
+        "name": "Enemy"
+      },
+      {
+        "Components": {
+          "EnemyAttackComponent": {
+            "attack_speed": 1.2000000476837158,
+            "damage": 15
+          },
+          "EnemyComponent": {},
+          "EnemyDecisionTreeComponent": {},
+          "EnemyHealthComponent": {
+            "enemyHealth": 1,
+            "enemyMaxhealth": 1
+          },
+          "EnemyTypeComponent": {
+            "type": "physical"
+          },
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.30000001192092896,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.30000001192092896
+          },
+          "RigidBodyComponent": {
+            "height": 0.10000000149011612,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 0.10000000149011612
+          },
+          "SpriteComponent": {
+            "texture_key": "boss"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": 0.17500001192092896,
+            "y": -0.020000003278255463
+          }
+        },
+        "layer": "Default",
+        "name": "Enemy"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.5,
+            "r": 1.0,
+            "visible": false,
+            "w": 0.5
+          },
+          "RigidBodyComponent": {
+            "height": 0.5,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 0.5
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": 0.38402777910232544,
+            "y": -0.42824074625968933
+          }
+        },
+        "layer": "Default",
+        "name": "Rect"
+      }
+    ],
+    "name": "level04"
+  }
+}

@@ -147,7 +147,11 @@ namespace gfx {
 
         /**
          * \brief Intentionally perturb GL state for crash/robustness testing.
-         * \param which 1: bg shader=0, 2: bg VAO=0, 3: sprite shader=0,
+         * \param which 1: bg 
+         
+         
+         
+=0, 2: bg VAO=0, 3: sprite shader=0,
          *              4: object shader=0, 5: delete bg texture.
          */
         static void testCrash(int which);

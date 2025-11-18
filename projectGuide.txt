@@ -39,6 +39,12 @@ CMake is required to generate Visual Studio solutions.
    start giraphics..sln
    ```
 
+Different project setting Debug and release mode
+
+Real-time (in-game) editor
+Toggle at runtime: Press F10 to show/hide the editor panels.
+UI switch: In the on-screen “Viewport Controls” helper, tick “Editor Enabled (F10)”.
+Current project ships real-time editor only (no separate offline editor app).
 
 
 That's it — the project is ready to build and run in Visual Studio 2022.

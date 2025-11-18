@@ -1,7 +1,7 @@
 /*********************************************************************************************
  \file      SystemManager.cpp
  \par       SofaSpuds
- \author    
+ \author    elvisshengjie.lim (elvisshengjie.lim@digipen.edu) - Primary Author, 100%
  \brief     Frame orchestrator for engine systems with lightweight per-system profiling.
  \details   Manages an ordered list of systems and drives their lifecycle:
 			InitializeAll(), per-frame UpdateAll(dt), DrawAll(), and ShutdownAll().

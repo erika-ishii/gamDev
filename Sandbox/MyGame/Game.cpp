@@ -46,7 +46,7 @@ namespace mygame {
         gInputSystem = gSystems.RegisterSystem<Framework::InputSystem>(win);
         gLogicSystem = gSystems.RegisterSystem<Framework::LogicSystem>(win, *gInputSystem);
         gPhysicsSystem = gSystems.RegisterSystem<Framework::PhysicSystem>(*gLogicSystem);
-        gAiSystem = gSystems.RegisterSystem<Framework::AiSystem>(win);
+        gAiSystem = gSystems.RegisterSystem<Framework::AiSystem>(win,*gLogicSystem);
         gAudioSystem = gSystems.RegisterSystem<Framework::AudioSystem>(win);
         gRenderSystem = gSystems.RegisterSystem<Framework::RenderSystem>(win, *gLogicSystem);
      
@@ -67,9 +67,13 @@ namespace mygame {
     void update(float dt)
     {
         TryGuard::Run([&] {
+            // F1 toggle for performance window (edge-triggered)
+            static bool prevTogglePerf = false;
             const bool togglePerf = gInputSystem && gInputSystem->IsKeyPressed(GLFW_KEY_F1);
-            Framework::PerfFrameStart(dt, togglePerf);
-
+            if (togglePerf && !prevTogglePerf) {
+                Framework::ToggleVisible();
+            }
+            prevTogglePerf = togglePerf;
             switch (currentState)
             {
             case GameState::MAIN_MENU:

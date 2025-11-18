@@ -1,7 +1,8 @@
 ﻿/*********************************************************************************************
  \file      Core.cpp
  \par       SofaSpuds
- \author    yimo.kong (yimo.kong@digipen.edu) - Primary Author, 100%
+ \author    yimo.kong (yimo.kong@digipen.edu) - Primary Author, 80%
+            elvisshengjie.lim ( elvisshengjie.lim@digipen.edu) 20%
  \brief     Minimal game/application core driving the main loop, timing, window events,
             and ImGui frame lifecycle.
  \details   Responsibilities:
@@ -18,6 +19,7 @@
             All rights reserved.
 *********************************************************************************************/
 #include "Core.hpp"
+#include "Debug/Perf.h" 
 
 Core::Core(int width, int height, const char* title)
     : m_Running(false),
@@ -56,6 +58,8 @@ void Core::Run() {
 
         // Clamp delta to avoid simulation explosion after stalls (>100 ms)
         if (frameDt > 0.1f) frameDt = 0.1f;
+
+        Framework::PerfFrameStart(frameDt, false);
 
         // Accumulate elapsed time and step the simulation with a fixed timestep
         accumulator += SecondsF{ frameDt };

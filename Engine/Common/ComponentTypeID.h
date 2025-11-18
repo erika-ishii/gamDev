@@ -53,6 +53,9 @@ namespace Framework
 
         /// SpriteComponent: textured sprite rendering
         CT_SpriteComponent,
+
+        /// SpriteAnimationComponent: drives sprite-frame swapping for animations
+        CT_SpriteAnimationComponent,
         
         //PlayerComponent
         CT_PlayerComponent,
@@ -69,6 +72,8 @@ namespace Framework
         CT_EnemyHealthComponent,
         //Enemy Type Component
         CT_EnemyTypeComponent,
+        //Audio Component
+        CT_AudioComponent,
 
         /// Maximum enum value marker (not a real component, used for iteration/validation)
         CT_MaxComponent

@@ -1,3 +1,30 @@
+/*********************************************************************************************
+ \file      Layer.cpp
+ \par       SofaSpuds
+ \author    elvisshengjie.lim (elvisshengjie.lim@digipen.edu) - Primary Author, 100%
+
+ \brief     Implements the Layer and LayerManager classes, which provide object grouping
+            and filtering within the engine. Layers allow systems such as rendering or
+            collision detection to operate on subsets of GameObjects.
+
+ \details
+            The Layer class maintains a list of GameObjectComposition IDs belonging to
+            the same logical group (e.g., Background, Gameplay, UI). The LayerManager
+            oversees the creation, retrieval, and cleanup of layers, ensuring each object
+            maps to at most one layer at a time. Layers are created on demand and pruned
+            when empty.
+
+            Key Features:
+            - Efficient mapping between objects and layers.
+            - Automatic default layer assignment.
+            - Utility for per-layer iteration, rendering, or collision checks.
+            - Safe removal and automatic cleanup of empty layers.
+
+ \copyright
+            All content © 2025 DigiPen Institute of Technology Singapore.
+            All rights reserved.
+*********************************************************************************************/
+
 #include "Layer.h"
 #include <algorithm>
 #include <utility>
@@ -18,7 +45,7 @@ namespace Framework {
         std::string NormalizeLayerName(std::string_view name)
         {
             if (name.empty())
-             return std::string{ kDefaultLayerName };
+                return std::string{ kDefaultLayerName };
             return std::string{ name };
         }
     }
