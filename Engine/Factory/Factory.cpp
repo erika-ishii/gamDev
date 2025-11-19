@@ -322,7 +322,20 @@ namespace Framework {
         }
         case ComponentTypeId::CT_RenderComponent: {
             auto const& rc = static_cast<RenderComponent const&>(component);
-            return json{ {"w", rc.w}, {"h", rc.h}, {"r", rc.r}, {"g", rc.g}, {"b", rc.b}, {"a", rc.a}, {"visible", rc.visible} };
+            json out = {
+               {"w", rc.w},
+               {"h", rc.h},
+               {"r", rc.r},
+               {"g", rc.g},
+               {"b", rc.b},
+               {"a", rc.a},
+               {"visible", rc.visible}
+            };
+            if (!rc.texture_key.empty())
+                out["texture_key"] = rc.texture_key;
+            if (!rc.texture_path.empty())
+                out["texture_path"] = rc.texture_path;
+            return out;
         }
         case ComponentTypeId::CT_CircleRenderComponent: {
             auto const& cc = static_cast<CircleRenderComponent const&>(component);
@@ -541,15 +554,50 @@ namespace Framework {
         - Increments the running ID counter.
         - Moves the unique_ptr into GameObjectIdMap, which now owns the object.
     *************************************************************************************/
-    GOC* GameObjectFactory::IdGameObject(std::unique_ptr<GOC> gameObject) {
+    GOC* GameObjectFactory::IdGameObject(std::unique_ptr<GOC> gameObject,
+        std::optional<GOCId> fixedId) {
         if (!gameObject)
             return nullptr;
 
-        ++LastGameObjectId;   // assign next unique sequential ID
-        gameObject->ObjectId = LastGameObjectId; // friend access grants direct write
-        GOC* raw = gameObject.get();             // non-owning view
+        bool reuseRequested = fixedId.has_value() && fixedId.value() != 0;
+        GOCId assignedId = 0;
+
+        if (reuseRequested)
+        {
+            assignedId = fixedId.value();
+            auto existing = GameObjectIdMap.find(assignedId);
+            if (existing != GameObjectIdMap.end())
+            {
+                // If the previous object is still pending deletion, finish removing it so
+                // the ID can be reused. Otherwise, fall back to issuing a new ID.
+                if (ObjectsToBeDeleted.count(assignedId))
+                {
+                    LayerData.RemoveObject(assignedId);
+                    GameObjectIdMap.erase(existing);
+                }
+                else
+                {
+                    reuseRequested = false;
+                }
+            }
+
+            if (reuseRequested)
+            {
+                ObjectsToBeDeleted.erase(assignedId);
+                if (assignedId > LastGameObjectId)
+                    LastGameObjectId = assignedId;
+            }
+        }
+
+        if (!reuseRequested)
+        {
+            assignedId = ++LastGameObjectId;
+        }
+
+        gameObject->ObjectId = assignedId;
+        GOC* raw = gameObject.get();
         LayerData.AssignToLayer(raw->ObjectId, raw->GetLayerName());
-        GameObjectIdMap.emplace(LastGameObjectId, std::move(gameObject)); // take ownership
+        GameObjectIdMap.emplace(assignedId, std::move(gameObject));
         return raw;
     }
 
@@ -871,6 +919,10 @@ namespace Framework {
         if (auto it = data.find("layer"); it != data.end() && it->is_string())
             goc->SetLayerName(it->get<std::string>());
 
+        std::optional<GOCId> desiredId;
+        if (auto it = data.find("_undo_id"); it != data.end() && it->is_number_unsigned())
+            desiredId = it->get<GOCId>();
+
         if (auto compIt = data.find("Components"); compIt != data.end() && compIt->is_object())
         {
             for (auto& [compName, compData] : compIt->items())
@@ -890,7 +942,10 @@ namespace Framework {
             }
         }
 
-        return IdGameObject(std::move(goc));
+        GOC* raw = IdGameObject(std::move(goc), desiredId);
+        if (raw)
+            raw->initialize();
+        return raw;
     }
 
     GOC* GameObjectFactory::InstantiateFromSnapshot(const json& data)

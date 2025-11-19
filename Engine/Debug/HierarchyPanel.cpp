@@ -57,6 +57,7 @@ namespace
 
         if (auto* target = Framework::FACTORY->GetObjectWithId(id))
         {
+            mygame::editor::RecordObjectDeleted(*target);
             Framework::FACTORY->Destroy(target);
         }
     }
@@ -151,11 +152,7 @@ void mygame::DrawHierarchyPanel()
                 {
                     if (ImGui::MenuItem("Delete"))
                     {
-                        if (auto* target = FACTORY->GetObjectWithId(id))
-                        {
-                            mygame::editor::RecordObjectDeleted(*target);
-                            FACTORY->Destroy(target);
-                        }
+                        DestroyObject(id);
 
                         if (mygame::GetSelectedObjectId() == id)
                             mygame::ClearSelection();

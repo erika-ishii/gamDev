@@ -50,6 +50,7 @@
 #include "Composition/Composition.h"
 #include "Serialization/JsonSerialization.h"
 #include "Core/Layer.h"
+#include <optional>
 
 // Factory responsibilities (summary)
 // - Create GOCs and assign unique IDs
@@ -117,9 +118,12 @@ namespace Framework {
         bool SaveLevel(const std::string& filename, const std::string& levelName = "");
 
         // --- Object ID & Lookup ---
-        /// Assigns a unique ID and **transfers ownership** of the GOC into the factory’s id map.
-        /// Returns a **non-owning** pointer to the registered object.
-        GOC* IdGameObject(std::unique_ptr<GOC> gameObject);
+        /// Assigns a unique ID (or reuses a requested one) and **transfers ownership**
+        /// of the GOC into the factory’s id map. Returns a **non-owning** pointer to
+        /// the registered object.
+        GOC* IdGameObject(std::unique_ptr<GOC> gameObject,
+            std::optional<GOCId> fixedId = std::nullopt);
+
 
         /// Retrieves a GOC by its unique ID; returns a **non-owning** pointer or nullptr if not found.
         GOC* GetObjectWithId(GOCId id);
