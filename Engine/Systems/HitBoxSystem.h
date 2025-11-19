@@ -89,7 +89,8 @@ namespace Framework
 			float targetX, float targetY,
 			float width = 0.2f, float height = 0.2f,
 			float damage = 1.0f,
-			float duration = 0.1f);
+			float duration = 0.1f,
+			HitBoxComponent::Team team = HitBoxComponent::Team::Player);
 
 		void SpawnProjectile(GameObjectComposition* attacker,
 			float targetX, float targetY,
@@ -97,7 +98,8 @@ namespace Framework
 			float speed,
 			float width = 0.2f, float height = 0.2f,
 			float damage = 1.0f,
-			float duration = 0.1f);
+			float duration = 0.1f,
+			HitBoxComponent::Team team = HitBoxComponent::Team::Thrown);
 
 		/*************************************************************************
 		  \brief  Access the current active hitboxes (read-only).

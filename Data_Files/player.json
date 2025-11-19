@@ -15,6 +15,18 @@
       "width": 0.15,
       "height": 0.15,
       "duration": 0.15
+    },
+    "AudioComponent":
+    {
+      "sounds": 
+      {
+        "footsteps":"footsteps",
+        "Slash1": "Slash1",
+        "GrappleShoot1": "GrappleShoot1"
+      },
+      "volume": 1.0,
+      "loop": 0,
+      "playing": 0
     }
   }
 }

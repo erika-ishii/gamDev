@@ -57,6 +57,18 @@
             "width": 0.15,
             "height": 0.15,
             "duration": 0.15
+          },
+          "AudioComponent":
+          {
+            "sounds": 
+            {
+              "footsteps":"footsteps",
+              "Slash1": "Slash1",
+              "GrappleShoot1": "GrappleShoot1"
+            },
+            "volume": 1.0,
+            "loop": 0,
+            "playing": 0
           }
         }
       },
@@ -71,10 +83,25 @@
       }
     },
     {
-      "name": "Enemy",
+      "name": "Enemy1",
       "Components": 
       {
       "TransformComponent": { "x": 0.2, "y": 0.2, "rot": 0 },
+      "RenderComponent": { "w": 0.3, "h": 0.3, "r": 1, "g": 1, "b": 1, "a": 1 },
+      "SpriteComponent": { "texture_key": "boss" },
+      "RigidBodyComponent": { "velocity_x": 10, "velocity_y": 0, "width": 0.13, "height": 0.24 },
+      "EnemyComponent": {},
+      "EnemyAttackComponent": { "damage": 15, "attack_speed": 1.2 },
+      "EnemyHealthComponent": { "enemyHealth": 100, "enemyMaxHealth": 100 },
+      "EnemyDecisionTreeComponent": {},
+      "EnemyTypeComponent": { "type": "ranged" }
+      }
+    },
+    {
+      "name": "Enemy2",
+      "Components": 
+      {
+      "TransformComponent": { "x": -0.2, "y": -0.2, "rot": 0 },
       "RenderComponent": { "w": 0.3, "h": 0.3, "r": 1, "g": 1, "b": 1, "a": 1 },
       "SpriteComponent": { "texture_key": "boss" },
       "RigidBodyComponent": { "velocity_x": 10, "velocity_y": 0, "width": 0.13, "height": 0.24 },

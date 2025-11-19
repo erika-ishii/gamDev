@@ -45,6 +45,7 @@ namespace Framework {
         
         // Load all sounds (previously in AudioImGui)
         Resource_Manager::loadAll("../../assets/Audio");
+
         // Set default master volume
         SoundManager::getInstance().setMasterVolume(0.7f);
         std::cout << "[AudioSystem] Audio system initialized successfully.\n";
@@ -58,7 +59,29 @@ namespace Framework {
      \param dt
         Delta time since the last frame (currently unused, reserved for future logic).
     *****************************************************************************************/
-    void AudioSystem::Update(float dt){ (void)dt; }
+    void AudioSystem::Update(float dt)
+    {
+        (void)dt;
+
+        // Iterate all game objects in the factory
+        for (auto& [id, gocPtr] : FACTORY->Objects())
+        {
+            if (!gocPtr) continue;
+            GOC* goc = gocPtr.get();
+
+            // Get Rigidbody and Audio components
+            auto* rb = goc->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);
+            auto* audio = goc->GetComponentType<AudioComponent>(ComponentTypeId::CT_AudioComponent);
+            if (!rb || !audio) continue;
+            // Footsteps audio
+            bool isMoving = (rb->velX != 0.0f || rb->velY != 0.0f);
+            if (isMoving && !audio->playing)
+            {audio->Play("footsteps");}
+            if (!isMoving)
+            {SoundManager::getInstance().stopSound(audio->sounds["footsteps"]);audio->playing = false;}
+        }
+    }
+
     /*****************************************************************************************
      \brief
         Draws the ImGui-based audio debug panel.

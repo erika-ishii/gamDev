@@ -28,5 +28,7 @@ WindowConfig LoadWindowConfig(const std::string& filename)
     WConfig.width  = j["window"]["width"].get<int>();
     WConfig.height = j["window"]["height"].get<int>();
     WConfig.title  = j["window"]["title"].get<std::string>();
+    if (j["window"].contains("fullscreen"))
+        WConfig.fullscreen = j["window"]["fullscreen"].get<bool>();
     return WConfig;
 }

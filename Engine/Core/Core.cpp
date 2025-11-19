@@ -21,10 +21,11 @@
 #include "Core.hpp"
 #include "Debug/Perf.h" 
 
-Core::Core(int width, int height, const char* title)
+Core::Core(int width, int height, const char* title, bool fullscreen)
     : m_Running(false),
     // create window immediately (unique_ptr ensures RAII cleanup)
-    m_Window(std::make_unique<gfx::Window>(width, height, title)) {}
+    m_Window(std::make_unique<gfx::Window>(width, height, title, fullscreen)) {
+}
 
 /*************************************************************************************
  \brief  Enter the main loop and drive the app until the window closes or Quit() is called.

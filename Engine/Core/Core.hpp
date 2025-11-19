@@ -29,7 +29,7 @@ public:
     using ShutdownFn = void(*)();             // Called once at shutdown
 
     /// \brief Create a windowed application core.
-    Core(int width, int height, const char* title);
+    Core(int width, int height, const char* title, bool fullscreen);
     ~Core() = default; // unique_ptr handles window cleanup (RAII)
 
     /// \brief Run the main loop until Quit() is called or the window closes.

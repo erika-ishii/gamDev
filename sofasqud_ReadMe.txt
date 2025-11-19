@@ -59,15 +59,14 @@ Left Mouse Button: Spawn a short-lived attack hitbox towards the cursor
 
 Editor & Viewport
 
-F10: Toggle Editor panels (dockspace & tools). 
-F11: Toggle full-width game viewport. 
-F (Editor camera): Frame current selection. 
-
+F10: Toggle Editor panels (dockspace & tools).
+F11: Toggle fullscreen/windowed mode.
+F (Editor camera): Frame current selection.
 
 Using the In-Game Editor (real time)
 
 Open the editor: press F10. Panels appear on the right (dockspace). 
-Viewport Controls: small floating helper to toggle editor/full-width, and play/stop sim. 
+Viewport Controls: small floating helper to toggle editor/viewport sizing, and play/stop sim.
 
 
 Hierarchy Panel

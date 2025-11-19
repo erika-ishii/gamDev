@@ -1,0 +1,208 @@
+{
+  "Level": {
+    "GameObjects": [
+      {
+        "Components": {
+          "CircleRenderComponent": {
+            "a": 1.0,
+            "b": 0.30000001192092896,
+            "g": 0.20000000298023224,
+            "r": 0.8999999761581421,
+            "radius": 0.20000000298023224
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": -0.699999988079071,
+            "y": -0.699999988079071
+          }
+        },
+        "layer": "layer1",
+        "name": "Circle"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 0.25,
+            "g": 0.75,
+            "h": 0.5,
+            "r": 0.949999988079071,
+            "visible": false,
+            "w": 0.5
+          },
+          "RigidBodyComponent": {
+            "height": 0.5,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 0.5
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": -0.5,
+            "y": 0.0
+          }
+        },
+        "layer": "Default",
+        "name": "Rect"
+      },
+      {
+        "Components": {
+          "AudioComponent": {},
+          "HitBoxComponent": {
+            "duration": 0.15000000596046448,
+            "height": 0.15000000596046448,
+            "width": 0.15000000596046448
+          },
+          "PlayerAttackComponent": {
+            "attack_speed": 1.0,
+            "damage": 50
+          },
+          "PlayerComponent": {},
+          "PlayerHealthComponent": {
+            "playerHealth": 100,
+            "playerMaxhealth": 100
+          },
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 0.3448673188686371,
+            "g": 0.3448673188686371,
+            "h": 0.25,
+            "r": 0.6764705777168274,
+            "visible": true,
+            "w": 0.25
+          },
+          "RigidBodyComponent": {
+            "height": 0.20999999344348907,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 0.10000000149011612
+          },
+          "SpriteComponent": {
+            "texture_key": "player"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": 0.4803241193294525,
+            "y": -0.5983796715736389
+          }
+        },
+        "layer": "Default",
+        "name": "Player"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.30000001192092896,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.30000001192092896
+          },
+          "RigidBodyComponent": {
+            "height": 0.25,
+            "velocity_x": 0.6000000238418579,
+            "velocity_y": 0.6000000238418579,
+            "width": 0.25
+          },
+          "SpriteComponent": {
+            "texture_key": "boss"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": 52.877132415771484,
+            "y": 52.6171760559082
+          }
+        },
+        "layer": "Default",
+        "name": "Boss"
+      },
+      {
+        "Components": {
+          "EnemyAttackComponent": {
+            "attack_speed": 1.2000000476837158,
+            "damage": 15
+          },
+          "EnemyComponent": {},
+          "EnemyDecisionTreeComponent": {},
+          "EnemyHealthComponent": {
+            "enemyHealth": 100,
+            "enemyMaxhealth": 1
+          },
+          "EnemyTypeComponent": {
+            "type": "ranged"
+          },
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.30000001192092896,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.30000001192092896
+          },
+          "RigidBodyComponent": {
+            "height": 0.23999999463558197,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 0.12999999523162842
+          },
+          "SpriteComponent": {
+            "texture_key": "boss"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": -0.18333281576633453,
+            "y": 0.20000000298023224
+          }
+        },
+        "layer": "Default",
+        "name": "Enemy1"
+      },
+      {
+        "Components": {
+          "EnemyAttackComponent": {
+            "attack_speed": 1.2000000476837158,
+            "damage": 15
+          },
+          "EnemyComponent": {},
+          "EnemyDecisionTreeComponent": {},
+          "EnemyHealthComponent": {
+            "enemyHealth": 100,
+            "enemyMaxhealth": 1
+          },
+          "EnemyTypeComponent": {
+            "type": "physical"
+          },
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.30000001192092896,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.30000001192092896
+          },
+          "RigidBodyComponent": {
+            "height": 0.23999999463558197,
+            "velocity_x": -0.20000000298023224,
+            "velocity_y": 0.0,
+            "width": 0.12999999523162842
+          },
+          "SpriteComponent": {
+            "texture_key": "boss"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": 0.07000041007995605,
+            "y": -0.20000000298023224
+          }
+        },
+        "layer": "Default",
+        "name": "Enemy2"
+      }
+    ],
+    "name": "level08"
+  }
+}

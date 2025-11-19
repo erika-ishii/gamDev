@@ -27,6 +27,8 @@
 *********************************************************************************************/
 #pragma once
 #include "../../Engine/Graphics/Window.hpp"
+#include "Input/Input.h"
+#include "Systems/InputSystem.h"
 #include "Common/System.h"
 #include "Messaging_System/Messager_Bus.hpp"
 

@@ -35,7 +35,7 @@ int main()
     if (cfg.title.empty()) cfg.title = "SofaSpuds Engine";
 
     // Create engine core and register game callbacks.
-    Core core(cfg.width, cfg.height, cfg.title.c_str());
+    Core core(cfg.width, cfg.height, cfg.title.c_str(), cfg.fullscreen);
     core.SetCallbacks(mygame::init, mygame::update, mygame::draw, mygame::shutdown);
 
     // Run main loop.

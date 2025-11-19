@@ -56,6 +56,8 @@
 #include <limits>
 #include <unordered_set>
 #include <unordered_map>
+
+#include "Debug/Inspector.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_inverse.hpp> // for glm::inverse (used in ScreenToWorld)
 #include <glm/gtc/matrix_transform.hpp>
@@ -389,7 +391,7 @@ namespace Framework {
     }
 /*************************************************************************************
   \brief  Keyboard shortcuts for toggling editor/fullscreen and framing selection.
-  \details F10 toggles editor panels; F11 toggles game full width; F frames selection
+  \details F10 toggles editor panels; F11 toggles fullscreen; F frames selection
            (only in editor camera mode).
 *************************************************************************************/
     void RenderSystem::HandleShortcuts()
@@ -400,7 +402,7 @@ namespace Framework {
         GLFWwindow* native = window->raw();
         if (!native)
             return;
-
+        ImGuiIO& io = ImGui::GetIO();
         auto handleToggle = [&](int key, bool& held)
             {
                 const bool pressed = glfwGetKey(native, key) == GLFW_PRESS;
@@ -413,7 +415,11 @@ namespace Framework {
             showEditor = !showEditor;
 
         if (handleToggle(GLFW_KEY_F11, fullscreenToggleHeld))
-            gameViewportFullWidth = !gameViewportFullWidth;
+        {
+            window->ToggleFullscreen();
+            screenW = window->Width();
+            screenH = window->Height();
+        }
         if (ShouldUseEditorCamera())
         {
             if (handleToggle(GLFW_KEY_F, editorFrameHeld))
@@ -423,6 +429,23 @@ namespace Framework {
         {
             // Keep state accurate so the next editor activation treats F as a fresh press.
             editorFrameHeld = glfwGetKey(native, GLFW_KEY_F) == GLFW_PRESS;
+        }
+        if (showEditor && mygame::HasSelectedObject())
+        {
+            if (handleToggle(GLFW_KEY_DELETE, deleteKeyHeld) && !io.WantCaptureKeyboard)
+            {
+                Framework::GOCId selectedId = mygame::GetSelectedObjectId();
+                if (FACTORY)
+                {
+                    if (auto* selected = FACTORY->GetObjectWithId(selectedId))
+                        FACTORY->Destroy(selected);
+                }
+                mygame::ClearSelection();
+            }
+        }
+        else
+        {
+            deleteKeyHeld = glfwGetKey(native, GLFW_KEY_DELETE) == GLFW_PRESS;
         }
     }
 /*************************************************************************************
@@ -1046,7 +1069,7 @@ namespace Framework {
             // ---- everything below this only shows when editor is ON ----
 
             bool fullWidth = gameViewportFullWidth;
-            if (ImGui::Checkbox("Game Full Width (F11)", &fullWidth))
+            if (ImGui::Checkbox("Game Full Width", &fullWidth))
                 gameViewportFullWidth = fullWidth;
             if (!gameViewportFullWidth)
             {
@@ -1616,7 +1639,9 @@ namespace Framework {
                 assetBrowser.Draw();
                 jsonEditor.Draw();
                 mygame::DrawHierarchyPanel();
+                mygame::DrawInspectorPanel();
                 mygame::DrawSpawnPanel();
+                mygame::DrawInspectorPanel();
 
                 if (ImGui::Begin("Crash Tests"))
                 {

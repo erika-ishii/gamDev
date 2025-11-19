@@ -27,5 +27,6 @@ struct WindowConfig
     int width{};  ///Width of the window in pixels
     int height{}; ///Height of the window in pixels
     std::string title{};///Window title text
+    bool fullscreen{ true }; ///Launch in fullscreen by default
 };
 WindowConfig LoadWindowConfig(const std::string& filename);

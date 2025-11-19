@@ -23,7 +23,7 @@ namespace gfx {
     class Window {
     public:
         // Create an OpenGL context and a window with the given size and title.
-        Window(int width, int height, const char* title);
+        Window(int width, int height, const char* title, bool startFullscreen = true);
 
         // Destroy the window and terminate GLFW (if needed).
         ~Window();
@@ -55,6 +55,10 @@ namespace gfx {
         // Static GLFW error callback.
         static void error_cb(int error, const char* description);
 
+        // Toggle fullscreen/windowed at runtime (non-resizable windowed mode).
+        void ToggleFullscreen();
+        bool IsFullscreen() const { return m_fullscreen; }
+
         GLFWwindow* raw() const { return s_window; }
 
         // Current window size (logical pixels)
@@ -69,6 +73,11 @@ namespace gfx {
         int m_width;
         int m_height;
         std::string m_title;
+        bool m_fullscreen = true;
+        int  m_windowedX = 100;
+        int  m_windowedY = 100;
+        int  m_windowedWidth = 0;
+        int  m_windowedHeight = 0;
     };
 
 } // namespace gfx

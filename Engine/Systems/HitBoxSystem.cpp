@@ -81,7 +81,7 @@ namespace Framework
 		float targetX, float targetY,
 		float width, float height,
 		float damage,
-		float duration)
+		float duration, HitBoxComponent::Team team)
 	{
 		if (!attacker)
 			return;
@@ -94,6 +94,7 @@ namespace Framework
 		newhitbox->damage = damage;
 		newhitbox->duration = duration;
 		newhitbox->owner = attacker;
+		newhitbox->team = team;
 
 		if (attacker->GetComponentType<PlayerComponent>(ComponentTypeId::CT_PlayerComponent))
 			newhitbox->team = HitBoxComponent::Team::Player;
@@ -103,7 +104,15 @@ namespace Framework
 			newhitbox->team = HitBoxComponent::Team::Neutral;
 
 		newhitbox->ActivateHurtBox(); // reuse flag: treat as active volume for collisions
-
+		std::string teamStr;
+		switch (newhitbox->team)
+		{
+		case HitBoxComponent::Team::Player:  teamStr = "Player"; break;
+		case HitBoxComponent::Team::Enemy:   teamStr = "Enemy"; break;
+		case HitBoxComponent::Team::Thrown:  teamStr = "Thrown"; break;
+		case HitBoxComponent::Team::Neutral: teamStr = "Neutral"; break;
+		}
+		std::cout << "HitBox spawned at (" << targetX << ", " << targetY << ") with team: " << teamStr << "\n";
 		ActiveHitBox active;
 		active.hitbox = std::move(newhitbox);
 		active.owner = attacker;
@@ -118,7 +127,8 @@ namespace Framework
 		float speed,
 		float width, float height,
 		float damage,
-		float duration)
+		float duration,
+		HitBoxComponent::Team team)
 	{
 		if (!attacker)
 			return;
@@ -138,15 +148,23 @@ namespace Framework
 		newhitbox->damage = damage; 
 		newhitbox->duration = duration; 
 		newhitbox->owner = attacker;
-
+		newhitbox->team = team;
 		// Set the team / make sure friendly fire doesnt happen
 		if (attacker->GetComponentType<PlayerComponent>(ComponentTypeId::CT_PlayerComponent))
-			newhitbox->team = HitBoxComponent::Team::Player; 
+			newhitbox->team = HitBoxComponent::Team::Thrown; 
 		else if (attacker->GetComponentType<EnemyComponent>(ComponentTypeId::CT_EnemyComponent))
 			newhitbox->team = HitBoxComponent::Team::Enemy;
 
 		newhitbox->ActivateHurtBox();
-
+		std::string teamStr;
+		switch (newhitbox->team)
+		{
+		case HitBoxComponent::Team::Player:  teamStr = "Player"; break;
+		case HitBoxComponent::Team::Enemy:   teamStr = "Enemy"; break;
+		case HitBoxComponent::Team::Thrown:  teamStr = "Thrown"; break;
+		case HitBoxComponent::Team::Neutral: teamStr = "Neutral"; break;
+		}
+		std::cout << "HitBox spawned at (" << targetX << ", " << targetY << ") with team: " << teamStr << "\n";
 		ActiveHitBox projectile; 
 		projectile.hitbox = std::move(newhitbox);
 		projectile.owner = attacker;
@@ -184,9 +202,9 @@ namespace Framework
 			{
 				it = activeHitBoxes.erase(it);
 				continue;
-			}
-
-			if (it->isProjectile)
+			}	
+			
+			if (it->isProjectile || HB->team == HitBoxComponent::Team::Thrown)
 			{
 				it->hitbox->spawnX += it->velX * dt;
 				it->hitbox->spawnY += it->velY * dt;
@@ -222,27 +240,32 @@ namespace Framework
 					continue;
 
 				AABB targetAABB(tr->x, tr->y, rb->width, rb->height);
-
-				if (Collision::CheckCollisionRectToRect(hitboxAABB, targetAABB))
-				{
-					if (HB->team == HitBoxComponent::Team::Player)
-					{
-						auto* health = obj->GetComponentType<EnemyHealthComponent>(ComponentTypeId::CT_EnemyHealthComponent);
-						if (health)
-						health->TakeDamage(static_cast<int>(HB->damage));
-					}
-					else if (HB->team == HitBoxComponent::Team::Enemy)
-					{
-						auto* health = obj->GetComponentType<PlayerHealthComponent>(ComponentTypeId::CT_PlayerHealthComponent);
-						if (health)
-						health->TakeDamage(static_cast<int>(HB->damage));
-					}
-
-					hit = true;
-					break;
-				}
-
+				if (!Collision::CheckCollisionRectToRect(hitboxAABB, targetAABB))
+					continue;
 				
+				
+				if (isEnemyTarget)
+				{
+					auto* typeComp = obj->GetComponentType<EnemyTypeComponent>(ComponentTypeId::CT_EnemyTypeComponent);
+					if (typeComp)
+					{
+						bool validHit = (isEnemyTarget && typeComp &&
+						((typeComp->Etype == EnemyTypeComponent::EnemyType::physical && HB->team == HitBoxComponent::Team::Player) ||
+						(typeComp->Etype == EnemyTypeComponent::EnemyType::ranged && HB->team == HitBoxComponent::Team::Thrown)));
+						if (!validHit) continue;
+						if (auto* health = obj->GetComponentType<EnemyHealthComponent>(ComponentTypeId::CT_EnemyHealthComponent))
+							health->TakeDamage(static_cast<int>(HB->damage));
+					}
+				}
+				
+				else if (isPlayerTarget)
+				{
+					auto* health = obj->GetComponentType<PlayerHealthComponent>(ComponentTypeId::CT_PlayerHealthComponent);
+					if (health)
+						health->TakeDamage(static_cast<int>(HB->damage));
+				}
+				hit = true;
+				break;
 			}
 
 			// Remove immediately if hit or expired; otherwise keep ticking.

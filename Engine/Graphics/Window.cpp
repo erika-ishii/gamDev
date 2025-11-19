@@ -31,8 +31,10 @@ GLFWwindow* gfx::Window::s_window = nullptr;
 
 namespace gfx {
 
-    Window::Window(int width, int height, const char* title)
-        : m_width(width), m_height(height), m_title(title)
+    Window::Window(int width, int height, const char* title, bool startFullscreen)
+        : m_width(width), m_height(height), m_title(title),
+        m_fullscreen(startFullscreen),
+        m_windowedWidth(width), m_windowedHeight(height)
     {
         if (!glfwInit()) {
             std::cerr << "GLFW initialization failed.\n";
@@ -51,10 +53,28 @@ namespace gfx {
         glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
 
         // Non-resizable for now (you can change this to GLFW_TRUE if desired)
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-        // Create the window + context
-        s_window = glfwCreateWindow(m_width, m_height, m_title.c_str(), nullptr, nullptr);
+        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+        const GLFWvidmode* mode = monitor ? glfwGetVideoMode(monitor) : nullptr;
+
+        if (m_fullscreen && monitor && mode)
+        {
+            m_width = mode->width;
+            m_height = mode->height;
+            s_window = glfwCreateWindow(m_width, m_height, m_title.c_str(), monitor, nullptr);
+
+            // Center the future windowed position if we later toggle back.
+            m_windowedX = (mode->width - m_windowedWidth) / 2;
+            m_windowedY = (mode->height - m_windowedHeight) / 2;
+        }
+        else
+        {
+            m_fullscreen = false;
+            s_window = glfwCreateWindow(m_width, m_height, m_title.c_str(), nullptr, nullptr);
+            glfwGetWindowPos(s_window, &m_windowedX, &m_windowedY);
+        }
+
         if (!s_window) {
             std::cerr << "Failed to create GLFW window.\n";
             glfwTerminate();
@@ -115,7 +135,64 @@ namespace gfx {
     void Window::swapBuffers() {
         glfwSwapBuffers(s_window);
     }
-        void Window::run() {
+    void Window::ToggleFullscreen()
+    {
+        if (!s_window)
+            return;
+
+        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+        const GLFWvidmode* mode = monitor ? glfwGetVideoMode(monitor) : nullptr;
+
+        if (m_fullscreen)
+        {
+            // Going back to WINDOWED mode
+            glfwSetWindowMonitor(
+                s_window,
+                nullptr,
+                m_windowedX,
+                m_windowedY,
+                m_windowedWidth,
+                m_windowedHeight,
+                0
+            );
+
+            m_width = m_windowedWidth;
+            m_height = m_windowedHeight;
+            m_fullscreen = false;
+
+            // Windowed mode: fixed size + border + title bar
+            glfwSetWindowAttrib(s_window, GLFW_DECORATED, GLFW_TRUE);
+            glfwSetWindowAttrib(s_window, GLFW_RESIZABLE, GLFW_FALSE);
+        }
+        else if (monitor && mode)
+        {
+            // Going to FULLSCREEN
+            glfwGetWindowPos(s_window, &m_windowedX, &m_windowedY);
+            glfwGetWindowSize(s_window, &m_windowedWidth, &m_windowedHeight);
+
+            // Optional, but nice: hide decorations in fullscreen
+            glfwSetWindowAttrib(s_window, GLFW_DECORATED, GLFW_FALSE);
+
+            glfwSetWindowMonitor(
+                s_window,
+                monitor,
+                0,
+                0,
+                mode->width,
+                mode->height,
+                mode->refreshRate
+            );
+
+            m_width = mode->width;
+            m_height = mode->height;
+            m_fullscreen = true;
+        }
+
+        // Keep GL viewport in sync
+        glViewport(0, 0, m_width, m_height);
+    }
+
+    void Window::run() {
         while (!glfwWindowShouldClose(Window::s_window)) {
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
@@ -129,23 +206,24 @@ namespace gfx {
 
 
     void Window::runWithCallback(std::function<void()> updateCallback) {
-    while (!glfwWindowShouldClose(Window::s_window)) {
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        
-        // Call the custom update callback (for audio updates, input handling, etc.)
-        if (updateCallback) {
-            updateCallback();
-        }
-        
-        glfwSwapBuffers(Window::s_window);
-        glfwPollEvents();
-        
-        if (glfwGetKey(Window::s_window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-            glfwSetWindowShouldClose(Window::s_window, 1);
+        while (!glfwWindowShouldClose(Window::s_window)) {
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
+
+            // Call the custom update callback (for audio updates, input handling, etc.)
+            if (updateCallback) {
+                updateCallback();
+            }
+
+            glfwSwapBuffers(Window::s_window);
+            glfwPollEvents();
+
+            if (glfwGetKey(Window::s_window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+                glfwSetWindowShouldClose(Window::s_window, 1);
+            }
         }
     }
-}
+
 
     bool Window::isKeyPressed(int key) const {
         return glfwGetKey(Window::s_window, key) == GLFW_PRESS;
@@ -156,7 +234,7 @@ namespace gfx {
     }
 
     void Window::close() {
-    glfwSetWindowShouldClose(Window::s_window, 1);
+        glfwSetWindowShouldClose(Window::s_window, 1);
     }
 
     void Window::error_cb(int /*error*/, const char* description) {

@@ -1,8 +1,9 @@
 {
     "window": 
     {
-        "width": 1920,
-        "height": 1080,
-        "title": "MyGame - Bloody Good Curry"
+        "width": 1280,
+        "height": 720,
+        "title": "MyGame - Bloody Good Curry",
+        "fullscreen": true
     }
 }

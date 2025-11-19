@@ -28,7 +28,7 @@
             All rights reserved.
 *********************************************************************************************/
 #include "Debug/Spawn.h"
-
+#include "Selection.h"
 #include "imgui.h"
 
 // #include "Debug/Perf.h"
@@ -1167,6 +1167,7 @@ namespace mygame {
             auto toKill = CollectNonMasterObjects();
             for (auto* o : toKill) o->Destroy();
             FACTORY->Update(0.0f);
+            mygame::ClearSelection();
         }
 
         // === Object Count ===
