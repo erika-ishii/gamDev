@@ -55,6 +55,7 @@
 #include "Component/EnemyTypeComponent.h"
 
 #include "Physics/Dynamics/RigidBodyComponent.h"
+
 // Summary of responsibilities:
 // - Create empty game objects (GOCs)
 // - Assign each a unique integer ID and keep an ownership table (id -> std::unique_ptr<GOC>)
@@ -82,9 +83,7 @@ namespace Framework {
     /*************************************************************************************
       \brief Destroys the factory, cleaning up all remaining objects and creators.
       \details
-        - Clearing GameObjectIdMap destroys all GOCs via std::unique_ptr.
-        - Clearing ObjectsToBeDeleted simply drops IDs (no live objects remain).
-        - Clearing ComponentMap destroys all registered ComponentCreators via std::unique_ptr.
+        - Clears all game objects and component creators via std::unique_ptr.
         - Resets global FACTORY pointer to nullptr.
     *************************************************************************************/
     GameObjectFactory::~GameObjectFactory() {
@@ -266,7 +265,6 @@ namespace Framework {
             LastLevelNameCache = levelName;
         }
 
-
         if (s.EnterArray("GameObjects")) {
             size_t n = s.ArraySize();
             out.reserve(n);
@@ -301,7 +299,6 @@ namespace Framework {
         }
         return {};
     }
-
 
     /*************************************************************************************
      \brief Serialize a single attached component into a JSON object.
@@ -419,7 +416,6 @@ namespace Framework {
         return json::object();
     }
 
-
     /*************************************************************************************
      \brief Save a set of GOCs to a level JSON file.
      \param filename  Target JSON path to write to (folders are created if missing).
@@ -506,22 +502,21 @@ namespace Framework {
     }
 
     /*************************************************************************************
- \brief Save a specific subset of game objects into a level file.
- \param filename  Target JSON file path to write to.
- \param objects   List of non-owning GOC* pointers to serialize (must belong to the factory).
- \param levelName Optional level name; overrides the default filename stem.
- \return true if the level was successfully saved; false on failure.
- \details
-   - Acts as a convenience wrapper for SaveLevelInternal().
-   - The caller explicitly specifies which objects to write (e.g., a selection or layer subset).
-   - SaveLevelInternal handles JSON formatting, component serialization, and directory creation.
-*************************************************************************************/
+     \brief Save a specific subset of game objects into a level file.
+     \param filename  Target JSON file path to write to.
+     \param objects   List of non-owning GOC* pointers to serialize (must belong to the factory).
+     \param levelName Optional level name; overrides the default filename stem.
+     \return true if the level was successfully saved; false on failure.
+     \details
+       - Acts as a convenience wrapper for SaveLevelInternal().
+       - The caller explicitly specifies which objects to write (e.g., a selection or layer subset).
+       - SaveLevelInternal handles JSON formatting, component serialization, and directory creation.
+    *************************************************************************************/
     bool GameObjectFactory::SaveLevel(const std::string& filename, const std::vector<GOC*>& objects,
         const std::string& levelName)
     {
         return SaveLevelInternal(filename, objects, levelName);
     }
-
 
     /*************************************************************************************
      \brief Save all active (non-deleted) game objects currently owned by the factory.
@@ -549,9 +544,10 @@ namespace Framework {
     /*************************************************************************************
       \brief Assigns a unique ID to the GOC and registers it in the id→object map.
       \param gameObject Newly constructed GOC to identify and take ownership of.
+      \param fixedId    Optional explicit id to reuse (used by some loaders/undo systems).
       \return Non-owning pointer to the now-registered GOC.
       \details
-        - Increments the running ID counter.
+        - Increments the running ID counter when no fixedId is used.
         - Moves the unique_ptr into GameObjectIdMap, which now owns the object.
     *************************************************************************************/
     GOC* GameObjectFactory::IdGameObject(std::unique_ptr<GOC> gameObject,
@@ -705,7 +701,12 @@ namespace Framework {
         ComponentMap[name] = std::move(creator);
     }
 
-
+    /*************************************************************************************
+      \brief Deserialize a single component from a JSON object and apply it to an instance.
+      \param component Target component instance (already created and attached).
+      \param data      JSON blob produced by SerializeComponentToJson().
+      \note  Missing keys are ignored and leave fields unchanged.
+    *************************************************************************************/
     void GameObjectFactory::DeserializeComponentFromJson(GameComponent& component,
         const json& data) const
     {
@@ -884,6 +885,12 @@ namespace Framework {
         }
     }
 
+    /*************************************************************************************
+      \brief Take a full JSON snapshot of a single GOC for undo/redo.
+      \param object The object to snapshot.
+      \return JSON blob describing name, layer, and all serializable components.
+      \note   Stores an internal "_undo_id" field with the original object ID.
+    *************************************************************************************/
     json GameObjectFactory::SnapshotGameObject(const GOC& object) const
     {
         json objJson = json::object();
@@ -908,6 +915,15 @@ namespace Framework {
         return objJson;
     }
 
+    /*************************************************************************************
+      \brief Internal helper to instantiate a GOC from a JSON snapshot.
+      \param data Snapshot produced by SnapshotGameObject().
+      \return Newly created and initialized GOC*, or nullptr on failure.
+      \details
+        - Rebuilds name, layer, and all serializable components.
+        - Currently **does not reuse the original ID** to avoid conflicts with
+          other systems caching IDs / pointers; the object gets a fresh ID.
+    *************************************************************************************/
     GOC* GameObjectFactory::InstantiateFromSnapshotInternal(const json& data)
     {
         if (!data.is_object())
@@ -919,6 +935,8 @@ namespace Framework {
         if (auto it = data.find("layer"); it != data.end() && it->is_string())
             goc->SetLayerName(it->get<std::string>());
 
+        // We keep reading _undo_id for potential future use, but we don't
+        // reuse it in IdGameObject() to avoid accidental state corruption.
         std::optional<GOCId> desiredId;
         if (auto it = data.find("_undo_id"); it != data.end() && it->is_number_unsigned())
             desiredId = it->get<GOCId>();
@@ -942,7 +960,9 @@ namespace Framework {
             }
         }
 
-        GOC* raw = IdGameObject(std::move(goc), desiredId);
+        // IMPORTANT: always assign a fresh ID when resurrecting from undo to avoid
+        // collisions with stale references in other systems.
+        GOC* raw = IdGameObject(std::move(goc), std::nullopt);
         if (raw)
             raw->initialize();
         return raw;
@@ -952,4 +972,5 @@ namespace Framework {
     {
         return InstantiateFromSnapshotInternal(data);
     }
-}
+
+} // namespace Framework

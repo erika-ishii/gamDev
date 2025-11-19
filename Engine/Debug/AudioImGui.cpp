@@ -29,6 +29,8 @@ namespace Framework
     bool AudioImGui::s_audioReady = false;
     std::vector<std::string> AudioImGui::soundNames;
     float AudioImGui::masterVolume = 0.7f;
+    bool AudioImGui::s_showUnsupportedPopup = false;
+    std::string AudioImGui::s_unsupportedFile;
     /*****************************************************************************************
     \brief
     Initializes the AudioImGui interface and sets up ImGui for audio control.
@@ -60,6 +62,15 @@ namespace Framework
     *****************************************************************************************/
     void AudioImGui::Render()
     {
+        if (s_showUnsupportedPopup) { ImGui::OpenPopup("Unsupported Audio File"); }
+        if (ImGui::BeginPopupModal("Unsupported Audio File", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            ImGui::Text("Failed to load audio file:\n%s", s_unsupportedFile.c_str());
+            ImGui::Separator();
+            if (ImGui::Button("OK", ImVec2(120, 0))) 
+            {s_showUnsupportedPopup = false;ImGui::CloseCurrentPopup();}
+            ImGui::EndPopup();
+        }
         ImVec2 windowSize(400, 300);
         ImVec2 displaySize = ImGui::GetIO().DisplaySize;
         ImGuiIO& io = ImGui::GetIO();
@@ -132,5 +143,10 @@ namespace Framework
         s_audioReady = false;
         std::cout << "[AudioImGui] Audio shutdown completed.\n";
     }
-
+    
+    void AudioImGui::ShowUnsupportedAudioPopup(const std::string& file)
+    {
+        s_unsupportedFile = file;
+        s_showUnsupportedPopup = true;
+    }
 }

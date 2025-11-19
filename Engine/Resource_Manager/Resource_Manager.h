@@ -16,6 +16,7 @@
 #include "../Audio/AudioManager.h"
 #include "../Audio/SoundManager.h"
 #include "../Graphics/Graphics.hpp"
+#include "../Debug/AudioImGui.h"
 #include "Common/System.h"
 #include "Factory/Factory.h"
 #include "Component/AudioComponent.h"

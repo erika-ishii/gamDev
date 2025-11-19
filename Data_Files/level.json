@@ -62,12 +62,11 @@
           {
             "sounds": 
             {
-              "footsteps":"footsteps",
-              "Slash1": "Slash1",
-              "GrappleShoot1": "GrappleShoot1"
+              "footsteps": { "id": "footsteps", "loop": true },
+              "Slash1": { "id": "Slash1", "loop": false },
+              "GrappleShoot1": { "id": "GrappleShoot1", "loop": false }
             },
             "volume": 1.0,
-            "loop": 0,
             "playing": 0
           }
         }

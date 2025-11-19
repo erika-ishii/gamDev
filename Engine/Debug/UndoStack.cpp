@@ -1,3 +1,10 @@
+/*********************************************************************************************
+ \file      UndoStack.cpp
+ \par       SofaSpuds
+ \author    ChatGPT (OpenAI)
+ \brief     Implementation of the editor undo system.
+*********************************************************************************************/
+
 #include "Debug/UndoStack.h"
 
 #include <vector>
@@ -22,11 +29,15 @@ namespace mygame
 
             struct UndoAction
             {
-                UndoKind kind = UndoKind::Transform;
-                Framework::GOCId objectId = 0;
-                TransformSnapshot before{};
-                TransformSnapshot after{};
-                Framework::json snapshot = Framework::json::object();
+                UndoKind          kind = UndoKind::Transform;
+                Framework::GOCId  objectId = 0;
+
+                // For Transform
+                TransformSnapshot before;
+                TransformSnapshot after;
+
+                // For Created / Deleted: full object snapshot
+                Framework::json   snapshot;
             };
 
             constexpr std::size_t kMaxUndoDepth = 50;
@@ -39,7 +50,8 @@ namespace mygame
                 gUndoStack.emplace_back(std::move(action));
             }
 
-            void ApplyTransformSnapshot(Framework::GOC& object, const TransformSnapshot& state)
+            void ApplyTransformSnapshot(Framework::GOC& object,
+                const TransformSnapshot& state)
             {
                 if (state.hasTransform)
                 {
@@ -71,7 +83,7 @@ namespace mygame
                     }
                 }
             }
-        }
+        } // anonymous namespace
 
         TransformSnapshot CaptureTransformSnapshot(const Framework::GOC& object)
         {
@@ -104,7 +116,8 @@ namespace mygame
             return state;
         }
 
-        void RecordTransformChange(const Framework::GOC& object, const TransformSnapshot& beforeState)
+        void RecordTransformChange(const Framework::GOC& object,
+            const TransformSnapshot& before)
         {
             if (!Framework::FACTORY)
                 return;
@@ -112,7 +125,7 @@ namespace mygame
             UndoAction action;
             action.kind = UndoKind::Transform;
             action.objectId = object.GetId();
-            action.before = beforeState;
+            action.before = before;
             action.after = CaptureTransformSnapshot(object);
             PushAction(std::move(action));
         }
@@ -148,30 +161,57 @@ namespace mygame
             if (gUndoStack.empty())
                 return false;
 
-            UndoAction action = std::move(gUndoStack.back());
+            UndoAction action = gUndoStack.back();
             gUndoStack.pop_back();
 
             bool requiresFactorySweep = false;
+
             switch (action.kind)
             {
             case UndoKind::Transform:
-                if (auto* obj = Framework::FACTORY->GetObjectWithId(action.objectId))
+            {
+                Framework::GOC* obj =
+                    Framework::FACTORY->GetObjectWithId(action.objectId);
+                if (obj)
                     ApplyTransformSnapshot(*obj, action.before);
-                break;
+            }
+            break;
+
             case UndoKind::Created:
-                if (auto* obj = Framework::FACTORY->GetObjectWithId(action.objectId))
+            {
+                // Undo a creation: destroy the object we created.
+                Framework::GOC* obj =
+                    Framework::FACTORY->GetObjectWithId(action.objectId);
+                if (obj)
                 {
                     Framework::FACTORY->Destroy(obj);
                     requiresFactorySweep = true;
                 }
-                break;
+            }
+            break;
+
             case UndoKind::Deleted:
-                Framework::FACTORY->InstantiateFromSnapshot(action.snapshot);
-                break;
+            {
+                // Undo a deletion: resurrect the object from its snapshot.
+                if (action.snapshot.is_object())
+                {
+                    Framework::GOC* restored =
+                        Framework::FACTORY->InstantiateFromSnapshot(action.snapshot);
+
+                    (void)restored;
+                    // Optional: reselect the restored object:
+                    // if (restored) mygame::SetSelectedObjectId(restored->GetId());
+                }
+            }
+            break;
             }
 
             if (requiresFactorySweep)
+            {
+                // Clean up any deferred-destroyed objects immediately so IDs/layers
+                // stay consistent with the editor view.
                 Framework::FACTORY->Update(0.0f);
+            }
 
             return true;
         }
@@ -190,5 +230,5 @@ namespace mygame
         {
             return kMaxUndoDepth;
         }
-    }
-}
+    } // namespace editor
+}     // namespace mygame

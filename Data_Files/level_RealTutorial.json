@@ -1,0 +1,311 @@
+{
+  "Level": {
+    "GameObjects": [
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 4.699999809265137,
+            "r": 1.0,
+            "visible": false,
+            "w": 0.09000000357627869
+          },
+          "RigidBodyComponent": {
+            "height": 4.699999809265137,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 0.09000000357627869
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": 2.5194449424743652,
+            "y": -0.3263888955116272
+          }
+        },
+        "layer": "Default",
+        "name": "Rect"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 4.699999809265137,
+            "r": 1.0,
+            "visible": false,
+            "w": 0.09000000357627869
+          },
+          "RigidBodyComponent": {
+            "height": 4.699999809265137,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 0.09000000357627869
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": -4.049722671508789,
+            "y": 0.04166668653488159
+          }
+        },
+        "layer": "Default",
+        "name": "Rect"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.09000000357627869,
+            "r": 1.0,
+            "visible": false,
+            "w": 6.710000038146973
+          },
+          "RigidBodyComponent": {
+            "height": 0.09000000357627869,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 6.710000038146973
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": -0.7791667580604553,
+            "y": -1.7013888359069824
+          }
+        },
+        "layer": "Default",
+        "name": "Rect"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.09000000357627869,
+            "r": 1.0,
+            "visible": false,
+            "w": 6.710000038146973
+          },
+          "RigidBodyComponent": {
+            "height": 0.09000000357627869,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 6.710000038146973
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": -0.7861112952232361,
+            "y": 0.7152777910232544
+          }
+        },
+        "layer": "Default",
+        "name": "Rect"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.5,
+            "r": 1.0,
+            "visible": false,
+            "w": 4.369999885559082
+          },
+          "RigidBodyComponent": {
+            "height": 0.5,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 4.369999885559082
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": 1.9986119270324707,
+            "y": -1.5972223281860352
+          }
+        },
+        "layer": "Default",
+        "name": "Rect"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.5,
+            "r": 1.0,
+            "visible": false,
+            "w": 4.389999866485596
+          },
+          "RigidBodyComponent": {
+            "height": 0.5,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 4.389999866485596
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": -3.3970000743865967,
+            "y": -1.611111044883728
+          }
+        },
+        "layer": "Default",
+        "name": "Rect"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.2800000011920929,
+            "r": 1.0,
+            "visible": false,
+            "w": 4.369999885559082
+          },
+          "RigidBodyComponent": {
+            "height": 0.28999999165534973,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 4.369999885559082
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": 1.9900000095367432,
+            "y": -0.49000000953674316
+          }
+        },
+        "layer": "Default",
+        "name": "Rect"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.28999999165534973,
+            "r": 1.0,
+            "visible": false,
+            "w": 4.369999885559082
+          },
+          "RigidBodyComponent": {
+            "height": 0.28999999165534973,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 4.369999885559082
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": -3.4000000953674316,
+            "y": -0.49000000953674316
+          }
+        },
+        "layer": "Default",
+        "name": "Rect"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.5,
+            "r": 1.0,
+            "visible": false,
+            "w": 4.369999885559082
+          },
+          "RigidBodyComponent": {
+            "height": 0.5,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 4.369999885559082
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": 1.9970555305480957,
+            "y": 0.671999990940094
+          }
+        },
+        "layer": "Default",
+        "name": "Rect"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.5,
+            "r": 1.0,
+            "visible": false,
+            "w": 4.369999885559082
+          },
+          "RigidBodyComponent": {
+            "height": 0.5,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 4.369999885559082
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": -3.391944169998169,
+            "y": 0.6776665449142456
+          }
+        },
+        "layer": "Default",
+        "name": "Rect"
+      },
+      {
+        "Components": {
+          "AudioComponent": {},
+          "HitBoxComponent": {
+            "duration": 0.15000000596046448,
+            "height": 0.15000000596046448,
+            "width": 0.15000000596046448
+          },
+          "PlayerAttackComponent": {
+            "attack_speed": 1.0,
+            "damage": 50
+          },
+          "PlayerComponent": {},
+          "PlayerHealthComponent": {
+            "playerHealth": 100,
+            "playerMaxhealth": 100
+          },
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.25,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.25
+          },
+          "RigidBodyComponent": {
+            "height": 0.20999999344348907,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 0.10000000149011612
+          },
+          "SpriteComponent": {
+            "texture_key": "player"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": -0.5541669130325317,
+            "y": -1.0388891696929932
+          }
+        },
+        "layer": "Default",
+        "name": "Player"
+      }
+    ],
+    "name": "level_RealTutorial"
+  }
+}

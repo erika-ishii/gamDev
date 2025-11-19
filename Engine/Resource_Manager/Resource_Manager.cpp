@@ -37,7 +37,8 @@ bool Resource_Manager::isTexture(const std::string& ext){return (ext == "png"||e
     \param ext  File extension string.
     \return true if it is a sound, false otherwise.
 *****************************************************************************************/
-bool Resource_Manager::isSound(const std::string& ext){return ext == "mp3"|| ext == "wav";}
+bool Resource_Manager::isSound(const std::string& ext)
+{return ext == "mp3"|| ext == "wav";}
 /*****************************************************************************************
      \brief Retrieve the handle of a texture resource by its unique key.
     \param key  Resource identifier.
@@ -100,7 +101,12 @@ bool Resource_Manager::load(const std::string& id, const std::string& path)
         }
         return success;
     }
-    else {std::cerr << "[Resource_Manager] Unsupported file type: "  << path << std::endl; return false;}
+    else 
+    {
+        std::cerr << "[Resource_Manager] Unsupported file type: " << path << std::endl;
+        Framework::AudioImGui::ShowUnsupportedAudioPopup(path);
+        return false;
+    }
 }
 /*****************************************************************************************
      \brief Load all resources from a specified directory.
@@ -117,15 +123,12 @@ void Resource_Manager::loadAll(const std::string& directory)
         std::string stem = path.stem().string();      // filename without extension
         size_t pos = stem.find_first_of("-_.");
         std::string id = (pos == std::string::npos) ? stem : stem.substr(0, pos);
-
-        if (isTexture(ext) || isSound(ext))
+        if (!load(id, path.string())) {}
+        else 
         {
-            if (load(id, path.string()))
-            {
-                std::cout << "[Resource_Manager] Loaded: "
-                    << id << " from " << path.string() << "\n";
-            }
-        }
+            std::cout << "[Resource_Manager] Loaded: "
+                << id << " from " << path.string() << "\n";
+        }        
     }
 }
 /*****************************************************************************************

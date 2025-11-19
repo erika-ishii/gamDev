@@ -59,6 +59,7 @@ namespace Framework
         static void Initialize(gfx::Window& win);
         static void Render();
         static void Shutdown();
+        static void ShowUnsupportedAudioPopup(const std::string& file);
         AudioImGui() = default;
         ~AudioImGui() = default;
 
@@ -67,7 +68,8 @@ namespace Framework
         static bool s_audioReady;
         static std::vector<std::string> soundNames;
         static float masterVolume;
-
+        static bool s_showUnsupportedPopup;     // flag to trigger popup
+        static std::string s_unsupportedFile;   // filename or message
 
 
 

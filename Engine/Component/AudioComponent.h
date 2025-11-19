@@ -9,19 +9,28 @@
 #include <fstream>
 namespace Framework
 {
+    struct SoundInfo
+    {
+        std::string id;
+        bool loop{ false };
+    };
+
     class AudioComponent : public GameComponent
     {
         public:
-        std::unordered_map<std::string, std::string> sounds;
+        std::unordered_map<std::string, SoundInfo> sounds;
+        std::unordered_map<std::string, bool> playing;
         float volume{ 1.0f }; 
-        bool loop{ false };   
-        bool playing{ false }; 
+        
         
         AudioComponent()
         {
-            sounds["footsteps"] = "";
-            sounds["Slash1"] = "";
-            sounds["GrappleShoot1"] = "";
+            sounds["footsteps"] = { "", false };
+            sounds["Slash1"] = { "", false };
+            sounds["GrappleShoot1"] = { "", false };
+            playing["footsteps"] = false;
+            playing["Slash1"] = false;
+            playing["GrappleShoot1"] = false;
         };
 
         void initialize() override {}
@@ -29,34 +38,46 @@ namespace Framework
         void Play(const std::string& action)
         {
             auto it = sounds.find(action);
-            if (it != sounds.end() && SoundManager::getInstance().isSoundLoaded(it->second))
-            {SoundManager::getInstance().playSound(it->second, volume, 1.0f, loop); playing = true;}
+            if (it != sounds.end() && SoundManager::getInstance().isSoundLoaded(it->second.id))
+            {SoundManager::getInstance().playSound(it->second.id, volume, 1.0f, it->second.loop); playing[action] = true;}
             else
             {std::cout << "[AudioComponent] ERROR: Action '" << action<< "' not found in sounds map!\n";}
         }
         
+        void Stop(const std::string& action)
+        {
+            auto it = sounds.find(action);
+            if (it != sounds.end())
+            {
+                SoundManager::getInstance().stopSound(it->second.id);
+                playing[action] = false;
+            }
+        }
+
         void TriggerSound(const std::string& action)
-        {if (sounds.count(action)) { SoundManager::getInstance().playSound(sounds[action], volume, 1.f, loop); }}
+        {
+            auto it = sounds.find(action);
+            if (it != sounds.end()) { SoundManager::getInstance().playSound(it->second.id, volume, 1.f, it->second.loop);}
+        }
 
         void Serialize(ISerializer& s) override
         {
             if (s.EnterObject("sounds"))
             {
-                for (auto& [action, id] : sounds)
+                for (auto& [action, info] : sounds)
                 {
-                    std::string val = id;
-                    StreamRead(s, action, val);
-                    id = val;
+                    if (s.EnterObject(action))
+                    {
+                        StreamRead(s, "id", info.id);
+                        int loopInt = info.loop ? 1 : 0;
+                        StreamRead(s, "loop", loopInt);
+                        info.loop = (loopInt != 0);
+                        s.ExitObject();
+                    }
                 }
                 s.ExitObject();
             }
             if (s.HasKey("volume")) StreamRead(s, "volume", volume);
-            if (s.HasKey("loop"))
-            {
-                int loopInt = loop ? 1 : 0;
-                StreamRead(s, "loop", loopInt);
-                loop = (loopInt != 0);
-            }
         }
 
         std::unique_ptr<GameComponent> Clone() const override
@@ -64,12 +85,25 @@ namespace Framework
             auto copy = std::make_unique<AudioComponent>();
             copy->sounds = sounds;
             copy->volume = volume;
-            copy->loop = loop;
             copy->playing = playing;
             return copy;
         }
 
         void Update(float dt) 
         {(void)dt;}
+        ~AudioComponent() override 
+        {
+            for (auto& [action, isPlaying] : playing)
+            {
+                if (isPlaying)
+                {
+                    auto it = sounds.find(action);
+                    if (it != sounds.end())
+                    {
+                        SoundManager::getInstance().stopSound(it->second.id);
+                    }
+                }
+            }
+        }
     };
 }
