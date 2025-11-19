@@ -1639,9 +1639,10 @@ namespace Framework {
                 assetBrowser.Draw();
                 jsonEditor.Draw();
                 mygame::DrawHierarchyPanel();
-                mygame::DrawInspectorPanel();
+             
                 mygame::DrawSpawnPanel();
-                mygame::DrawInspectorPanel();
+                mygame::DrawPropertiesEditor();
+                mygame::DrawInspectorWindow();
 
                 if (ImGui::Begin("Crash Tests"))
                 {

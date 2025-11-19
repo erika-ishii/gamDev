@@ -106,7 +106,7 @@ namespace
 
 namespace mygame
 {
-    void DrawInspectorPanel()
+    void DrawPropertiesEditor()
     {
         using namespace Framework;
 
@@ -126,8 +126,7 @@ namespace mygame
         {
             object = FACTORY->GetObjectWithId(mygame::GetSelectedObjectId());
         }
-
-        if (!ImGui::Begin("Inspector"))
+        if (!ImGui::Begin("Properties Editor"))
         {
             ImGui::End();
             return;

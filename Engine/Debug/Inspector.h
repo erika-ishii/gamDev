@@ -18,6 +18,6 @@ namespace mygame {
 
     /// Draw the inspector window. Shows identity data and editable component values
     /// for the currently selected object (if any).
-    void DrawInspectorPanel();
+    void DrawInspectorWindow();
 
 } // namespace mygame

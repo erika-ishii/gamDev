@@ -49,7 +49,7 @@ namespace {
 
 namespace mygame {
 
-    void DrawInspectorPanel()
+    void DrawInspectorWindow()
     {
         Framework::GOCId selectedId = mygame::HasSelectedObject() ? mygame::GetSelectedObjectId() : 0;
         if (selectedId == 0)
@@ -64,7 +64,7 @@ namespace mygame {
             gFocusedSelection = selectedId;
         }
 
-        if (!ImGui::Begin("Inspector"))
+        if (!ImGui::Begin("Inspector Window"))
         {
             ImGui::End();
             return;
