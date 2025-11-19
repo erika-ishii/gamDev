@@ -171,6 +171,8 @@ namespace Framework {
 
         std::string ComponentNameFromId(ComponentTypeId id) const;
         json SerializeComponentToJson(const GameComponent& component) const;
+        void DeserializeComponentFromJson(GameComponent& component, const json& data) const;
+        GOC* InstantiateFromSnapshotInternal(const json& data);
         bool SaveLevelInternal(const std::string& filename, const std::vector<GOC*>& objects,
             const std::string& levelName);
 
@@ -178,6 +180,11 @@ namespace Framework {
         /// Read-only accessor for all objects managed by the factory (ownership retained by factory).
         const GameObjectIdMapType& Objects() const { return GameObjectIdMap; }
 
+        /// Serialize a single live object into a JSON snapshot used by editor systems.
+        json SnapshotGameObject(const GOC& object) const;
+
+        /// Instantiate a new object from a JSON snapshot (used by editor undo).
+        GOC* InstantiateFromSnapshot(const json& data);
         /// Snapshot of the most recently saved or loaded level objects.
         const std::vector<GOC*>& LastLevelObjects() const { return LastLevelCache; }
 

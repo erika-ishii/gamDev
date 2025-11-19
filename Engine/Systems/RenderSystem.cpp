@@ -57,6 +57,7 @@
 #include <unordered_set>
 #include <unordered_map>
 
+#include "Debug/UndoStack.h"
 #include "Debug/Inspector.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_inverse.hpp> // for glm::inverse (used in ScreenToWorld)
@@ -438,7 +439,10 @@ namespace Framework {
                 if (FACTORY)
                 {
                     if (auto* selected = FACTORY->GetObjectWithId(selectedId))
+                    {
+                        mygame::editor::RecordObjectDeleted(*selected);
                         FACTORY->Destroy(selected);
+                    }
                 }
                 mygame::ClearSelection();
             }
@@ -1065,6 +1069,24 @@ namespace Framework {
                 ImGui::End();
                 return;
             }
+
+            const ImGuiIO& io = ImGui::GetIO();
+            if (!io.WantCaptureKeyboard && (io.KeyCtrl || io.KeySuper) && ImGui::IsKeyPressed(ImGuiKey_Z))
+            {
+                mygame::editor::UndoLastAction();
+            }
+
+            ImGui::Separator();
+            ImGui::TextUnformatted("Undo");
+            bool canUndo = mygame::editor::CanUndo();
+            if (!canUndo)
+                ImGui::BeginDisabled();
+            if (ImGui::Button("Undo Last"))
+                mygame::editor::UndoLastAction();
+            if (!canUndo)
+                ImGui::EndDisabled();
+            ImGui::SameLine();
+            ImGui::Text("%zu / %zu steps", mygame::editor::StackDepth(), mygame::editor::StackCapacity());
 
             // ---- everything below this only shows when editor is ON ----
 

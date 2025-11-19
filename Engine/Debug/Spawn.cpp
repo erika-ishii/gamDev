@@ -29,6 +29,7 @@
 *********************************************************************************************/
 #include "Debug/Spawn.h"
 #include "Selection.h"
+#include "Debug/UndoStack.h"
 #include "imgui.h"
 
 // #include "Debug/Perf.h"
@@ -339,9 +340,9 @@ namespace mygame {
       \param  index  Batch index (applied to stepX/stepY offsets).
       \note   Newly spawned object is assigned to the current active layer.
     *************************************************************************************/
-    static void SpawnOnePrefab(const char* prefab, SpawnSettings const& s, int index) {
+    static GOC* SpawnOnePrefab(const char* prefab, SpawnSettings const& s, int index) {
         GOC* obj = ClonePrefab(prefab);
-        if (!obj) return;
+        if (!obj) return nullptr;
 
         // Transform: inherit JSON unless override is ON
         if (auto* tr = obj->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent)) {
@@ -449,6 +450,7 @@ namespace mygame {
 
         // Assign layer on creation
         obj->SetLayerName(gActiveLayer);
+        return obj;
     }
 
     /*************************************************************************************
@@ -1148,8 +1150,10 @@ namespace mygame {
 
         // === Actions ===
         if (ImGui::Button("Spawn")) {
-            for (int i = 0; i < gS.count; ++i)
-                SpawnOnePrefab(gSelectedPrefab.c_str(), gS, i);
+            for (int i = 0; i < gS.count; ++i) {
+                if (GOC* spawned = SpawnOnePrefab(gSelectedPrefab.c_str(), gS, i))
+                    mygame::editor::RecordObjectCreated(*spawned);
+            }
         }
 
         ImGui::SameLine();

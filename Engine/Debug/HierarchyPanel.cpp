@@ -11,8 +11,12 @@
 #include "Factory/Factory.h"
 #include "Composition/Composition.h"
 #include "Selection.h"
-
+#include "Debug/UndoStack.h"
 #include <imgui.h>
+#include <array>
+#include <algorithm>
+#include <cctype>
+#include <cstdio>
 #include <string>
 
 namespace
@@ -28,6 +32,33 @@ namespace
         const std::string& name = obj->GetObjectName();
         storage = name.empty() ? "<unnamed>" : name;
         return storage.c_str();
+    }
+    std::string TrimCopy(std::string value)
+    {
+        auto notSpace = [](unsigned char c) { return !std::isspace(c); };
+        value.erase(value.begin(), std::find_if(value.begin(), value.end(), notSpace));
+        value.erase(std::find_if(value.rbegin(), value.rend(), notSpace).base(), value.end());
+        return value;
+    }
+
+    std::string DefaultNameForId(Framework::GOCId id)
+    {
+        char buffer[32];
+        std::snprintf(buffer, sizeof(buffer), "GameObject_%u", id);
+        return buffer;
+    }
+
+ 
+
+    void DestroyObject(Framework::GOCId id)
+    {
+        if (!Framework::FACTORY || id == 0)
+            return;
+
+        if (auto* target = Framework::FACTORY->GetObjectWithId(id))
+        {
+            Framework::FACTORY->Destroy(target);
+        }
     }
 }
 
@@ -54,6 +85,28 @@ void mygame::DrawHierarchyPanel()
         ImGui::TextDisabled("Objects: %zu", objects.size());
         ImGui::Separator();
 
+      
+
+        ImGui::PushID("HierarchyControls");
+        ImGui::SetNextItemWidth(ImGui::GetFontSize() * 10.0f);
+    
+        ImGui::SameLine();
+
+      
+
+        ImGui::SameLine();
+        const bool hasSelection = mygame::HasSelectedObject();
+        ImGui::BeginDisabled(!hasSelection);
+        if (ImGui::Button("Delete Selected"))
+        {
+            const GOCId selected = mygame::GetSelectedObjectId();
+            DestroyObject(selected);
+            mygame::ClearSelection();
+        }
+        ImGui::EndDisabled();
+        ImGui::PopID();
+
+        ImGui::Separator();
         if (objects.empty())
         {
             ImGui::TextDisabled("No objects available.");
@@ -99,7 +152,10 @@ void mygame::DrawHierarchyPanel()
                     if (ImGui::MenuItem("Delete"))
                     {
                         if (auto* target = FACTORY->GetObjectWithId(id))
+                        {
+                            mygame::editor::RecordObjectDeleted(*target);
                             FACTORY->Destroy(target);
+                        }
 
                         if (mygame::GetSelectedObjectId() == id)
                             mygame::ClearSelection();

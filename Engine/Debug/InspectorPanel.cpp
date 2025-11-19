@@ -16,6 +16,7 @@
 #include "Component/HitBoxComponent.h"
 #include "Selection.h"
 #include "Factory/Factory.h"
+#include "Debug/UndoStack.h"
 
 #include <imgui.h>
 #include <array>
@@ -26,29 +27,55 @@ namespace
 {
     using namespace Framework;
 
-    void DrawTransformSection(TransformComponent& transform)
+    void DrawTransformSection(Framework::GOC& owner, TransformComponent& transform)
     {
         if (!ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
             return;
 
+        mygame::editor::TransformSnapshot before{};
+        bool captured = false;
+        auto capture = [&]()
+            {
+                if (!captured)
+                {
+                    before = mygame::editor::CaptureTransformSnapshot(owner);
+                    captured = true;
+                }
+            };
+
         float position[2] = { transform.x, transform.y };
         if (ImGui::DragFloat2("Position", position, 0.1f))
         {
+            capture();
             transform.x = position[0];
             transform.y = position[1];
         }
 
-        ImGui::DragFloat("Rotation", &transform.rot, 0.5f, -360.0f, 360.0f, "%.2f");
+        if (ImGui::DragFloat("Rotation", &transform.rot, 0.5f, -360.0f, 360.0f, "%.2f"))
+            capture();
+
+        if (captured)
+            mygame::editor::RecordTransformChange(owner, before);
     }
 
-    void DrawRenderSection(RenderComponent& render)
+    void DrawRenderSection(Framework::GOC& owner, RenderComponent& render)
     {
         if (!ImGui::CollapsingHeader("Render", ImGuiTreeNodeFlags_DefaultOpen))
             return;
-
+        mygame::editor::TransformSnapshot before{};
+        bool captured = false;
+        auto capture = [&]()
+            {
+                if (!captured)
+                {
+                    before = mygame::editor::CaptureTransformSnapshot(owner);
+                    captured = true;
+                }
+            };
         float size[2] = { render.w, render.h };
         if (ImGui::DragFloat2("Size", size, 1.0f, 0.0f, 10000.0f, "%.1f"))
         {
+            capture();
             render.w = size[0];
             render.h = size[1];
         }
@@ -63,16 +90,30 @@ namespace
         }
 
         ImGui::Checkbox("Visible", &render.visible);
+        if (captured)
+            mygame::editor::RecordTransformChange(owner, before);
 
     
     }
 
-    void DrawCircleRenderSection(CircleRenderComponent& circle)
+    void DrawCircleRenderSection(Framework::GOC& owner, CircleRenderComponent& circle)
     {
         if (!ImGui::CollapsingHeader("Circle Render", ImGuiTreeNodeFlags_DefaultOpen))
             return;
 
-        ImGui::DragFloat("Radius", &circle.radius, 0.05f, 0.0f, 1000.0f, "%.2f");
+        mygame::editor::TransformSnapshot before{};
+        bool captured = false;
+        auto capture = [&]()
+            {
+                if (!captured)
+                {
+                    before = mygame::editor::CaptureTransformSnapshot(owner);
+                    captured = true;
+                }
+            };
+
+        if (ImGui::DragFloat("Radius", &circle.radius, 0.05f, 0.0f, 1000.0f, "%.2f"))
+            capture();
 
         float color[4] = { circle.r, circle.g, circle.b, circle.a };
         if (ImGui::ColorEdit4("Color", color))
@@ -82,6 +123,9 @@ namespace
             circle.b = color[2];
             circle.a = color[3];
         }
+
+        if (captured)
+            mygame::editor::RecordTransformChange(owner, before);
     }
 
     void DrawSpriteSection(SpriteComponent& sprite)
@@ -159,13 +203,13 @@ namespace mygame
         ImGui::Separator();
 
         if (auto* transform = object->GetComponentAs<TransformComponent>(ComponentTypeId::CT_TransformComponent))
-            DrawTransformSection(*transform);
+            DrawTransformSection(*object, *transform);
 
         if (auto* render = object->GetComponentAs<RenderComponent>(ComponentTypeId::CT_RenderComponent))
-            DrawRenderSection(*render);
+            DrawRenderSection(*object, *render);
 
         if (auto* circle = object->GetComponentAs<CircleRenderComponent>(ComponentTypeId::CT_CircleRenderComponent))
-            DrawCircleRenderSection(*circle);
+            DrawCircleRenderSection(*object, *circle);
 
         if (auto* sprite = object->GetComponentAs<SpriteComponent>(ComponentTypeId::CT_SpriteComponent))
             DrawSpriteSection(*sprite);

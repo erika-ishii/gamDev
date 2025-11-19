@@ -265,7 +265,7 @@ namespace Framework {
             s.ReadString("name", levelName);
             LastLevelNameCache = levelName;
         }
-    
+
 
         if (s.EnterArray("GameObjects")) {
             size_t n = s.ArraySize();
@@ -655,5 +655,246 @@ namespace Framework {
     void GameObjectFactory::AddComponentCreator(const std::string& name, std::unique_ptr<ComponentCreator> creator)
     {
         ComponentMap[name] = std::move(creator);
+    }
+
+
+    void GameObjectFactory::DeserializeComponentFromJson(GameComponent& component,
+        const json& data) const
+    {
+        if (!data.is_object())
+            return;
+
+        auto readFloat = [&](const char* key, float& out)
+            {
+                auto it = data.find(key);
+                if (it != data.end() && it->is_number())
+                    out = static_cast<float>(it->get<double>());
+            };
+
+        auto readInt = [&](const char* key, int& out)
+            {
+                auto it = data.find(key);
+                if (it != data.end() && it->is_number_integer())
+                    out = it->get<int>();
+            };
+
+        auto readBool = [&](const char* key, bool& out)
+            {
+                auto it = data.find(key);
+                if (it != data.end() && it->is_boolean())
+                    out = it->get<bool>();
+            };
+
+        auto readString = [&](const char* key, std::string& out)
+            {
+                auto it = data.find(key);
+                if (it != data.end() && it->is_string())
+                    out = it->get<std::string>();
+            };
+
+        switch (component.GetTypeId())
+        {
+        case ComponentTypeId::CT_TransformComponent:
+        {
+            auto& tr = static_cast<TransformComponent&>(component);
+            readFloat("x", tr.x);
+            readFloat("y", tr.y);
+            readFloat("rot", tr.rot);
+            break;
+        }
+        case ComponentTypeId::CT_RenderComponent:
+        {
+            auto& rc = static_cast<RenderComponent&>(component);
+            readFloat("w", rc.w);
+            readFloat("h", rc.h);
+            readFloat("r", rc.r);
+            readFloat("g", rc.g);
+            readFloat("b", rc.b);
+            readFloat("a", rc.a);
+            readBool("visible", rc.visible);
+            readString("texture_key", rc.texture_key);
+            readString("texture_path", rc.texture_path);
+            break;
+        }
+        case ComponentTypeId::CT_CircleRenderComponent:
+        {
+            auto& cc = static_cast<CircleRenderComponent&>(component);
+            readFloat("radius", cc.radius);
+            readFloat("r", cc.r);
+            readFloat("g", cc.g);
+            readFloat("b", cc.b);
+            readFloat("a", cc.a);
+            break;
+        }
+        case ComponentTypeId::CT_SpriteComponent:
+        {
+            auto& sp = static_cast<SpriteComponent&>(component);
+            readString("texture_key", sp.texture_key);
+            readString("path", sp.path);
+            break;
+        }
+        case ComponentTypeId::CT_SpriteAnimationComponent:
+        {
+            auto& anim = static_cast<SpriteAnimationComponent&>(component);
+            readFloat("fps", anim.fps);
+            if (auto it = data.find("loop"); it != data.end())
+            {
+                if (it->is_boolean()) anim.loop = it->get<bool>();
+                else if (it->is_number_integer()) anim.loop = it->get<int>() != 0;
+            }
+            if (auto it = data.find("play"); it != data.end())
+            {
+                if (it->is_boolean()) anim.play = it->get<bool>();
+                else if (it->is_number_integer()) anim.play = it->get<int>() != 0;
+            }
+            if (auto it = data.find("frames"); it != data.end() && it->is_array())
+            {
+                anim.frames.clear();
+                for (const auto& frameData : *it)
+                {
+                    if (!frameData.is_object())
+                        continue;
+                    SpriteAnimationFrame frame;
+                    if (auto keyIt = frameData.find("texture_key"); keyIt != frameData.end() && keyIt->is_string())
+                        frame.texture_key = keyIt->get<std::string>();
+                    if (auto pathIt = frameData.find("path"); pathIt != frameData.end() && pathIt->is_string())
+                        frame.path = pathIt->get<std::string>();
+                    anim.frames.emplace_back(std::move(frame));
+                }
+            }
+            break;
+        }
+        case ComponentTypeId::CT_RigidBodyComponent:
+        {
+            auto& rb = static_cast<RigidBodyComponent&>(component);
+            readFloat("velocity_x", rb.velX);
+            readFloat("velocity_y", rb.velY);
+            readFloat("width", rb.width);
+            readFloat("height", rb.height);
+            break;
+        }
+        case ComponentTypeId::CT_PlayerHealthComponent:
+        {
+            auto& hp = static_cast<PlayerHealthComponent&>(component);
+            readInt("playerHealth", hp.playerHealth);
+            readInt("playerMaxhealth", hp.playerMaxhealth);
+            break;
+        }
+        case ComponentTypeId::CT_PlayerAttackComponent:
+        {
+            auto& atk = static_cast<PlayerAttackComponent&>(component);
+            readInt("damage", atk.damage);
+            readFloat("attack_speed", atk.attack_speed);
+            break;
+        }
+        case ComponentTypeId::CT_EnemyAttackComponent:
+        {
+            auto& atk = static_cast<EnemyAttackComponent&>(component);
+            readInt("damage", atk.damage);
+            readFloat("attack_speed", atk.attack_speed);
+            if (atk.hitbox)
+            {
+                readFloat("hitwidth", atk.hitbox->width);
+                readFloat("hitheight", atk.hitbox->height);
+                readFloat("hitduration", atk.hitbox->duration);
+            }
+            break;
+        }
+        case ComponentTypeId::CT_EnemyHealthComponent:
+        {
+            auto& hp = static_cast<EnemyHealthComponent&>(component);
+            readInt("enemyHealth", hp.enemyHealth);
+            readInt("enemyMaxhealth", hp.enemyMaxhealth);
+            break;
+        }
+        case ComponentTypeId::CT_EnemyTypeComponent:
+        {
+            auto& type = static_cast<EnemyTypeComponent&>(component);
+            std::string typeStr;
+            readString("type", typeStr);
+            if (typeStr == "ranged")
+                type.Etype = EnemyTypeComponent::EnemyType::ranged;
+            else
+                type.Etype = EnemyTypeComponent::EnemyType::physical;
+            break;
+        }
+        case ComponentTypeId::CT_HitBoxComponent:
+        {
+            auto& hit = static_cast<HitBoxComponent&>(component);
+            readFloat("width", hit.width);
+            readFloat("height", hit.height);
+            readFloat("duration", hit.duration);
+            break;
+        }
+        case ComponentTypeId::CT_EnemyComponent:
+        case ComponentTypeId::CT_PlayerComponent:
+        case ComponentTypeId::CT_EnemyDecisionTreeComponent:
+        case ComponentTypeId::CT_InputComponents:
+        case ComponentTypeId::CT_AudioComponent:
+        default:
+            break;
+        }
+    }
+
+    json GameObjectFactory::SnapshotGameObject(const GOC& object) const
+    {
+        json objJson = json::object();
+        objJson["_undo_id"] = object.ObjectId;
+        if (!object.ObjectName.empty())
+            objJson["name"] = object.ObjectName;
+        objJson["layer"] = object.LayerName;
+
+        json comps = json::object();
+        for (auto const& up : object.Components)
+        {
+            if (!up)
+                continue;
+            const GameComponent& comp = *up;
+            std::string compName = ComponentNameFromId(comp.GetTypeId());
+            if (compName.empty())
+                continue;
+            comps[compName] = SerializeComponentToJson(comp);
+        }
+
+        objJson["Components"] = std::move(comps);
+        return objJson;
+    }
+
+    GOC* GameObjectFactory::InstantiateFromSnapshotInternal(const json& data)
+    {
+        if (!data.is_object())
+            return nullptr;
+
+        auto goc = std::make_unique<GOC>();
+        if (auto it = data.find("name"); it != data.end() && it->is_string())
+            goc->SetObjectName(it->get<std::string>());
+        if (auto it = data.find("layer"); it != data.end() && it->is_string())
+            goc->SetLayerName(it->get<std::string>());
+
+        if (auto compIt = data.find("Components"); compIt != data.end() && compIt->is_object())
+        {
+            for (auto& [compName, compData] : compIt->items())
+            {
+                auto creatorIt = ComponentMap.find(compName);
+                if (creatorIt == ComponentMap.end())
+                    continue;
+                ComponentCreator* creator = creatorIt->second.get();
+                if (!creator)
+                    continue;
+                std::unique_ptr<GameComponent> comp(creator->Create());
+                if (!comp)
+                    continue;
+                if (compData.is_object())
+                    DeserializeComponentFromJson(*comp, compData);
+                goc->AddComponent(creator->TypeId, std::move(comp));
+            }
+        }
+
+        return IdGameObject(std::move(goc));
+    }
+
+    GOC* GameObjectFactory::InstantiateFromSnapshot(const json& data)
+    {
+        return InstantiateFromSnapshotInternal(data);
     }
 }

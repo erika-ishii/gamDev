@@ -23,7 +23,7 @@
 #include "Component/CircleRenderComponent.h"
 #include "Component/SpriteComponent.h"
 #include "Physics/Dynamics/RigidBodyComponent.h"
-
+#include "Debug/UndoStack.h"
 #include <imgui.h>
 
 #include <algorithm>
@@ -97,9 +97,10 @@ namespace mygame {
             SyncNameBuffer(selectedId, obj->GetObjectName());
 
         ImGui::SeparatorText("Identity");
+        ImGui::BeginDisabled(true);
         if (ImGui::InputText("Name", gNameBuffer.data(), gNameBuffer.size()))
             obj->SetObjectName(gNameBuffer.data());
-
+        ImGui::EndDisabled();
         ImGui::Text("ID: %u", obj->GetId());
         ImGui::Text("Layer: %s", obj->GetLayerName().c_str());
         ImGui::Spacing();
@@ -111,13 +112,31 @@ namespace mygame {
         {
             anyComponentDrawn = true;
             ImGui::SeparatorText("Transform");
+            mygame::editor::TransformSnapshot before{};
+            bool captured = false;
+            auto capture = [&]()
+                {
+                    if (!captured)
+                    {
+                        before = mygame::editor::CaptureTransformSnapshot(*obj);
+                        captured = true;
+                    }
+                };
+
+            ImGui::BeginDisabled(true);
             float pos[2] = { tr->x, tr->y };
             if (ImGui::DragFloat2("Position", pos, 0.05f))
             {
+                capture();
                 tr->x = pos[0];
                 tr->y = pos[1];
             }
-            ImGui::SliderAngle("Rotation", &tr->rot, -360.0f, 360.0f);
+            if (ImGui::SliderAngle("Rotation", &tr->rot, -360.0f, 360.0f))
+                capture();
+
+            if (captured)
+                mygame::editor::RecordTransformChange(*obj, before);
+            ImGui::EndDisabled();
         }
 
         if (auto* render = obj->GetComponentType<Framework::RenderComponent>(
@@ -125,9 +144,21 @@ namespace mygame {
         {
             anyComponentDrawn = true;
             ImGui::SeparatorText("Rectangle Render");
+            ImGui::BeginDisabled(true);
+            mygame::editor::TransformSnapshot before{};
+            bool captured = false;
+            auto capture = [&]()
+                {
+                    if (!captured)
+                    {
+                        before = mygame::editor::CaptureTransformSnapshot(*obj);
+                        captured = true;
+                    }
+                };
             float size[2] = { render->w, render->h };
             if (ImGui::DragFloat2("Size", size, 0.01f))
             {
+                capture();
                 render->w = size[0];
                 render->h = size[1];
             }
@@ -142,11 +173,14 @@ namespace mygame {
             bool visible = render->visible;
             if (ImGui::Checkbox("Visible", &visible))
                 render->visible = visible;
+            ImGui::EndDisabled();
 
             ImGui::Text("Texture Key: %s", render->texture_key.empty() ? "<none>" : render->texture_key.c_str());
             if (!render->texture_path.empty())
                 ImGui::Text("Texture Path: %s", render->texture_path.c_str());
             ImGui::Text("Texture Id: %u", render->texture_id);
+            if (captured)
+                mygame::editor::RecordTransformChange(*obj, before);
         }
 
         if (auto* sprite = obj->GetComponentType<Framework::SpriteComponent>(
@@ -164,6 +198,7 @@ namespace mygame {
         {
             anyComponentDrawn = true;
             ImGui::SeparatorText("Circle");
+            ImGui::BeginDisabled(true);
             float radius = circle->radius;
             if (ImGui::DragFloat("Radius", &radius, 0.01f, 0.0f, 0.0f, "%.3f"))
                 circle->radius = std::max(0.0f, radius);
@@ -175,6 +210,7 @@ namespace mygame {
                 circle->b = color[2];
                 circle->a = color[3];
             }
+            ImGui::EndDisabled();
         }
 
         if (auto* rb = obj->GetComponentType<Framework::RigidBodyComponent>(
@@ -182,6 +218,7 @@ namespace mygame {
         {
             anyComponentDrawn = true;
             ImGui::SeparatorText("RigidBody");
+            ImGui::BeginDisabled(true);
             float vel[2] = { rb->velX, rb->velY };
             if (ImGui::DragFloat2("Velocity", vel, 0.05f))
             {
@@ -194,6 +231,7 @@ namespace mygame {
                 rb->width = std::max(0.0f, size[0]);
                 rb->height = std::max(0.0f, size[1]);
             }
+            ImGui::EndDisabled();
         }
 
         if (!anyComponentDrawn)
