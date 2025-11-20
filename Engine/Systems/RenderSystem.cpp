@@ -365,7 +365,23 @@ namespace Framework {
     *************************************************************************************/
     unsigned RenderSystem::CurrentPlayerTexture() const
     {
-        return logic.Animation().running ? runTex : idleTex;
+        const auto& anim = logic.Animation();
+        using Mode = LogicSystem::AnimationInfo::Mode;
+
+        switch (anim.mode)
+        {
+        case Mode::Run:
+            return runTex ? runTex : idleTex;
+        case Mode::Attack1:
+            return attackTex[0] ? attackTex[0] : idleTex;
+        case Mode::Attack2:
+            return attackTex[1] ? attackTex[1] : idleTex;
+        case Mode::Attack3:
+            return attackTex[2] ? attackTex[2] : idleTex;
+        case Mode::Idle:
+        default:
+            return idleTex ? idleTex : playerTex;
+        }
     }
 
     /*************************************************************************************
@@ -1317,8 +1333,17 @@ namespace Framework {
 
         Resource_Manager::load("ming_idle", "../../assets/Textures/Idle Sprite .png");
         Resource_Manager::load("ming_run", "../../assets/Textures/Running Sprite .png");
+        Resource_Manager::load("ming_attack1", "../../assets/Textures/Character/Ming_Sprite/1st_Attack Sprite.png");
+        Resource_Manager::load("ming_attack2", "../../assets/Textures/Character/Ming_Sprite/2nd_Attack Sprite.png");
+        Resource_Manager::load("ming_attack3", "../../assets/Textures/Character/Ming_Sprite/3rd_Attack Sprite.png");
+        Resource_Manager::load("ming_knife", "../../assets/Textures/Character/Ming_Sprite/Knife_Sprite.png");
+
         idleTex = Resource_Manager::resources_map["ming_idle"].handle;
         runTex = Resource_Manager::resources_map["ming_run"].handle;
+        attackTex[0] = Resource_Manager::resources_map["ming_attack1"].handle;
+        attackTex[1] = Resource_Manager::resources_map["ming_attack2"].handle;
+        attackTex[2] = Resource_Manager::resources_map["ming_attack3"].handle;
+        knifeTex = Resource_Manager::resources_map["ming_knife"].handle;
 
         ImGuiLayerConfig config;
         config.glsl_version = "#version 330";
@@ -1437,8 +1462,43 @@ namespace Framework {
 
             auto t0 = clock::now();
 
-            // Background: prefer a texture named "house" if available, otherwise fallback to gradient.
-            if (unsigned bgTex = Resource_Manager::getTexture("house"))
+            static unsigned hawkerFloorTex = 0;
+            static unsigned hawkerHdbTex = 0;
+
+            auto ensureBackgroundTexture = [](unsigned& textureHandle,
+                const char* key,
+                const char* path)
+                {
+                    if (textureHandle)
+                        return;
+
+                    textureHandle = Resource_Manager::getTexture(key);
+                    if (!textureHandle && path)
+                    {
+                        if (Resource_Manager::load(key, path))
+                        {
+                            textureHandle = Resource_Manager::getTexture(key);
+                        }
+                    }
+                };
+
+            ensureBackgroundTexture(hawkerFloorTex,
+                "hawker_floor_bg",
+                "../../assets/Textures/Environment/lvl 1_Hawker/Floor.png");
+            ensureBackgroundTexture(hawkerHdbTex,
+                "hawker_hdb_bg",
+                "../../assets/Textures/Environment/lvl 1_Hawker/HDB.png");
+
+            if (hawkerFloorTex && hawkerHdbTex)
+            {
+                gfx::Graphics::renderSprite(hawkerHdbTex, 0.0f, 0.5f, 0.0f,
+                    2.0f, 1.0f,
+                    1.f, 1.f, 1.f, 1.f);
+                gfx::Graphics::renderSprite(hawkerFloorTex, 0.0f, -0.5f, 0.0f,
+                    2.0f, 1.0f,
+                    1.f, 1.f, 1.f, 1.f);
+            }
+            else if (unsigned bgTex = Resource_Manager::getTexture("house"))
             {
                 // Big background quad in world space (uses camera VP).
                 gfx::Graphics::renderSprite(bgTex, 0.0f, 0.0f, 0.0f, 2.0f, 2.0f, 1.f, 1.f, 1.f, 1.f);
@@ -1529,6 +1589,47 @@ namespace Framework {
                         instance.uv = uvRect;
 
                         spriteBatches[tex].push_back(instance);
+                    }
+                }
+
+                // NEW: Render knife projectiles using Knife_Sprite.png with its own anim.
+                if (knifeTex && logic.hitBoxSystem)
+                {
+                    const auto& activeHits = logic.hitBoxSystem->GetActiveHitBoxes();
+                    if (!activeHits.empty())
+                    {
+                        auto& knives = spriteBatches[knifeTex];
+                        constexpr int knifeCols = 4;
+                        constexpr int knifeRows = 1;
+                        constexpr int knifeFrames = 4;
+                        constexpr float knifeFps = 12.f;
+                        const float invCols = 1.0f / static_cast<float>(knifeCols);
+                        const float invRows = 1.0f / static_cast<float>(knifeRows);
+
+                        for (const auto& activeHit : activeHits)
+                        {
+                            if (!activeHit.hitbox || !activeHit.isProjectile)
+                                continue;
+
+                            const auto* hb = activeHit.hitbox.get();
+
+                            gfx::Graphics::SpriteInstance instance;
+                            glm::mat4 model(1.0f);
+                            model = glm::translate(model, glm::vec3(hb->spawnX, hb->spawnY, 0.0f));
+                            const float angle = std::atan2(activeHit.velY, activeHit.velX);
+                            model = glm::rotate(model, angle, glm::vec3(0, 0, 1));
+                            model = glm::scale(model, glm::vec3(hb->width, hb->height, 1.0f));
+                            instance.model = model;
+                            instance.tint = glm::vec4(1.0f);
+
+                            const float duration = std::max(0.0001f, hb->duration);
+                            const float elapsed = std::clamp(duration - activeHit.timer, 0.0f, duration);
+                            const int frameIdx = static_cast<int>(elapsed * knifeFps) % knifeFrames;
+                            const float u = static_cast<float>(frameIdx) * invCols;
+                            instance.uv = glm::vec4(u, 0.0f, invCols, invRows);
+
+                            knives.push_back(instance);
+                        }
                     }
                 }
 
@@ -1698,23 +1799,23 @@ namespace Framework {
 
             if (textReadyTitle)
             {
-                textTitle.RenderText(
+                /*textTitle.RenderText(
                     "Bloody Good Curry",
                     32.0f,
                     static_cast<float>(screenH) - 64.0f,
                     1.05f,
                     glm::vec3(1.0f, 1.0f, 1.0f)
-                );
+                );*/
             }
             if (textReadyHint)
             {
-                textHint.RenderText(
+                /*textHint.RenderText(
                     "Press WASD to run",
                     32.0f,
                     40.0f,
                     0.75f,
                     glm::vec3(0.95f, 0.85f, 0.10f)
-                );
+                );*/
             }
 
             const double renderMs = std::chrono::duration<double, std::milli>(clock::now() - t0).count();

@@ -13,6 +13,7 @@
 #include "Component/RenderComponent.h"
 #include "Component/CircleRenderComponent.h"
 #include "Factory/Factory.h"
+#include "Debug/Selection.h"
 
 namespace mygame
 {
@@ -195,12 +196,11 @@ namespace mygame
                 // Undo a deletion: resurrect the object from its snapshot.
                 if (action.snapshot.is_object())
                 {
-                    Framework::GOC* restored =
-                        Framework::FACTORY->InstantiateFromSnapshot(action.snapshot);
-
-                    (void)restored;
-                    // Optional: reselect the restored object:
-                    // if (restored) mygame::SetSelectedObjectId(restored->GetId());
+                    if (Framework::GOC* restored =
+                        Framework::FACTORY->InstantiateFromSnapshot(action.snapshot))
+                    {
+                        mygame::SetSelectedObjectId(restored->GetId());
+                    }
                 }
             }
             break;

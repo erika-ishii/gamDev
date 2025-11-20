@@ -57,6 +57,9 @@ namespace Framework {
         if (auto* b = FACTORY->CreateTemplate("../../Data_Files/boss.json")) {
             master_copies["Boss"].reset(b);
         }
+        else {
+            std::cerr << "[Prefab] Failed to create 'boss' from boss.json\n";
+        }
         if (auto* h1 = FACTORY->CreateTemplate("../../Data_Files/hang_clothes_01.json")) {
             master_copies["Hang_Clothes_01"].reset(h1);
         }
@@ -68,11 +71,52 @@ namespace Framework {
         if (auto* flag = FACTORY->CreateTemplate("../../Data_Files/hawker_flag.json")) {
             master_copies["Hawker_Flag"].reset(flag);
         }
+        if (auto* table = FACTORY->CreateTemplate("../../Data_Files/hawker_table.json")) {
+            master_copies["Hawker_Table"].reset(table);
+        }
+
+        if (auto* store = FACTORY->CreateTemplate("../../Data_Files/hawker_store.json")) {
+            master_copies["Hawker_Store"].reset(store);
+        }
+
+        if (auto* floor = FACTORY->CreateTemplate("../../Data_Files/hawker_floor_background.json")) {
+            master_copies["Hawker_Floor"].reset(floor);
+        }
+
+        if (auto* hdb = FACTORY->CreateTemplate("../../Data_Files/hawker_hdb_background.json")) {
+            master_copies["Hawker_HDB"].reset(hdb);
+        }
+
+        if (auto* bin = FACTORY->CreateTemplate("../../Data_Files/hawker_bin.json")) {
+            master_copies["Hawker_Bin"].reset(bin);
+        }
+
+        if (auto* bucket = FACTORY->CreateTemplate("../../Data_Files/hawker_bucket.json")) {
+            master_copies["Hawker_Bucket"].reset(bucket);
+        }
+
+        if (auto* cart = FACTORY->CreateTemplate("../../Data_Files/hawker_cleaning_cart.json")) {
+            master_copies["Cleaning_Cart"].reset(cart);
+        }
+
+        if (auto* cs1 = FACTORY->CreateTemplate("../../Data_Files/hawker_cleaning_sign_01.json")) {
+            master_copies["Cleaning_Sign_01"].reset(cs1);
+        }
+
+        if (auto* cs2 = FACTORY->CreateTemplate("../../Data_Files/hawker_cleaning_sign_02.json")) {
+            master_copies["Cleaning_Sign_02"].reset(cs2);
+        }
+
+        if (auto* tray = FACTORY->CreateTemplate("../../Data_Files/hawker_tray_return.json")) {
+            master_copies["Tray_Return"].reset(tray);
+        }
+
+        if (auto* gate = FACTORY->CreateTemplate("../../Data_Files/hawker_gate.json")) {
+            master_copies["Hawker_Gate"].reset(gate);
+        }
 
        
-        else {
-            std::cerr << "[Prefab] Failed to create 'boss' from boss.json\n";
-        }
+       
     }
 
     /*************************************************************************************

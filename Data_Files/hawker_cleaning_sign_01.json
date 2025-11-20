@@ -1,0 +1,18 @@
+{
+  "GameObject": {
+    "name": "Cleaning_Sign_01",
+    "Components": {
+      "TransformComponent": { "x": 0.0, "y": 0.0, "rot": 0.0 },
+      "RenderComponent": {
+        "w": 0.4,
+        "h": 0.7,
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0,
+        "a": 1.0,
+        "texture_key": "hawker_cleaning_sign_01",
+        "texture_path": "../../assets/Textures/Environment/lvl 1_Hawker/Cleaning_Sign_01.png"
+      }
+    }
+  }
+}

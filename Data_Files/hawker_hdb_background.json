@@ -1,0 +1,19 @@
+{
+  "GameObject": {
+    "name": "Hawker_HDB",
+    "layer": "Background",
+    "Components": {
+      "TransformComponent": { "x": 0.0, "y": 0.5, "rot": 0.0 },
+      "RenderComponent": {
+        "w": 2.0,
+        "h": 1.0,
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0,
+        "a": 1.0,
+        "texture_key": "hawker_hdb",
+        "texture_path": "../../assets/Textures/Environment/lvl 1_Hawker/HDB.png"
+      }
+    }
+  }
+}

@@ -3,6 +3,8 @@
  \par       SofaSpuds
  \author    yimo.kong ( yimo.kong@digipen.edu) - Primary Author, 50%
             erika.ishii (erika.ishii@digipen.edu) - Author, 30%
+            elvisshengjie.lim (elvisshengjie.lim@digipen.edu) - Author, 10%
+            h.jun (h.jun@digipen.edu) - Author, 10%
  \brief     Editor-aware 2D render system: game viewport, UI dockspace, text, and picking.
  \details   Drives all frame-time drawing for the sandbox/editor:
             - Game viewport: manages full/partial splits, camera control, screen→world unproject.
@@ -17,13 +19,17 @@
 *********************************************************************************************/
 
 #pragma once
+
 #include "LogicSystem.h"
 #include "Component/CircleRenderComponent.h"
 #include "Component/RenderComponent.h"
 #include "Component/SpriteComponent.h"
 #include "Component/TransformComponent.h"
 #include "Component/EnemyAttackComponent.h"
+#include "Component/PlayerAttackComponent.h"
+
 #include "Config/WindowConfig.h"
+
 #include "Debug/ImGuiLayer.h"
 #include "Debug/Perf.h"
 #include "Debug/Spawn.h"
@@ -32,15 +38,18 @@
 #include "Debug/InspectorPanel.h"
 #include "Debug/AssetBrowserPanel.h"
 #include "Debug/JsonEditorPanel.h"
+
 #include "Factory/Factory.h"
 #include "Graphics/Graphics.hpp"
 #include "Graphics/Camera2D.hpp"
 #include "Graphics/Window.hpp"
 #include "Graphics/GraphicsText.hpp"
 #include "Resource_Manager/Resource_Manager.h"
-#include "Component/PlayerAttackComponent.h"
 
+#include <array>
 #include <filesystem>
+#include <string>
+
 #include <imgui.h>
 #include <glm/vec2.hpp>
 
@@ -94,10 +103,10 @@ namespace Framework {
 
         /// \brief Returns true if the editor UI is visible (for other systems to adapt).
         static bool IsEditorVisible();
-        // Global accessor to the current RenderSystem instance (set in ctor, cleared in Shutdown).
+
+        /// \brief Global accessor to the current RenderSystem instance.
         static RenderSystem* Get();
 
-     
         // Text accessors
         /// \brief  True if the hint text renderer is ready (font/atlas loaded).
         bool IsTextReadyHint()  const { return textReadyHint; }
@@ -112,7 +121,12 @@ namespace Framework {
         int ScreenWidth()  const { return screenW; }
         /// \brief  Back-buffer height in pixels.
         int ScreenHeight() const { return screenH; }
-        bool  ScreenToWorld(double cursorX, double cursorY, float& worldX, float& worldY, bool& insideViewport) const;
+
+        /// \brief  Convert a screen cursor position to world space using the active camera.
+        bool ScreenToWorld(double cursorX, double cursorY,
+            float& worldX, float& worldY,
+            bool& insideViewport) const;
+
     private:
         // --- Filesystem / asset resolution ------------------------------------------------
         std::filesystem::path GetExeDir() const;
@@ -130,10 +144,17 @@ namespace Framework {
         void HandleViewportPicking();
 
         // --- Camera & picking helpers -----------------------------------------------------
-        void  UpdateEditorCameraControls(GLFWwindow* native, const ImGuiIO& io, double cursorX, double cursorY);
-       
-        bool  CursorToViewportNdc(double cursorX, double cursorY, float& ndcX, float& ndcY, bool& insideViewport) const;
-        bool  UnprojectWithCamera(const gfx::Camera2D& cam, float ndcX, float ndcY, float& worldX, float& worldY) const;
+        void  UpdateEditorCameraControls(GLFWwindow* native, const ImGuiIO& io,
+            double cursorX, double cursorY);
+
+        bool  CursorToViewportNdc(double cursorX, double cursorY,
+            float& ndcX, float& ndcY,
+            bool& insideViewport) const;
+
+        bool  UnprojectWithCamera(const gfx::Camera2D& cam,
+            float ndcX, float ndcY,
+            float& worldX, float& worldY) const;
+
         bool  ShouldUseEditorCamera() const;
         void  FrameEditorSelection();
         Framework::GOCId TryPickObject(float worldX, float worldY) const;
@@ -166,18 +187,20 @@ namespace Framework {
 
         // --- Frame/viewport state ---------------------------------------------------------
         int  screenW = 1280;             //!< Back-buffer width.
-        int  screenH = 720;              //!< Back-buffer height.
+        int  screenH = 720;             //!< Back-buffer height.
 
         // --- Text ------------------------------------------------------------------------
         gfx::TextRenderer textTitle;     //!< Title text (e.g., big header).
         gfx::TextRenderer textHint;      //!< Hint text (e.g., input/help).
         bool textReadyTitle = false;     //!< True once title font is ready.
-        bool textReadyHint = false;     //!< True once hint font is ready.
+        bool textReadyHint = false;      //!< True once hint font is ready.
 
-        // --- Demo textures (player/animation) --------------------------------------------
-        unsigned playerTex = 0;          //!< Current sprite-sheet handle.
-        unsigned idleTex = 0;          //!< Idle animation sheet.
-        unsigned runTex = 0;          //!< Run  animation sheet.
+        // --- Demo textures (player / animation) ------------------------------------------
+        unsigned playerTex = 0;               //!< Legacy fallback player texture.
+        unsigned idleTex = 0;               //!< Idle animation sheet.
+        unsigned runTex = 0;               //!< Run animation sheet.
+        std::array<unsigned, 3> attackTex{};  //!< Combo attack sheets (1st / 2nd / 3rd).
+        unsigned knifeTex = 0;              //!< Animated knife projectile sheet.
 
         // --- Game viewport rectangle (pixels) --------------------------------------------
         struct ViewRect {
@@ -187,31 +210,33 @@ namespace Framework {
             int height = 0;
         };
 
-        ViewRect gameViewport{};         //!< Active game viewport in pixels.
+        ViewRect gameViewport{};              //!< Active game viewport in pixels.
 
-        // --- Editor layout flags ----------------------------------------------------------
-        bool  showEditor = false;   //!< Toggle editor UI visibility.
-        bool  gameViewportFullWidth = false;  //!< Maximize viewport width.
-        bool  gameViewportFullHeight = false;  //!< Maximize viewport height.
+        // --- Editor layout flags ---------------------------------------------------------
+        bool  showEditor = false;  //!< Toggle editor UI visibility.
+        bool  gameViewportFullWidth = false; //!< Maximize viewport width.
+        bool  gameViewportFullHeight = false; //!< Maximize viewport height.
         float heightRatio = 0.8f;   //!< Viewport height vs window height.
         float editorSplitRatio = 0.5f;   //!< Editor/game split ratio.
-        bool  editorToggleHeld = false;  //!< Debounce toggle key.
-        bool  fullscreenToggleHeld = false;  //!< Debounce fullscreen toggle.
-        bool  deleteKeyHeld = false; //!< Debounce Delete shortcut used for removing objects.
+
+        bool  editorToggleHeld = false;  //!< Debounce toggle key (F10).
+        bool  fullscreenToggleHeld = false;  //!< Debounce fullscreen toggle (F11).
+        bool  deleteKeyHeld = false;  //!< Debounce Delete shortcut for removing objects.
+
         bool  showPhysicsHitboxes = true;   //!< Debug: draw physics hitboxes.
 
-        // --- Mouse drag selection ---------------------------------------------------------
+        // --- Mouse drag selection --------------------------------------------------------
         bool  leftMouseDownPrev = false;
         bool  draggingSelection = false;
         float dragOffsetX = 0.0f;
         float dragOffsetY = 0.0f;
 
-        // --- Game camera ------------------------------------------------------------------
+        // --- Game camera -----------------------------------------------------------------
         gfx::Camera2D camera;                 //!< In-game camera.
         float         cameraViewHeight = 1.0f; //!< Ortho view height (world units).
         bool          cameraEnabled = true; //!< Toggle in-game camera control.
 
-        // --- Editor camera ----------------------------------------------------------------
+        // --- Editor camera ---------------------------------------------------------------
         gfx::Camera2D editorCamera;                //!< Editor camera.
         float         editorCameraViewHeight = 1.0f;
         bool          editorCameraPanning = false;
@@ -221,8 +246,6 @@ namespace Framework {
 
         // --- Layout persistence -----------------------------------------------------------
         std::string imguiLayoutPath{};       //!< Optional saved ImGui layout path.
-
-     
     };
 
 } // namespace Framework

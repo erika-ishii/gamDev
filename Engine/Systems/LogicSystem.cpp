@@ -24,13 +24,11 @@
             * Screen coordinates are mapped to world space via RenderSystem::ScreenToWorld().
             * Layering, physics, and rendering are handled by their respective systems; LogicSystem
               manipulates components (Transform/Render/RigidBody) but does not own them.
- \copyright
-            All content ©2025 DigiPen Institute of Technology Singapore.
-            All rights reserved.
+©2025 DigiPen Institute of Technology Singapore. All rights reserved.
 *********************************************************************************************/
 
 #include "Systems/LogicSystem.h"
-#include "Systems/RenderSystem.h"      // <-- NEW: for ScreenToWorld / camera-based world mapping
+#include "Systems/RenderSystem.h"      // for ScreenToWorld / camera-based world mapping
 #include "Debug/Selection.h"
 #include <cctype>
 #include <string>
@@ -56,12 +54,95 @@ namespace Framework {
     LogicSystem::~LogicSystem() = default;
 
     /*****************************************************************************************
-      \brief Get the currently active animation configuration (idle vs run).
-      \return const AnimConfig& Either runConfig or idleConfig depending on AnimState.
+      \brief Get the currently active animation configuration (idle / run / attacks).
     *****************************************************************************************/
     const LogicSystem::AnimConfig& LogicSystem::CurrentConfig() const
     {
-        return animState == AnimState::Run ? runConfig : idleConfig;
+        return ConfigForState(animState);
+    }
+
+    const LogicSystem::AnimConfig& LogicSystem::ConfigForState(AnimState state) const
+    {
+        switch (state)
+        {
+        case AnimState::Idle:    return idleConfig;
+        case AnimState::Run:     return runConfig;
+        case AnimState::Attack1: return attackConfigs[0];
+        case AnimState::Attack2: return attackConfigs[1];
+        case AnimState::Attack3: return attackConfigs[2];
+        }
+        // Fallback
+        return idleConfig;
+    }
+
+    bool LogicSystem::IsAttackState(AnimState state) const
+    {
+        return state == AnimState::Attack1 ||
+            state == AnimState::Attack2 ||
+            state == AnimState::Attack3;
+    }
+
+    void LogicSystem::SetAnimState(AnimState newState)
+    {
+        if (animState == newState)
+            return;
+
+        animState = newState;
+        frame = 0;
+        frameClock = 0.f;
+    }
+
+    LogicSystem::AnimState LogicSystem::AttackStateForIndex(int comboIndex) const
+    {
+        // Wrap combo index into [0,2]
+        const int wrapped = ((comboIndex - 1) % 3 + 3) % 3;
+        switch (wrapped)
+        {
+        case 0:  return AnimState::Attack1;
+        case 1:  return AnimState::Attack2;
+        default: return AnimState::Attack3;
+        }
+    }
+
+    float LogicSystem::AttackDurationForState(AnimState state) const
+    {
+        if (!IsAttackState(state))
+            return 0.f;
+
+        const AnimConfig& cfg = ConfigForState(state);
+        if (cfg.fps <= 0.f)
+            return 0.f;
+
+        return static_cast<float>(cfg.frames) / cfg.fps;
+    }
+
+    void LogicSystem::ForceAttackState(int comboIndex)
+    {
+        comboStep = ((comboIndex - 1) % 3 + 3) % 3 + 1;   // store 1..3 for bookkeeping
+        AnimState nextState = AttackStateForIndex(comboStep);
+        animState = nextState;
+        frame = 0;
+        frameClock = 0.f;
+        attackTimer = AttackDurationForState(nextState);
+    }
+
+    void LogicSystem::BeginComboAttack()
+    {
+        comboStep = (comboStep % 3) + 1;   // 1 -> 2 -> 3 -> 1 ...
+        ForceAttackState(comboStep);
+    }
+
+    LogicSystem::AnimationInfo::Mode LogicSystem::ModeForState(AnimState state) const
+    {
+        switch (state)
+        {
+        case AnimState::Run:     return AnimationInfo::Mode::Run;
+        case AnimState::Attack1: return AnimationInfo::Mode::Attack1;
+        case AnimState::Attack2: return AnimationInfo::Mode::Attack2;
+        case AnimState::Attack3: return AnimationInfo::Mode::Attack3;
+        case AnimState::Idle:
+        default:                 return AnimationInfo::Mode::Idle;
+        }
     }
 
     /*****************************************************************************************
@@ -135,7 +216,24 @@ namespace Framework {
         if (!factory)
             return;
 
-        levelObjects = factory->LastLevelObjects();
+        // Rebuild the level object cache every frame so we only keep alive objects.
+        // The previous implementation grabbed the snapshot returned by
+        // GameObjectFactory::LastLevelObjects(), which is only updated when a level is
+        // loaded/saved. Once gameplay started, pointers to objects that were destroyed
+        // (e.g. the player being killed by enemies) remained inside levelObjects even
+        // though the underlying memory had been freed. Systems like HitBoxSystem
+        // iterate this list every frame and dereference each pointer to query
+        // components. Walking into enemies would quickly destroy either the player or
+        // an enemy, leaving a dangling pointer behind and eventually causing an access
+        // violation when the stale pointer was dereferenced. Rebuilding the cache from
+        // the factory’s current ownership map guarantees we only keep valid objects.
+        levelObjects.clear();
+        for (auto const& [id, obj] : factory->Objects())
+        {
+            (void)id;
+            if (obj)
+                levelObjects.push_back(obj.get());
+        }
 
         if (!IsAlive(player))
             player = nullptr;
@@ -188,18 +286,27 @@ namespace Framework {
     }
 
     /*****************************************************************************************
-      \brief Step the sprite-sheet animation based on desired run/idle state.
+      \brief Step the sprite-sheet animation based on desired state (idle/run/attacks).
       \param dt      Delta time (seconds).
       \param wantRun Whether the input implies running (vs idle).
     *****************************************************************************************/
     void LogicSystem::UpdateAnimation(float dt, bool wantRun)
     {
-        AnimState desired = wantRun ? AnimState::Run : AnimState::Idle;
-        if (desired != animState)
+        // If we are in an attack animation, let it run to completion.
+        if (IsAttackState(animState))
         {
-            animState = desired;
-            frame = 0;
-            frameClock = 0.f;
+            attackTimer -= dt;
+            if (attackTimer <= 0.f)
+            {
+                attackTimer = 0.f;
+                AnimState desired = wantRun ? AnimState::Run : AnimState::Idle;
+                SetAnimState(desired);
+            }
+        }
+        else
+        {
+            AnimState desired = wantRun ? AnimState::Run : AnimState::Idle;
+            SetAnimState(desired);
         }
 
         const AnimConfig& cfg = CurrentConfig();
@@ -213,6 +320,7 @@ namespace Framework {
         animInfo.frame = frame;
         animInfo.columns = cfg.cols;
         animInfo.rows = cfg.rows;
+        animInfo.mode = ModeForState(animState);
         animInfo.running = (animState == AnimState::Run);
     }
 
@@ -298,6 +406,8 @@ namespace Framework {
         std::cout << "\n=== Controls ===\n"
             << "WASD: Move | Q/E: Rotate | Z/X: Scale | R: Reset\n"
             << "A/D held => Run animation, otherwise Idle\n"
+            << "Left Mouse: Melee combo (3-hit)\n"
+            << "Right Mouse: Throw projectile\n"
             << "F1: Toggle Performance Overlay (FPS & timings)\n"
             << "F9: Trigger crash logging test (SIGABRT)\n"
             << "=======================================\n";
@@ -611,8 +721,6 @@ namespace Framework {
                 input.IsKeyHeld(GLFW_KEY_UP) ||
                 input.IsKeyHeld(GLFW_KEY_DOWN);
 
-            UpdateAnimation(dt, wantRun);
-
             // Update PlayerAttackComponent (handles hitbox lifetime)
             if (attack && tr)
             {
@@ -634,15 +742,18 @@ namespace Framework {
                     attackTr.y = tr->y + aimDirY * (halfH + offset);
 
                     hitBoxSystem->SpawnHitBox(player,
-                     attackTr.x, attackTr.y,
-                     0.1f, 0.1f,
-                     10.0f, 0.2f
-                    ,HitBoxComponent::Team::Player);
+                        attackTr.x, attackTr.y,
+                        0.1f, 0.1f,
+                        10.0f, 0.2f,
+                        HitBoxComponent::Team::Player);
 
                     std::cout << "Hurtbox spawned at (" << attackTr.x << ", " << attackTr.y << ")\n";
                     audio->TriggerSound("Slash1");
+
+                    // Start / advance melee combo animation (Attack1,2,3 cycling)
+                    BeginComboAttack();
                 }
-               
+
             }
             else if (input.IsMousePressed(GLFW_MOUSE_BUTTON_RIGHT) && attack && tr && rc)
             {
@@ -668,6 +779,9 @@ namespace Framework {
                     audio->TriggerSound("GrappleShoot1");
                 }
             }
+
+            // Finally, advance the main character animation (idle/run/attack combo)
+            UpdateAnimation(dt, wantRun);
 
             // Collision debug info (player vs a target rect)
             collisionInfo.playerValid = false;
@@ -728,6 +842,8 @@ namespace Framework {
         animState = AnimState::Idle;
         frame = 0;
         frameClock = 0.f;
+        attackTimer = 0.f;
+        comboStep = 0;
         animInfo = AnimationInfo{};
         collisionInfo = CollisionInfo{};
 

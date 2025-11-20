@@ -960,9 +960,10 @@ namespace Framework {
             }
         }
 
-        // IMPORTANT: always assign a fresh ID when resurrecting from undo to avoid
-        // collisions with stale references in other systems.
-        GOC* raw = IdGameObject(std::move(goc), std::nullopt);
+        // If the snapshot was recorded for undo, try to reuse the previous ID so
+          // that any other systems that cached it continue to function. IdGameObject
+          // will fall back to issuing a new ID if reuse is unsafe (e.g., still live).
+        GOC* raw = IdGameObject(std::move(goc), desiredId);
         if (raw)
             raw->initialize();
         return raw;

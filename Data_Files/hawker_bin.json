@@ -1,0 +1,18 @@
+{
+  "GameObject": {
+    "name": "Hawker_Bin",
+    "Components": {
+      "TransformComponent": { "x": 0.0, "y": 0.0, "rot": 0.0 },
+      "RenderComponent": {
+        "w": 0.35,
+        "h": 0.6,
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0,
+        "a": 1.0,
+        "texture_key": "hawker_bin",
+        "texture_path": "../../assets/Textures/Environment/lvl 1_Hawker/Bin.png"
+      }
+    }
+  }
+}

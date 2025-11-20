@@ -66,9 +66,12 @@ namespace Framework {
     public:
         /*! \brief Lightweight snapshot of current sprite animation state. */
         struct AnimationInfo {
+            enum class Mode { Idle, Run, Attack1, Attack2, Attack3 };
+
             int  frame{ 0 };
             int  columns{ 1 };
             int  rows{ 1 };
+            Mode mode{ Mode::Idle };
             bool running{ false };
         };
 
@@ -117,12 +120,17 @@ namespace Framework {
         std::string GetName() override { return "LogicSystem"; }
 
     private:
-        enum class AnimState { Idle, Run };
-        struct AnimConfig { int cols; int rows; int frames; float fps; };
+        // Extended to support combo attacks.
+        enum class AnimState { Idle, Run, Attack1, Attack2, Attack3 };
 
-       
-        struct ScaleState
-        {
+        struct AnimConfig {
+            int   cols;
+            int   rows;
+            int   frames;
+            float fps;
+        };
+
+        struct ScaleState {
             float baseRenderW{ 1.f };
             float baseRenderH{ 1.f };
             float baseColliderW{ 1.f };
@@ -132,6 +140,15 @@ namespace Framework {
         };
 
         const AnimConfig& CurrentConfig() const;
+        const AnimConfig& ConfigForState(AnimState state) const;
+        bool              IsAttackState(AnimState state) const;
+        void              SetAnimState(AnimState newState);
+        void              BeginComboAttack();
+        void              ForceAttackState(int comboIndex);
+        AnimState         AttackStateForIndex(int comboIndex) const;
+        float             AttackDurationForState(AnimState state) const;
+        AnimationInfo::Mode ModeForState(AnimState state) const;
+
         bool  IsAlive(GOC* obj) const;
         void  CachePlayerSize();
         void  RefreshLevelReferences();
@@ -141,30 +158,35 @@ namespace Framework {
         InputSystem& input;
 
         std::unique_ptr<GameObjectFactory> factory;
-        std::vector<GOC*>                levelObjects;
+        std::vector<GOC*>                  levelObjects;
 
         GOC* player{ nullptr };
         GOC* collisionTarget{ nullptr };
 
-        float                            rectScale{ 1.f };
-        float                            rectBaseW{ 0.5f };
-        float                            rectBaseH{ 0.5f };
+        float rectScale{ 1.f };
+        float rectBaseW{ 0.5f };
+        float rectBaseH{ 0.5f };
 
-        AnimState                        animState{ AnimState::Idle };
-        AnimConfig                       idleConfig{ 5,1,5,6.f };
-        AnimConfig                       runConfig{ 8,1,8,10.f };
-        int                              frame{ 0 };
-        float                            frameClock{ 0.f };
-        AnimationInfo                    animInfo{};
+        AnimState  animState{ AnimState::Idle };
+        AnimConfig idleConfig{ 5,1,5,6.f };
+        AnimConfig runConfig{ 8,1,8,10.f };
+        AnimConfig attackConfigs[3]{ {13,1,13,12.f}, {8,1,8,12.f}, {9,1,9,12.f} };
 
-        CollisionInfo                    collisionInfo{};
+        int    frame{ 0 };
+        float  frameClock{ 0.f };
+        float  attackTimer{ 0.f };
+        int    comboStep{ 0 };
 
-        int                              screenW{ 800 };
-        int                              screenH{ 600 };
+        AnimationInfo animInfo{};
 
-        bool                             captured{ false };
-        bool                             crashTestLatched{ false };
-        std::unique_ptr<CrashLogger>     crashLogger;
+        CollisionInfo collisionInfo{};
+
+        int  screenW{ 800 };
+        int  screenH{ 600 };
+
+        bool                         captured{ false };
+        bool                         crashTestLatched{ false };
+        std::unique_ptr<CrashLogger> crashLogger;
 
         std::unordered_map<GOCId, ScaleState> scaleStates;
     };
