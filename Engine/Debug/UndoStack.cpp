@@ -163,20 +163,24 @@ namespace mygame
                 return false;
 
             UndoAction action = gUndoStack.back();
-            gUndoStack.pop_back();
 
             bool requiresFactorySweep = false;
+            bool undoApplied = false;
 
             switch (action.kind)
             {
             case UndoKind::Transform:
             {
+                // Undo a transform: restore the "before" transform state
                 Framework::GOC* obj =
                     Framework::FACTORY->GetObjectWithId(action.objectId);
                 if (obj)
+                {
                     ApplyTransformSnapshot(*obj, action.before);
+                    undoApplied = true;
+                }
+                break;
             }
-            break;
 
             case UndoKind::Created:
             {
@@ -187,24 +191,34 @@ namespace mygame
                 {
                     Framework::FACTORY->Destroy(obj);
                     requiresFactorySweep = true;
+                    undoApplied = true;
                 }
+                break;
             }
-            break;
 
             case UndoKind::Deleted:
             {
                 // Undo a deletion: resurrect the object from its snapshot.
                 if (action.snapshot.is_object())
                 {
-                    if (Framework::GOC* restored =
-                        Framework::FACTORY->InstantiateFromSnapshot(action.snapshot))
+                    Framework::GOC* restored =
+                        Framework::FACTORY->InstantiateFromSnapshot(action.snapshot);
+
+                    if (restored)
                     {
                         mygame::SetSelectedObjectId(restored->GetId());
+                        undoApplied = true;
                     }
                 }
+                break;
             }
-            break;
             }
+
+            if (!undoApplied)
+                return false;
+
+            // Only drop the action if it actually did something.
+            gUndoStack.pop_back();
 
             if (requiresFactorySweep)
             {

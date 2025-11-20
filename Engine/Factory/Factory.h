@@ -191,7 +191,8 @@ namespace Framework {
         GOC* InstantiateFromSnapshot(const json& data);
         /// Snapshot of the most recently saved or loaded level objects.
         const std::vector<GOC*>& LastLevelObjects() const { return LastLevelCache; }
-
+        /// Removes a pending destroy flag for the given id (used by undo).
+        void CancelDestroy(GOCId id);
         /// Cached level name associated with the last save/load operation.
         const std::string& LastLevelName() const { return LastLevelNameCache; }
 

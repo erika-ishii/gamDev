@@ -916,62 +916,81 @@ namespace Framework {
     }
 
     /*************************************************************************************
-      \brief Internal helper to instantiate a GOC from a JSON snapshot.
-      \param data Snapshot produced by SnapshotGameObject().
-      \return Newly created and initialized GOC*, or nullptr on failure.
-      \details
-        - Rebuilds name, layer, and all serializable components.
-        - Currently **does not reuse the original ID** to avoid conflicts with
-          other systems caching IDs / pointers; the object gets a fresh ID.
-    *************************************************************************************/
+     \brief Internal helper to instantiate a GOC from a JSON snapshot.
+     \param data Snapshot produced by SnapshotGameObject().
+     \return Newly created and initialized GOC*, or nullptr on failure.
+     \details
+       - Rebuilds name, layer, and all serializable components.
+       - Always assigns a **fresh ID**; we keep _undo_id only for debugging.
+   *************************************************************************************/
     GOC* GameObjectFactory::InstantiateFromSnapshotInternal(const json& data)
     {
         if (!data.is_object())
             return nullptr;
 
+        // 1. Build a brand–new GOC from the snapshot
         auto goc = std::make_unique<GOC>();
+
+        // Name
         if (auto it = data.find("name"); it != data.end() && it->is_string())
             goc->SetObjectName(it->get<std::string>());
+
+        // Layer
         if (auto it = data.find("layer"); it != data.end() && it->is_string())
             goc->SetLayerName(it->get<std::string>());
 
-        // We keep reading _undo_id for potential future use, but we don't
-        // reuse it in IdGameObject() to avoid accidental state corruption.
-        std::optional<GOCId> desiredId;
-        if (auto it = data.find("_undo_id"); it != data.end() && it->is_number_unsigned())
-            desiredId = it->get<GOCId>();
+        // We still read _undo_id (for debugging / logging if needed),
+        // but we no longer try to reuse it when assigning the new ID.
+        if (auto it = data.find("_undo_id");
+            it != data.end() && it->is_number_unsigned())
+        {
+            (void)it; // currently unused, kept only for possible future diagnostics
+        }
 
-        if (auto compIt = data.find("Components"); compIt != data.end() && compIt->is_object())
+        // Components
+        if (auto compIt = data.find("Components");
+            compIt != data.end() && compIt->is_object())
         {
             for (auto& [compName, compData] : compIt->items())
             {
                 auto creatorIt = ComponentMap.find(compName);
                 if (creatorIt == ComponentMap.end())
                     continue;
+
                 ComponentCreator* creator = creatorIt->second.get();
                 if (!creator)
                     continue;
+
                 std::unique_ptr<GameComponent> comp(creator->Create());
                 if (!comp)
                     continue;
+
                 if (compData.is_object())
                     DeserializeComponentFromJson(*comp, compData);
+
                 goc->AddComponent(creator->TypeId, std::move(comp));
             }
         }
 
-        // If the snapshot was recorded for undo, try to reuse the previous ID so
-          // that any other systems that cached it continue to function. IdGameObject
-          // will fall back to issuing a new ID if reuse is unsafe (e.g., still live).
-        GOC* raw = IdGameObject(std::move(goc), desiredId);
+        // 2. Register with a NEW ID (do NOT pass desiredId)
+        GOC* raw = IdGameObject(std::move(goc));
+
+        // 3. Initialize so components can hook up internal pointers (like hitbox, etc.)
         if (raw)
             raw->initialize();
+
         return raw;
     }
+
 
     GOC* GameObjectFactory::InstantiateFromSnapshot(const json& data)
     {
         return InstantiateFromSnapshotInternal(data);
+    }
+
+    void GameObjectFactory::CancelDestroy(GOCId id)
+    {
+        ObjectsToBeDeleted.erase(id);
     }
 
 } // namespace Framework
