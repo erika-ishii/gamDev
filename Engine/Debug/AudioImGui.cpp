@@ -22,6 +22,8 @@
 *********************************************************************************************/
 #include "AudioImGui.h"
 #include <iostream>
+#include <algorithm>
+#include <filesystem>
 
 namespace Framework
 {
@@ -31,6 +33,8 @@ namespace Framework
     float AudioImGui::masterVolume = 0.7f;
     bool AudioImGui::s_showUnsupportedPopup = false;
     std::string AudioImGui::s_unsupportedFile;
+    std::filesystem::path AudioImGui::s_assetsRoot;
+    std::string AudioImGui::s_importStatus;
     /*****************************************************************************************
     \brief
     Initializes the AudioImGui interface and sets up ImGui for audio control.
@@ -48,6 +52,13 @@ namespace Framework
         if (s_audioReady) return;
         s_audioReady = true;
         std::cout << "[AudioImGui] Audio initialized successfully.\n";
+    }
+    void AudioImGui::SetAssetsRoot(const std::filesystem::path& root)
+    {
+        std::error_code ec;
+        s_assetsRoot = std::filesystem::weakly_canonical(root, ec);
+        if (ec)
+            s_assetsRoot = root;
     }
     /*****************************************************************************************
     \brief
@@ -93,6 +104,49 @@ namespace Framework
             if (ImGui::Button("Resume All")) { soundManager.pauseAllSounds(false); }
             if (ImGui::Button("Pause All")) { soundManager.pauseAllSounds(true); }
             if (ImGui::Button("Stop All")) { soundManager.stopAllSounds(); }
+            ImGui::SeparatorText("Import");
+            ImGui::TextDisabled("Drag .wav or .mp3 from the Content Browser to load them.");
+            ImVec2 dropSize(ImGui::GetContentRegionAvail().x, ImGui::GetFrameHeight() * 2.0f);
+            if (ImGui::Button("Drop Audio Here", dropSize))
+            {
+                // Button only provides the target; no click action needed.
+            }
+
+            if (ImGui::BeginDragDropTarget())
+            {
+                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_BROWSER_AUDIO_PATH"))
+                {
+                    if (payload->Data && payload->DataSize > 0)
+                    {
+                        std::string relative(static_cast<const char*>(payload->Data), payload->DataSize - 1);
+                        std::filesystem::path absolute = relative;
+                        if (!relative.empty())
+                        {
+                            if (!s_assetsRoot.empty())
+                            {
+                                std::error_code ec;
+                                absolute = std::filesystem::weakly_canonical(s_assetsRoot / relative, ec);
+                                if (ec)
+                                    absolute = s_assetsRoot / relative;
+                            }
+                        }
+
+                        bool loaded = false;
+                        if (!absolute.empty())
+                            loaded = Resource_Manager::load(relative, absolute.string());
+
+                        s_importStatus = loaded
+                            ? "Loaded audio: " + relative
+                            : "Failed to load audio: " + relative;
+                    }
+                }
+                ImGui::EndDragDropTarget();
+            }
+
+            if (!s_importStatus.empty())
+            {
+                ImGui::TextColored(ImVec4(0.6f, 0.8f, 1.0f, 1.0f), "%s", s_importStatus.c_str());
+            }
             //Sort sounds 
             std::vector<std::string> soundIDs;
             for (auto& [id, res] : Resource_Manager::resources_map)

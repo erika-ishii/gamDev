@@ -9,13 +9,13 @@
       "EnemyComponent": {},
       
       "EnemyAttackComponent": {
-        "damage": 15,
+        "damage": 2,
         "attack_speed": 1.2
       },
 
       "EnemyHealthComponent": {
-        "enemyHealth": 100,
-        "enemyMaxHealth": 100
+        "enemyHealth": 2,
+        "enemyMaxHealth": 2
       },
 
       "EnemyDecisionTreeComponent": {},

@@ -56,7 +56,7 @@
 #include <limits>
 #include <unordered_set>
 #include <unordered_map>
-
+#include "Debug/AudioImGui.h"
 #include "Debug/UndoStack.h"
 #include "Debug/Inspector.h"
 #include <glm/glm.hpp>
@@ -1365,6 +1365,7 @@ namespace Framework {
         {
             assetBrowser.Initialize(assetsRoot);
             mygame::SetSpawnPanelAssetsRoot(assetsRoot);
+            AudioImGui::SetAssetsRoot(assetsRoot);
         }
 
         dataFilesRoot = FindDataFilesRoot();

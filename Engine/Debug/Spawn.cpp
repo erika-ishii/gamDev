@@ -332,43 +332,54 @@ namespace mygame {
         }
     } // namespace
 
-
-    /*************************************************************************************
-      \brief  Helper to spawn a single prefab and apply current SpawnSettings.
-      \param  prefab Name of the prefab to clone (must exist in master_copies).
-      \param  s      Spawn settings (position/size/circle/sprite/rigidbody/player/enemy).
-      \param  index  Batch index (applied to stepX/stepY offsets).
-      \note   Newly spawned object is assigned to the current active layer.
+       /*************************************************************************************
+      \brief  Apply SpawnSettings to an existing object.
+      \param  obj   Target object (already created).
+      \param  s     Spawn settings (position/size/circle/sprite/rigidbody/player/enemy).
+      \param  index Batch index (for step offsets when spawning new).
+      \param  applyTransformAndLayer
+                    If true, apply transform + step offsets and (in caller) layer.
+                    If false, keep existing transform and layer.
     *************************************************************************************/
-    static GOC* SpawnOnePrefab(const char* prefab, SpawnSettings const& s, int index) {
-        GOC* obj = ClonePrefab(prefab);
-        if (!obj) return nullptr;
-
-        // Transform: inherit JSON unless override is ON
-        if (auto* tr = obj->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent)) {
-            if (s.overridePrefabTransform) {
+    static void ApplySpawnSettingsToObject(GOC& obj,
+        SpawnSettings const& s,
+        int index,
+        bool applyTransformAndLayer)
+    {
+        // Transform: only for new spawns (we don't want to teleport existing instances)
+        if (auto* tr = obj.GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent)) {
+            if (applyTransformAndLayer && s.overridePrefabTransform) {
                 tr->x = s.x + s.stepX * index;
                 tr->y = s.y + s.stepY * index;
                 tr->rot = s.rot;
             }
 
-            tr->x += s.stepX * index;
-            tr->y += s.stepY * index;
+            if (applyTransformAndLayer) {
+                tr->x += s.stepX * index;
+                tr->y += s.stepY * index;
+            }
         }
 
-        auto* spriteComp = obj->GetComponentType<SpriteComponent>(ComponentTypeId::CT_SpriteComponent);
+        auto* spriteComp = obj.GetComponentType<SpriteComponent>(ComponentTypeId::CT_SpriteComponent);
 
         // Rectangle render: override size, color, and optional texture when requested
-        if (auto* rc = obj->GetComponentType<RenderComponent>(ComponentTypeId::CT_RenderComponent)) {
+        if (auto* rc = obj.GetComponentType<RenderComponent>(ComponentTypeId::CT_RenderComponent)) {
             if (s.overridePrefabSize) {
-                rc->w = s.w; rc->h = s.h;
+                rc->w = s.w;
+                rc->h = s.h;
             }
-            rc->r = s.rgba[0]; rc->g = s.rgba[1]; rc->b = s.rgba[2]; rc->a = s.rgba[3];
+
+            // Always push tint from SpawnSettings (for both new and existing)
+            rc->r = s.rgba[0];
+            rc->g = s.rgba[1];
+            rc->b = s.rgba[2];
+            rc->a = s.rgba[3];
 
             if (s.overridePrefabVisible) {
                 rc->visible = s.visible;
             }
 
+            // Rectangle-only texture override when prefab has no SpriteComponent
             if (!sRectangleTexKey.empty() && !spriteComp) {
                 rc->texture_key = sRectangleTexKey;
                 rc->texture_id = Resource_Manager::getTexture(sRectangleTexKey);
@@ -376,24 +387,26 @@ namespace mygame {
         }
 
         // Circle: inherit JSON unless override is ON
-        if (auto* cc = obj->GetComponentType<CircleRenderComponent>(ComponentTypeId::CT_CircleRenderComponent)) {
+        if (auto* cc = obj.GetComponentType<CircleRenderComponent>(ComponentTypeId::CT_CircleRenderComponent)) {
             if (s.overridePrefabCircle) {
                 cc->radius = s.radius;
             }
-            cc->r = s.rgba[0]; cc->g = s.rgba[1]; cc->b = s.rgba[2]; cc->a = s.rgba[3];
+            cc->r = s.rgba[0];
+            cc->g = s.rgba[1];
+            cc->b = s.rgba[2];
+            cc->a = s.rgba[3];
         }
 
         // Sprite: only override if a texture key has been chosen
         if (spriteComp) {
             if (!sSpriteTexKey.empty()) {
-               
                 spriteComp->texture_key = sSpriteTexKey;
                 spriteComp->texture_id = Resource_Manager::getTexture(sSpriteTexKey);
             }
         }
 
         // RigidBody: velocity and collider overrides
-        if (auto* rb = obj->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent)) {
+        if (auto* rb = obj.GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent)) {
             if (s.overridePrefabVelocity) {
                 rb->velX = s.rbVelX;
                 rb->velY = s.rbVelY;
@@ -405,7 +418,7 @@ namespace mygame {
         }
 
         // Enemy Attack override
-        if (auto* atk = obj->GetComponentType<EnemyAttackComponent>(ComponentTypeId::CT_EnemyAttackComponent)) {
+        if (auto* atk = obj.GetComponentType<EnemyAttackComponent>(ComponentTypeId::CT_EnemyAttackComponent)) {
             if (s.overrideEnemyAttack) {
                 atk->damage = s.attackDamage;
                 atk->attack_speed = s.attack_speed;
@@ -413,20 +426,19 @@ namespace mygame {
         }
 
         // Enemy Health override
-        if (auto* eh = obj->GetComponentType<EnemyHealthComponent>(ComponentTypeId::CT_EnemyHealthComponent)) {
+        if (auto* eh = obj.GetComponentType<EnemyHealthComponent>(ComponentTypeId::CT_EnemyHealthComponent)) {
             if (s.overrideEnemyHealth) {
                 eh->enemyMaxhealth = s.enemyMaxhealth;
                 eh->enemyHealth = s.enemyHealth;
             }
             else {
-                // keep JSON max, set current = max on spawn
+                // keep JSON max, set current = max
                 eh->enemyHealth = eh->enemyMaxhealth;
             }
         }
 
-        // Player components (if present)
-        if (auto* player = obj->GetComponentType<PlayerComponent>(ComponentTypeId::CT_PlayerComponent)) { (void)player; }
-        if (auto* health = obj->GetComponentType<PlayerHealthComponent>(ComponentTypeId::CT_PlayerHealthComponent)) {
+        // Player health
+        if (auto* health = obj.GetComponentType<PlayerHealthComponent>(ComponentTypeId::CT_PlayerHealthComponent)) {
             if (s.overridePlayerHealth) {
                 health->playerHealth = s.playerHealth;
                 health->playerMaxhealth = s.playerMaxhealth;
@@ -435,22 +447,39 @@ namespace mygame {
                 health->playerHealth = health->playerMaxhealth;
             }
         }
-        if (auto* attack = obj->GetComponentType<PlayerAttackComponent>(ComponentTypeId::CT_PlayerAttackComponent)) {
+
+        // Player attack
+        if (auto* attack = obj.GetComponentType<PlayerAttackComponent>(ComponentTypeId::CT_PlayerAttackComponent)) {
             if (s.overridePlayerAttack) {
-                attack->damage = s.attackDamage;
-                attack->attack_speed = s.attack_speed;
+                attack->damage = s.attackDamagep;
+                attack->attack_speed = s.attack_speedp;
             }
         }
 
-        if (auto* enemy = obj->GetComponentType<EnemyComponent>(ComponentTypeId::CT_EnemyComponent)) { (void)enemy; }
-
-        if (auto* type = obj->GetComponentType<EnemyTypeComponent>(ComponentTypeId::CT_EnemyTypeComponent)) {
+        // Enemy type (kept same behavior as spawn)
+        if (auto* type = obj.GetComponentType<EnemyTypeComponent>(ComponentTypeId::CT_EnemyTypeComponent)) {
             type->Etype = Framework::EnemyTypeComponent::EnemyType::physical;
         }
 
+        // NOTE: layer is *not* changed here. For new spawns we still set layer in SpawnOnePrefab().
+    }
+ 
+    /*************************************************************************************
+     \brief  Helper to spawn a single prefab and apply current SpawnSettings.
+     \param  prefab Name of the prefab to clone (must exist in master_copies).
+     \param  s      Spawn settings (position/size/circle/sprite/rigidbody/player/enemy).
+     \param  index  Batch index (applied to stepX/stepY offsets).
+     \note   Newly spawned object is assigned to the current active layer.
+   *************************************************************************************/
+    static void SpawnOnePrefab(const char* prefab, SpawnSettings const& s, int index) {
+        GOC* obj = ClonePrefab(prefab);
+        if (!obj) return;
+
+        // For new objects: full application (including transform offsets)
+        ApplySpawnSettingsToObject(*obj, s, index, /*applyTransformAndLayer*/ true);
+
         // Assign layer on creation
         obj->SetLayerName(gActiveLayer);
-        return obj;
     }
 
     /*************************************************************************************
@@ -1150,9 +1179,24 @@ namespace mygame {
 
         // === Actions ===
         if (ImGui::Button("Spawn")) {
-            for (int i = 0; i < gS.count; ++i) {
-                if (GOC* spawned = SpawnOnePrefab(gSelectedPrefab.c_str(), gS, i))
-                    mygame::editor::RecordObjectCreated(*spawned);
+            for (int i = 0; i < gS.count; ++i)
+                SpawnOnePrefab(gSelectedPrefab.c_str(), gS, i);
+        }
+
+        // NEW: Apply current SpawnSettings to all existing instances of this prefab
+        ImGui::SameLine();
+        if (ImGui::Button("Apply to Existing")) {
+            auto all = CollectNonMasterObjects();
+            for (auto* obj : all) {
+                if (!obj) continue;
+
+                // We treat "instances of this prefab" as objects whose name matches the prefab key
+                if (obj->GetObjectName() != gSelectedPrefab)
+                    continue;
+
+                // index is 0 because we don't want stepX/stepY to move existing instances.
+                // applyTransformAndLayer = false to keep their position/rotation/layer.
+                ApplySpawnSettingsToObject(*obj, gS, /*index*/ 0, /*applyTransformAndLayer*/ false);
             }
         }
 
@@ -1160,7 +1204,8 @@ namespace mygame {
         if (ImGui::Button("Clear Selected Prefab") && !gSelectedPrefabToClear.empty()) {
             auto toKill = CollectNonMasterObjects();
             toKill.erase(std::remove_if(toKill.begin(), toKill.end(),
-                [](GOC* obj) { return obj->GetObjectName() != gSelectedPrefabToClear; }), toKill.end());
+                [](GOC* obj) { return obj->GetObjectName() != gSelectedPrefabToClear; }),
+                toKill.end());
 
             for (auto* o : toKill) o->Destroy();
             FACTORY->Update(0.0f);

@@ -744,7 +744,7 @@ namespace Framework {
                     hitBoxSystem->SpawnHitBox(player,
                         attackTr.x, attackTr.y,
                         0.1f, 0.1f,
-                        10.0f, 0.2f,
+                        1.0f, 0.2f,
                         HitBoxComponent::Team::Player);
 
                     std::cout << "Hurtbox spawned at (" << attackTr.x << ", " << attackTr.y << ")\n";
@@ -773,7 +773,7 @@ namespace Framework {
                         aimDirX, aimDirY,
                         0.1f,
                         0.1f, 0.1f,
-                        10.0f, 5.f, HitBoxComponent::Team::Thrown);
+                        1.0f, 5.f, HitBoxComponent::Team::Thrown);
 
                     std::cout << "Hurtbox spawned at (" << attackTr.x << ", " << attackTr.y << ")\n";
                     audio->TriggerSound("GrappleShoot1");

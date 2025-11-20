@@ -14,6 +14,7 @@
 #include "Component/CircleRenderComponent.h"
 #include "Component/SpriteComponent.h"
 #include "Component/HitBoxComponent.h"
+#include "Physics/Dynamics/RigidBodyComponent.h"
 #include "Selection.h"
 #include "Factory/Factory.h"
 #include "Debug/UndoStack.h"
@@ -26,6 +27,32 @@
 namespace
 {
     using namespace Framework;
+
+    void DrawRigidBodySection(Framework::GOC& owner, RigidBodyComponent& rb)
+    {
+        if (!ImGui::CollapsingHeader("RigidBody", ImGuiTreeNodeFlags_DefaultOpen))
+            return;
+
+        // Velocity (x, y)
+        float velocity[2] = { rb.velX, rb.velY };
+        if (ImGui::DragFloat2("Velocity", velocity, 0.1f, -1000.0f, 1000.0f, "%.2f"))
+        {
+            rb.velX = velocity[0];
+            rb.velY = velocity[1];
+        }
+
+        // Collider size (width, height)
+        float size[2] = { rb.width, rb.height };
+        if (ImGui::DragFloat2("Collider Size", size, 0.01f, 0.0f, 1000.0f, "%.3f"))
+        {
+            rb.width = size[0];
+            rb.height = size[1];
+        }
+
+        // (owner is passed in so later you can hook this into UndoStack if you want)
+        (void)owner;
+    }
+
 
     void DrawTransformSection(Framework::GOC& owner, TransformComponent& transform)
     {
@@ -213,6 +240,8 @@ namespace mygame
 
         if (auto* sprite = object->GetComponentAs<SpriteComponent>(ComponentTypeId::CT_SpriteComponent))
             DrawSpriteSection(*sprite);
+        if (auto* rb = object->GetComponentAs<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent))
+            DrawRigidBodySection(*object, *rb);
 
 
         ImGui::End();

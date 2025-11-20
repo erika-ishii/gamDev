@@ -571,9 +571,8 @@ namespace mygame {
                 rectMin.y + (rectMax.y - rectMin.y - textSize.y) * 0.5f);
             ImGui::GetWindowDrawList()->AddText(textPos, ImGui::GetColorU32(ImGuiCol_Text), overlay);
         }
-
-        // Drag-drop: keep for textures only (by design)
-        if (isTexture)
+        // Drag-drop: allow textures and audio to be used by other panels
+        if (isTexture || isAudio)
         {
             std::string payloadPath = SafeRelative(m_assetsRoot, entry.path);
             if (payloadPath.empty())
@@ -582,7 +581,8 @@ namespace mygame {
             if (!payloadPath.empty()
                 && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
             {
-                ImGui::SetDragDropPayload("ASSET_BROWSER_PATH",
+                const char* payloadType = isAudio ? "ASSET_BROWSER_AUDIO_PATH" : "ASSET_BROWSER_PATH";
+                ImGui::SetDragDropPayload(payloadType,
                     payloadPath.c_str(), payloadPath.size() + 1);
                 ImGui::TextUnformatted(payloadPath.c_str());
                 ImGui::EndDragDropSource();

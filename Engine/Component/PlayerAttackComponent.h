@@ -44,8 +44,8 @@ namespace Framework
     class PlayerAttackComponent : public GameComponent
     {
     public:
-        int damage{ 50 };             ///< Base attack damage of the player.
-        float attack_speed{ 1.0f };   ///< Time interval or multiplier controlling attack rate.
+        int damage{ 1 };             ///< Base attack damage of the player.
+        float attack_speed{ 1.2f };   ///< Time interval or multiplier controlling attack rate.
         std::unique_ptr<HitBoxComponent> hitbox;
 
         /*************************************************************************************

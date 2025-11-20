@@ -28,6 +28,7 @@
 #include "Graphics/Window.hpp"
 #include <vector>
 #include <string>
+#include <filesystem>
 namespace Framework 
 {
     /*********************************************************************************************
@@ -59,6 +60,7 @@ namespace Framework
         static void Initialize(gfx::Window& win);
         static void Render();
         static void Shutdown();
+        static void SetAssetsRoot(const std::filesystem::path& root);
         static void ShowUnsupportedAudioPopup(const std::string& file);
         AudioImGui() = default;
         ~AudioImGui() = default;
@@ -70,6 +72,8 @@ namespace Framework
         static float masterVolume;
         static bool s_showUnsupportedPopup;     // flag to trigger popup
         static std::string s_unsupportedFile;   // filename or message
+        static std::filesystem::path s_assetsRoot; // resolved assets root for drag-drop imports
+        static std::string s_importStatus;         // latest status message for drag-drop
 
 
 
