@@ -1,0 +1,65 @@
+{
+  "GameObject": {
+    "name": "Hawker_Store_Animated",
+    "Components": {
+      "TransformComponent": {
+        "x": -0.5,
+        "y": -1.3,
+        "rot": 0.0
+      },
+      "RenderComponent": {
+        "w": 1.4,
+        "h": 1.0,
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0,
+        "a": 1.0,
+        "visible": true,
+        "texture_key": "storef0",
+        "texture_path": "../../assets/Textures/Environment/lvl 1_Hawker/Stores/Stores_00000.png"
+      },
+      "SpriteComponent": { "texture_key": "storef0" },
+      "SpriteAnimationComponent": {
+        "fps": 6.0,
+        "loop": 1,
+        "play": 1,
+        "frames": [
+          {
+            "texture_key": "storef0",
+            "path": "../../assets/Textures/Environment/lvl 1_Hawker/Stores/Stores_00000.png"
+          },
+          {
+            "texture_key": "storef1",
+            "path": "../../assets/Textures/Environment/lvl 1_Hawker/Stores/Stores_00001.png"
+          },
+          {
+            "texture_key": "storef2",
+            "path": "../../assets/Textures/Environment/lvl 1_Hawker/Stores/Stores_00002.png"
+          },
+          {
+            "texture_key": "storef3",
+            "path": "../../assets/Textures/Environment/lvl 1_Hawker/Stores/Stores_00003.png"
+          },
+          {
+            "texture_key": "storef4",
+            "path": "../../assets/Textures/Environment/lvl 1_Hawker/Stores/Stores_00004.png"
+          },
+          {
+            "texture_key": "storef5",
+            "path": "../../assets/Textures/Environment/lvl 1_Hawker/Stores/Stores_00005.png"
+          },
+          {
+            "texture_key": "storef6",
+            "path": "../../assets/Textures/Environment/lvl 1_Hawker/Stores/Stores_00006.png"
+          }
+        ]
+      },
+      "RigidBodyComponent": {
+        "velocity_x": 0.0,
+        "velocity_y": 0.0,
+        "width": 1.4,
+        "height": 1.0
+      }
+    }
+  }
+}
