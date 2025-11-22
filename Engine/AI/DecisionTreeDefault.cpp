@@ -82,8 +82,9 @@ namespace Framework
             auto* rb = enemy->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);
             auto* tr = enemy->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
             auto* ai = enemy->GetComponentType<EnemyDecisionTreeComponent>(ComponentTypeId::CT_EnemyDecisionTreeComponent);
-              if (rb && tr && ai)
+            if (rb && tr && ai)
             {
+    
                 const float patrolSpeed = 0.2f;
                 const float patrolRange = 0.5f;
                 const float pauseDuration = 2.0f;
@@ -144,107 +145,107 @@ namespace Framework
             }
         }
         );
-       
         //Attack Leaf
         auto AttackLeaf = std::make_unique<DecisionNode>
-        (nullptr, nullptr,nullptr,[enemyID,logic](float dt)
-        { 
-            GOC* enemy = FACTORY->GetObjectWithId(enemyID);
-            if (!enemy) return;
-            auto* attack = enemy->GetComponentType<EnemyAttackComponent>(ComponentTypeId::CT_EnemyAttackComponent);
-            auto* rb = enemy->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);
-            auto* tr = enemy->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
-            auto* ai = enemy->GetComponentType<EnemyDecisionTreeComponent>(ComponentTypeId::CT_EnemyDecisionTreeComponent);
-            if (!attack || !rb || !tr) return;
-            GOC* player = nullptr;
-            if (ai->chaseSpeed < 0.0f) 
-            { 
-                std::random_device rd;
-                std::mt19937 gen(rd());
-                std::uniform_real_distribution<float> dist(0.3f, 0.5f);
-                ai->chaseSpeed = dist(gen);
-            }
+        (nullptr, nullptr, nullptr, [enemyID, logic](float dt)
+        {
+                GOC* enemy = FACTORY->GetObjectWithId(enemyID);
+                if (!enemy) return;
+                auto* attack = enemy->GetComponentType<EnemyAttackComponent>(ComponentTypeId::CT_EnemyAttackComponent);
+                auto* rb = enemy->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);
+                auto* tr = enemy->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
+                auto* ai = enemy->GetComponentType<EnemyDecisionTreeComponent>(ComponentTypeId::CT_EnemyDecisionTreeComponent);
+                if (!attack || !rb || !tr) return;
+                GOC* player = nullptr;
 
-            auto& objects = FACTORY->Objects();
-            for (auto& kv : objects)
-            {
-                GOC* goc = kv.second.get();
-                if (!goc) continue;
-                auto* base = goc->GetComponent(ComponentTypeId::CT_PlayerComponent);
-                if (base){player=goc; break;}
-            }
-            if (!player) return;
-            
-            auto*trplayer= player->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
-            
-            float dx = trplayer->x - tr->x;
-            float dy = trplayer->y - tr->y;
-            float distance = std::sqrt(dx*dx + dy*dy);
-            const float speed = 0.3f;
-            const float nudge = 0.2f;
-            float vx = 0.0f, vy = 0.0f;
-            
-            if (distance > 0.1f)
-            {
-                if (std::fabs(dx) > 0.01f) { vx = (dx > 0.0f ? speed : -speed); vy = 0.0f; }
-                else if (std::fabs(dy) > 0.01f) { vx = 0.0f; vy = (dy > 0.0f ? speed : -speed); }
-                if (std::fabs(vx) < 0.01f && std::fabs(vy) < 0.01f) { vx = (dx > 0.0f ? -nudge : nudge); vy = (dy > 0.0f ? -nudge : nudge); }
-            }
+                ai->chaseSpeed = 0.1f;
 
-            rb->velX = vx;
-            rb->velY = vy;
-            tr->x += rb->velX * dt;
-            tr->y += rb->velY * dt;
-            
-            attack->attack_timer += dt;
-
-            if (attack->attack_timer >= attack->attack_speed)
-            {
-                attack->attack_timer = 0.0f;
-                attack->hitbox->active = true;
-
-                // Spawn hitbox based on enemy direction
-                float offsetX = (ai->facing == Facing::RIGHT) ? attack->hitbox->width :
-                    (ai->facing == Facing::LEFT) ? -attack->hitbox->width : 0.0f;
-                float offsetY = 0.0f;
-
-                float spawnX = tr->x + offsetX;
-                float spawnY = tr->y + offsetY;
-
-                logic->hitBoxSystem->SpawnHitBox(
-                    enemy,
-                    spawnX,
-                    spawnY,
-                    static_cast<float>(attack->hitbox->width),
-                    static_cast<float>(attack->hitbox->height),
-                    static_cast<float>(attack->damage),
-                    static_cast<float>(attack->hitbox->duration)
-                );
-
-                std::cout << "[DEBUG] Enemy ID " << enemy->GetId()
-                    << " spawned hitbox at (" << spawnX << ", " << spawnY << ")"
-                    << " with damage " << attack->damage
-                    << " and size (" << attack->hitbox->width << "x" << attack->hitbox->height << ")\n";
-            }
-            
-            if (attack->hitbox->active)
-            {
-                attack->hitbox->duration -=dt;
-                if (attack->hitbox->duration <= 0.0f)
+                auto& objects = FACTORY->Objects();
+                for (auto& kv : objects)
                 {
-                    attack->hitbox->active = false;
-                    attack->hitbox->duration = 1.0f;
+                    GOC* goc = kv.second.get();
+                    if (!goc) continue;
+                    auto* base = goc->GetComponent(ComponentTypeId::CT_PlayerComponent);
+                    if (base) { player = goc; break; }
                 }
-            }
-        
-            
-            ai->chaseTimer += dt;
-            if (ai->chaseTimer >= ai->maxChaseDuration) {
-                ai->hasSeenPlayer = false;
-                ai->chaseTimer = 0.0f;
-            }
-        }
-        );
+                if (!player) return;
+
+                auto* trplayer = player->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
+
+                float dx = trplayer->x - tr->x;
+                float dy = trplayer->y - tr->y;
+                float distance = std::sqrt(dx * dx + dy * dy);
+                const float speed = 1.0f;
+                const float baseDuration = 0.15f;
+                const float accel = 2.0f;
+
+                if (distance > 0.01f)
+                {
+                    float norm = std::sqrt(dx * dx + dy * dy);
+                    float targetVX = (dx / norm) * speed;
+                    float targetVY = (dy / norm) * speed;
+
+                    // Smooth approach using simple linear interpolation
+                    rb->velX += (targetVX - rb->velX) * std::min(accel * dt, 1.0f);
+                    rb->velY += (targetVY - rb->velY) * std::min(accel * dt, 1.0f);
+                }
+                else
+                {
+                    // stop when very close
+                    rb->velX *= 0.5f;
+                    rb->velY *= 0.5f;
+                }
+
+                attack->attack_timer += dt;
+
+                if (attack->attack_timer >= attack->attack_speed && !attack->hitbox->active)
+                {
+                    attack->attack_timer = 0.0f;
+                    attack->hitbox->active = true;
+                    ai->facing = (dx < 0.0f) ? Facing::LEFT : Facing::RIGHT;
+                    float direction = (ai->facing == Facing::LEFT) ? -1.0f : 1.0f;
+
+                    float hbWidth = rb->width * 1.2f;
+                    float hbHeight = rb->height * 0.8f;
+
+                    // Spawn X just outside enemy's hitbox
+                    float spawnX = tr->x + (direction * hbWidth * 0.25f);
+                    float spawnY = tr->y; // centered vertically
+                    attack->hitbox->duration = baseDuration;
+                    logic->hitBoxSystem->SpawnHitBox(
+                        enemy,
+                        spawnX,
+                        spawnY,
+                        hbWidth,
+                        hbHeight,
+                        static_cast<float>(attack->damage),
+                        attack->hitbox->duration,
+                        HitBoxComponent::Team::Enemy
+                    );
+
+                }
+                // Update hitbox duration
+                if (attack->hitbox->active)
+                {
+                    attack->hitbox->duration -= dt;
+                    if (attack->hitbox->duration <= 0.0f)
+                        attack->hitbox->active = false;
+                }
+
+                if (distance > 0.5f) {
+                    ai->chaseTimer += dt;
+                    if (ai->chaseTimer >= ai->maxChaseDuration) {
+                        ai->hasSeenPlayer = false;
+                        ai->chaseTimer = 0.0f;
+                    }
+                }
+                else
+                {
+                    ai->chaseTimer = 0.0f; // reset while player is near
+                    ai->hasSeenPlayer = true;
+                }
+        });
+
 
         //Root Node
         auto root = std::make_unique<DecisionNode>(

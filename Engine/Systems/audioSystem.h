@@ -30,6 +30,7 @@
 #include "Input/Input.h"
 #include "Systems/InputSystem.h"
 #include "Common/System.h"
+#include "../Component/AudioComponent.h"
 #include "Messaging_System/Messager_Bus.hpp"
 
 #include <array>

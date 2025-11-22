@@ -26,6 +26,7 @@
 *********************************************************************************************/
 
 #include "MainMenuPage.hpp"
+#include "Core/PathUtils.h"
 #include "Graphics/Graphics.hpp"
 #include "Resource_Manager/Resource_Manager.h"
 #include <glm/vec3.hpp>
@@ -67,28 +68,34 @@ void MainMenuPage::Init(int screenW, int screenH)
             // 3) Final fallback: raw GL texture load (no RM caching)
             return gfx::Graphics::loadTexture(path);
         };
-
     // --- Background ---
-    menuBgTex = resolveTexture({ "menu_bg", "menu" }, "../../assets/Textures/menu.jpg");
+    const std::string menuBgPath =
+        Framework::ResolveAssetPath("Textures/menu.jpg").string();
+    menuBgTex = resolveTexture({ "menu_bg", "menu" }, menuBgPath.c_str());
 
-    // --- Buttons (idle/hover share the same asset here; replace if you have distinct ones) ---
+    // --- Buttons ---
+    const std::string startBtnPath =
+        Framework::ResolveAssetPath("Textures/start_btn.png").string();
     startBtnIdleTex = resolveTexture({ "menu_start_btn", "start_btn", "start" },
-        "../../assets/Textures/start_btn.png");
+        startBtnPath.c_str());
     startBtnHoverTex = startBtnIdleTex;
 
+    const std::string exitBtnPath =
+        Framework::ResolveAssetPath("Textures/exit_btn.png").string();
     exitBtnIdleTex = resolveTexture({ "menu_exit_btn", "exit_btn", "exit" },
-        "../../assets/Textures/exit_btn.png");
+        exitBtnPath.c_str());
     exitBtnHoverTex = exitBtnIdleTex;
 
-    // --- Build GUI buttons with callbacks that flip latches ---
-    gui.Clear();
-    gui.AddButton(startBtn.x, startBtn.y, startBtn.w, startBtn.h, "Start",
-        startBtnIdleTex, startBtnHoverTex,
-        [this]() { startLatched = true; });
+    //// --- Build GUI buttons with callbacks that flip latches ---
+    //gui.Clear();
+    //gui.AddButton(startBtn.x, startBtn.y, startBtn.w, startBtn.h, "Start",
+    //    startBtnIdleTex, startBtnHoverTex,
+    //    [this]() { startLatched = true; });
 
-    gui.AddButton(exitBtn.x, exitBtn.y, exitBtn.w, exitBtn.h, "Exit",
-        exitBtnIdleTex, exitBtnHoverTex,
-        [this]() { exitLatched = true; });
+    //gui.AddButton(exitBtn.x, exitBtn.y, exitBtn.w, exitBtn.h, "Exit",
+    //    exitBtnIdleTex, exitBtnHoverTex,
+    //    [this]() { exitLatched = true; });
+    BuildGui();
 }
 
 /*************************************************************************************
@@ -107,6 +114,9 @@ void MainMenuPage::Update(Framework::InputSystem* input)
 *************************************************************************************/
 void MainMenuPage::Draw(Framework::RenderSystem* render)
 {
+    if (render) {
+        SyncLayout(render->ScreenWidth(), render->ScreenHeight());
+    }
     // 1) Background
     if (menuBgTex) {
         gfx::Graphics::renderFullscreenTexture(menuBgTex);
@@ -142,4 +152,36 @@ bool MainMenuPage::ConsumeExit()
     if (!exitLatched)  return false;
     exitLatched = false;
     return true;
+}
+
+void MainMenuPage::SyncLayout(int screenW, int screenH)
+{
+    if (screenW == sw && screenH == sh)
+        return;
+
+    sw = screenW;
+    sh = screenH;
+
+    // Maintain relative positions when the window/fullscreen size changes.
+    const float baseW = 1280.f;
+    const float baseH = 720.f;
+    const float scaleX = sw / baseW;
+    const float scaleY = sh / baseH;
+
+    startBtn = { 100.f * scaleX, 260.f * scaleY, 220.f * scaleX, 58.f * scaleY };
+    exitBtn = { 100.f * scaleX, 180.f * scaleY, 220.f * scaleX, 58.f * scaleY };
+
+    BuildGui();
+}
+
+void MainMenuPage::BuildGui()
+{
+    gui.Clear();
+    gui.AddButton(startBtn.x, startBtn.y, startBtn.w, startBtn.h, "Start",
+        startBtnIdleTex, startBtnHoverTex,
+        [this]() { startLatched = true; });
+
+    gui.AddButton(exitBtn.x, exitBtn.y, exitBtn.w, exitBtn.h, "Exit",
+        exitBtnIdleTex, exitBtnHoverTex,
+        [this]() { exitLatched = true; });
 }

@@ -67,6 +67,10 @@ namespace mygame {
         *************************************************************************/
         bool ConsumeExit();
 
+
+        // Adjust cached layout if the screen size changes (keeps buttons under the cursor).
+        void SyncLayout(int screenW, int screenH);
+
     private:
         // --- Screen ----------------------------------------------------------------------
         int sw = 1280;                 //Screen width in pixels.
@@ -91,6 +95,7 @@ namespace mygame {
         // --- Layout (origin: bottom-left) ------------------------------------------------
         RectF startBtn{ 100.f, 260.f, 220.f, 58.f }; //Start button rectangle.
         RectF exitBtn{ 100.f, 180.f, 220.f, 58.f }; //Exit button rectangle.
+        void BuildGui();
     };
 
 } // namespace mygame

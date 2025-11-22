@@ -47,8 +47,8 @@ namespace Framework
     class EnemyAttackComponent : public GameComponent
     {
     public:
-        int damage{ 10 };               ///< Damage dealt by this enemy�s attack.
-        float attack_speed{ 1.0f };     ///< Cooldown time (seconds) between consecutive attacks.
+        int damage{ 1 };               ///< Damage dealt by this enemy�s attack.
+        float attack_speed{ 3.0f };     ///< Cooldown time (seconds) between consecutive attacks.
         float attack_timer{ 0.0f };     ///< Tracks elapsed time since the last attack.
         std::unique_ptr<HitBoxComponent> hitbox; ///< Managed hitbox instance used for attacks.
 

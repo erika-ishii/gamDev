@@ -51,7 +51,7 @@ namespace Framework {
 
     private:
         gfx::Window* window;          // Non-owning window handle used by the system.
-        std::vector<GOC*> gameObjects;    // Working set of enemy objects (populated in .cpp).
+        std::vector<GOCId> gameObjectIds;
     };
 
 } // namespace Framework

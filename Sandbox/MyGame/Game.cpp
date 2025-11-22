@@ -20,6 +20,7 @@
 #include <GLFW/glfw3.h>
 #include <chrono>
 #include <MainMenuPage.hpp>
+#include <PauseMenuPage.hpp>
 
 namespace mygame {
 
@@ -36,11 +37,15 @@ namespace mygame {
         Framework::AiSystem* gAiSystem = nullptr;
         Framework::HealthSystem* gHealthSystem = nullptr;
 
-        enum class GameState { MAIN_MENU, PLAYING, EXIT };
+        enum class GameState { MAIN_MENU, PLAYING, PAUSED, EXIT };
         GameState currentState = GameState::MAIN_MENU;
         bool editorSimulationRunning = false;
 
         MainMenuPage mainMenu;
+        PauseMenuPage pauseMenu;
+
+        constexpr int START_KEY = GLFW_KEY_ENTER; // Keyboard stand-in for a controller Start button.
+        constexpr int PAUSE_KEY = GLFW_KEY_ESCAPE;
     }
 
     void init(gfx::Window& win)
@@ -62,6 +67,7 @@ namespace mygame {
         
 
         mainMenu.Init(gRenderSystem->ScreenWidth(), gRenderSystem->ScreenHeight());
+        pauseMenu.Init(gRenderSystem->ScreenWidth(), gRenderSystem->ScreenHeight());
         currentState = GameState::MAIN_MENU;
 
         editorSimulationRunning = false;
@@ -70,23 +76,33 @@ namespace mygame {
     void update(float dt)
     {
         TryGuard::Run([&] {
-            // F1 toggle for performance window (edge-triggered)
-            static bool prevTogglePerf = false;
-            const bool togglePerf = gInputSystem && gInputSystem->IsKeyPressed(GLFW_KEY_F1);
-            if (togglePerf && !prevTogglePerf) {
-                Framework::ToggleVisible();
+            const bool systemsUpdating = (currentState == GameState::PLAYING && editorSimulationRunning);
+            if (!systemsUpdating && gInputSystem) {
+                gInputSystem->Update(dt);
             }
-            prevTogglePerf = togglePerf;
+            auto handlePerfToggle = []() {
+                static bool prevTogglePerf = false;
+                const bool togglePerf = gInputSystem && gInputSystem->IsKeyPressed(GLFW_KEY_F1);
+                if (togglePerf && !prevTogglePerf) {
+                    Framework::ToggleVisible();
+                }
+                prevTogglePerf = togglePerf;
+                };
             switch (currentState)
             {
             case GameState::MAIN_MENU:
                 mainMenu.Update(gInputSystem);
+                handlePerfToggle();
                 if (mainMenu.ConsumeStart())
                 {
                     currentState = GameState::PLAYING;
                     editorSimulationRunning = true;
+                    pauseMenu.ResetLatches();
                 }
-                if (mainMenu.ConsumeExit())  currentState = GameState::EXIT;
+                if (mainMenu.ConsumeExit())
+                {
+                    currentState = GameState::EXIT;
+                }
                 break;
 
             case GameState::PLAYING:
@@ -94,9 +110,40 @@ namespace mygame {
                 {
                     gSystems.UpdateAll(dt);
                 }
-                else if (gInputSystem)
+                // When simulation is not running we already refreshed input above.
+                handlePerfToggle();
+                if (gInputSystem &&
+                    (gInputSystem->IsKeyPressed(PAUSE_KEY) || gInputSystem->IsKeyPressed(START_KEY)))
                 {
-                    gInputSystem->Update(dt);
+                    pauseMenu.ResetLatches();
+                    currentState = GameState::PAUSED;
+                }
+                break;
+
+            case GameState::PAUSED:
+                pauseMenu.Update(gInputSystem);
+                handlePerfToggle();
+                if (pauseMenu.ConsumeResume() ||
+                    (gInputSystem && (gInputSystem->IsKeyPressed(PAUSE_KEY) || gInputSystem->IsKeyPressed(START_KEY))))
+                {
+                    currentState = GameState::PLAYING;
+                    break;
+                }
+
+                if (pauseMenu.ConsumeMainMenu())
+                {
+                    if (gLogicSystem)
+                    {
+                        gLogicSystem->ReloadLevel();
+                    }
+                    editorSimulationRunning = false;
+                    currentState = GameState::MAIN_MENU;
+                    break;
+                }
+
+                if (pauseMenu.ConsumeQuit())
+                {
+                    currentState = GameState::EXIT;
                 }
                 break;
 
@@ -126,6 +173,15 @@ namespace mygame {
 
             case GameState::PLAYING:
                 gSystems.DrawAll();
+                break;
+
+            case GameState::PAUSED:
+                gSystems.DrawAll();
+                if (gRenderSystem) {
+                    gRenderSystem->BeginMenuFrame();
+                    pauseMenu.Draw(gRenderSystem);
+                    gRenderSystem->EndMenuFrame();
+                }
                 break;
 
             case GameState::EXIT:

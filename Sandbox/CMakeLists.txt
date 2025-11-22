@@ -59,17 +59,29 @@ add_custom_command(TARGET MyGame POST_BUILD
     VERBATIM
 )
 
-# Copy game assets (audio files) to build directory
+
+# Copy ALL runtime folders next to the exe
 add_custom_command(TARGET MyGame POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory
-    "$<TARGET_FILE_DIR:MyGame>/assets/Audio"
+    # assets/
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-    "${CMAKE_SOURCE_DIR}/assets/Audio"
-    "$<TARGET_FILE_DIR:MyGame>/assets/Audio"
-    COMMENT "Copying game assets (audio files) to build directory"
+            "${CMAKE_SOURCE_DIR}/assets"
+            "$<TARGET_FILE_DIR:MyGame>/assets"
+
+    # Data_Files/
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_SOURCE_DIR}/Data_Files"
+            "$<TARGET_FILE_DIR:MyGame>/Data_Files"
+
+    # logs/ (if you keep default logs in repo; otherwise just create empty)
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+            "$<TARGET_FILE_DIR:MyGame>/logs"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_SOURCE_DIR}/logs"
+            "$<TARGET_FILE_DIR:MyGame>/logs"
+
+    COMMENT "Copying assets, Data_Files, and logs to build directory"
     VERBATIM
 )
-
 
 # Optional: Nice grouping in IDEs
 source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/MyGame FILES ${MYGAME_SRC} ${MYGAME_HDR})

@@ -11,6 +11,7 @@
       "damage": 1,
       "attack_speed": 1.2
     },
+     "SpriteAnimationComponent": {},
     "HitBoxComponent": {
       "width": 0.15,
       "height": 0.15,
@@ -24,9 +25,29 @@
         "Slash1": { "id": "Slash1", "loop": false },
         "GrappleShoot1": { "id": "GrappleShoot1", "loop": false }
       },
-      "volume": 1.0,
-      "playing": 0
+      "PlayerComponent": {},
+      "PlayerHealthComponent": {
+        "playerHealth": 100,
+        "playerMaxhealth": 100
+      },
+      "PlayerAttackComponent": {
+        "damage": 50,
+        "attack_speed": 1.0
+      },
+      "HitBoxComponent": {
+        "width": 0.15,
+        "height": 0.15,
+        "duration": 0.15
+      },
+      "AudioComponent": {
+        "sounds": {
+          "footsteps":     { "id": "footsteps",     "loop": true },
+          "Slash1":        { "id": "Slash1",        "loop": false },
+          "GrappleShoot1": { "id": "GrappleShoot1", "loop": false }
+        },
+        "volume": 1.0,
+        "playing": 0
+      }
     }
   }
-}
-}
+}}

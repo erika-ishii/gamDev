@@ -69,17 +69,10 @@ bool Resource_Manager::load(const std::string& id, const std::string& path)
     {std::cerr << "[Resource_Manager] File not found: " << path << std::endl; return false;}
     std::string ext = GetExtension(path);
     if (isTexture(ext))
-    {  
+    {
         unsigned int texID = gfx::Graphics::loadTexture(path.c_str());
         if (texID != 0)
         {
-            auto existing = resources_map.find(id);
-            if (existing != resources_map.end() && existing->second.type == Resource_Type::Graphics)
-            {
-                if (existing->second.handle != 0 && existing->second.handle != texID)
-                    gfx::Graphics::destroyTexture(existing->second.handle);
-            }
-
             resources_map[id] = { id, Resource_Type::Graphics, texID };
             return true;
         }
@@ -87,24 +80,23 @@ bool Resource_Manager::load(const std::string& id, const std::string& path)
     }
     else if (isSound(ext))
     {
-        auto existing = resources_map.find(id);
-        if (existing != resources_map.end() && existing->second.type == Resource_Type::Sound)
-        {
-            SoundManager::getInstance().stopSound(id);
-            SoundManager::getInstance().unloadSound(id);
-        }
-
         bool success = SoundManager::getInstance().loadSound(id, path);
         if (success)
         {
             resources_map[id] = { id, Resource_Type::Sound ,0 };
+            return true;
         }
-        return success;
+        else
+        {
+            Framework::AudioImGui::ShowUnsupportedAudioPopup(path);
+            std::cerr << "[Resource_Manager] Failed to load audio: " << path << std::endl;
+            return false;
+        }
     }
     else 
     {
         std::cerr << "[Resource_Manager] Unsupported file type: " << path << std::endl;
-        Framework::AudioImGui::ShowUnsupportedAudioPopup(path);
+        if (path.find("Audio") != std::string::npos) { Framework::AudioImGui::ShowUnsupportedAudioPopup(path); }
         return false;
     }
 }

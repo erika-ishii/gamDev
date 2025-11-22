@@ -18,6 +18,9 @@
 #include "Composition/Component.h"
 #include "Serialization/Serialization.h"
 #include "Resource_Manager/Resource_Manager.h"
+#include "Core/PathUtils.h"
+#include <filesystem>
+
 
 namespace Framework {
     /*****************************************************************************************
@@ -34,6 +37,7 @@ namespace Framework {
     public:
         float w{ 64.f }, h{ 64.f };               ///< Width and height (treated as scale factors in NDC)
         float r{ 1.f }, g{ 1.f }, b{ 1.f }, a{ 1.f }; ///< RGBA tint color values (default white)
+        int layer = 0;
 
         unsigned int texture_id{ 0 }; 
         std::string  texture_key;      
@@ -46,14 +50,22 @@ namespace Framework {
                  Default implementation does nothing but may be extended if needed.
         *************************************************************************************/
         void initialize() override {
-            if (!texture_key.empty()) {
+            if (texture_key.empty())
+                return;
+
+            texture_id = Resource_Manager::getTexture(texture_key);
+            if (texture_id)
+                return;
+
+            if (texture_path.empty())
+                return;
+
+            const auto resolvedPath = Framework::ResolveAssetPath(std::filesystem::path(texture_path));
+            const std::string& pathStr = resolvedPath.empty() ? texture_path : resolvedPath.string();
+
+            if (Resource_Manager::load(texture_key, pathStr))
                 texture_id = Resource_Manager::getTexture(texture_key);
-                if (!texture_id && !texture_path.empty()) {
-                    if (Resource_Manager::load(texture_key, texture_path)) {
-                        texture_id = Resource_Manager::getTexture(texture_key);
-                    }
-                }
-            }
+            
         }
 
         /*************************************************************************************
@@ -77,6 +89,7 @@ namespace Framework {
             if (s.HasKey("a")) StreamRead(s, "a", a);
             if (s.HasKey("texture_key")) StreamRead(s, "texture_key", texture_key);
             if (s.HasKey("texture_path")) StreamRead(s, "texture_path", texture_path);
+            if (s.HasKey("layer")) StreamRead(s, "layer", layer); 
 
             if (s.HasKey("visible")) {
                 int visibleInt = static_cast<int>(visible);
@@ -105,6 +118,7 @@ namespace Framework {
             copy->texture_id = texture_id;
             copy->texture_path = texture_path;
             copy->visible = visible;
+            copy->layer = layer;
 
             //Transfer ownership to whoever call clone()
             return copy;

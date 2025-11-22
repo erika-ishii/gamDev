@@ -1,4 +1,5 @@
 #include "audioSystem.h"
+#include "Core/PathUtils.h"
 #include "RenderSystem.h"
 #include <iostream>
 /*********************************************************************************************
@@ -44,7 +45,7 @@ namespace Framework {
         }
         
         // Load all sounds (previously in AudioImGui)
-        Resource_Manager::loadAll("../../assets/Audio");
+        Resource_Manager::loadAll(Framework::ResolveAssetPath("Audio").string());
 
         // Set default master volume
         SoundManager::getInstance().setMasterVolume(0.7f);
@@ -81,7 +82,9 @@ namespace Framework {
             auto* audio = goc->GetComponentType<AudioComponent>(ComponentTypeId::CT_AudioComponent);
             if (!rb || !audio) continue;
             // Footsteps audio
-            bool isMoving = (rb->velX != 0.0f || rb->velY != 0.0f);
+            const float moveThreshold = 0.01f; // tweak as needed
+            bool isMoving = (std::fabs(rb->velX) > moveThreshold ||
+                std::fabs(rb->velY) > moveThreshold);
             if (isMoving)
             {if (!audio->playing["footsteps"])audio->Play("footsteps");}
             else

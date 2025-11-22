@@ -1,65 +1,53 @@
 {
   "Level": {
-    "name": "level01",
     "GameObjects": [
       {
-        "name": "Circle",
-        "layer": "layer1",
-        "Components": 
-        {
-          "TransformComponent": { "x": -0.7, "y": -0.7, "rot": 0.0 },
-          "CircleRenderComponent": { "radius": 0.20, "r": 0.9, "g": 0.2, "b": 0.3, "a": 1.0 }
-        }
-      },
-      {
-        "name": "Rect",
-        "Components": 
-        {
-          "TransformComponent": { "x":-0.5, "y": 0.0, "rot": 0.0 },
-          "RenderComponent":    { "w": 0.5, "h": 0.5, "r": 0.95, "g": 0.75, "b": 0.25, "a": 1.0, "visible": 0 },
-          "RigidBodyComponent": { "velocity_x": 0, "velocity_y": 0, "width": 0.5, "height": 0.5 }
-        }
-      },
-      {
-       "name": "Player",
         "Components": {
+          "CircleRenderComponent": {
+            "a": 1.0,
+            "b": 0.30000001192092896,
+            "g": 0.20000000298023224,
+            "r": 0.8999999761581421,
+            "radius": 0.20000000298023224
+          },
           "TransformComponent": {
-            "x": -0.5,
-            "y": -0.5,
-            "rot": 0.0
-          },
+            "rot": 0.0,
+            "x": -0.699999988079071,
+            "y": -0.699999988079071
+          }
+        },
+        "layer": "layer1",
+        "name": "Circle"
+      },
+      {
+        "Components": {
           "RenderComponent": {
-            "w": 0.25,
-            "h": 0.25,
-            "r": 1,
-            "g": 1,
-            "b": 1,
-            "a": 1,
-            "visible": 1
+            "a": 1.0,
+            "b": 0.25,
+            "g": 0.75,
+            "h": 0.5,
+            "r": 0.949999988079071,
+            "visible": false,
+            "w": 0.5
           },
-          "SpriteComponent": { "texture_key": "player" },
           "RigidBodyComponent": {
-            "velocity_x": 0,
-            "velocity_y": 0,
-            "width": 0.1,
-            "height": 0.21
+            "height": 0.5,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 0.5
           },
-          "PlayerComponent": {},
-          "PlayerHealthComponent": {
-            "playerHealth": 5,
-            "playerMaxhealth": 5
-          },
-          "PlayerAttackComponent": {
-            "damage": 1,
-            "attack_speed": 1.2
-          },
-          "HitBoxComponent": {
-            "width": 0.15,
-            "height": 0.15,
-            "duration": 0.15
-          },
-          "AudioComponent":
-          {
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": -0.5,
+            "y": 0.0
+          }
+        },
+        "layer": "Default",
+        "name": "Rect"
+      },
+      {
+        "Components": {
+          "AudioComponent":{
             "sounds": 
             {
               "footsteps": { "id": "footsteps", "loop": true },
@@ -68,49 +56,246 @@
             },
             "volume": 1.0,
             "playing": 0
+          },
+          "HitBoxComponent": {
+            "duration": 0.15000000596046448,
+            "height": 0.15000000596046448,
+            "width": 0.15000000596046448
+          },
+          "PlayerAttackComponent": {
+            "attack_speed": 1.0,
+            "damage": 1
+          },
+          "PlayerComponent": {},
+          "PlayerHealthComponent": {
+            "playerHealth": 5,
+            "playerMaxhealth": 5
+          },
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.24375000596046448,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.24375000596046448
+          },
+          "RigidBodyComponent": {
+            "height": 0.20475000143051147,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 0.09750000387430191
+          },
+          "SpriteAnimationComponent": {
+            "activeAnimation": 0,
+            "animations": [
+              {
+                "config": {
+                  "columns": 5,
+                  "endFrame": 4,
+                  "fps": 6.0,
+                  "loop": true,
+                  "rows": 1,
+                  "startFrame": 0,
+                  "totalFrames": 5
+                },
+                "currentFrame": 1,
+                "name": "idle",
+                "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/Idle_Sprite.png",
+                "textureKey": "idle_sheet"
+              },
+              {
+                "config": {
+                  "columns": 10,
+                  "endFrame": 9,
+                  "fps": 12.0,
+                  "loop": true,
+                  "rows": 1,
+                  "startFrame": 0,
+                  "totalFrames": 10
+                },
+                "currentFrame": 2,
+                "name": "run",
+                "spriteSheetPath": "../../assets\\Textures\\Character\\Ming_Sprite\\Running_Sprite.png",
+                "textureKey": "run_sheet"
+              },
+              {
+                "config": {
+                  "columns": 13,
+                  "endFrame": 12,
+                  "fps": 12.0,
+                  "loop": true,
+                  "rows": 1,
+                  "startFrame": 0,
+                  "totalFrames": 13
+                },
+                "currentFrame": 2,
+                "name": "attack1",
+                "spriteSheetPath": "../../assets\\Textures\\Character\\Ming_Sprite\\1st_Attack Sprite.png",
+                "textureKey": "attack1_sheet"
+              },
+              {
+                "config": {
+                  "columns": 8,
+                  "endFrame": 7,
+                  "fps": 12.0,
+                  "loop": true,
+                  "rows": 1,
+                  "startFrame": 0,
+                  "totalFrames": 8
+                },
+                "currentFrame": 7,
+                "name": "attack2",
+                "spriteSheetPath": "../../assets\\Textures\\Character\\Ming_Sprite\\2nd_Attack Sprite.png",
+                "textureKey": "attack2_sheet"
+              },
+              {
+                "config": {
+                  "columns": 9,
+                  "endFrame": 8,
+                  "fps": 12.0,
+                  "loop": true,
+                  "rows": 1,
+                  "startFrame": 0,
+                  "totalFrames": 9
+                },
+                "currentFrame": 0,
+                "name": "attack3",
+                "spriteSheetPath": "../../assets\\Textures\\Character\\Ming_Sprite\\3rd_Attack Sprite.png",
+                "textureKey": "attack3_sheet"
+              }
+            ],
+            "fps": 6.0,
+            "frames": [],
+            "loop": true,
+            "play": true
+          },
+          "SpriteComponent": {
+            "texture_key": "idle_sheet"
+          },
+          "TransformComponent": {
+            "rot": -0.02617994137108326,
+            "x": -0.2381940633058548,
+            "y": -1.3111112117767334
           }
-        }
+        },
+        "layer": "Default",
+        "name": "Player"
       },
-    {
-      "name": "Boss",
-      "Components": 
       {
-       "TransformComponent": { "x": -0.5, "y": -0.5, "rot": 0.0 },
-       "RenderComponent": { "w": 0.3, "h": 0.3, "r": 1, "g": 1, "b": 1, "a": 1 },
-       "SpriteComponent": { "texture_key": "boss" },
-         "RigidBodyComponent": { "velocity_x": 0.6, "velocity_y": 0.6, "width": 0.25, "height": 0.25}
-      }
-    },
-    {
-      "name": "Enemy1",
-      "Components": 
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.30000001192092896,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.30000001192092896
+          },
+          "RigidBodyComponent": {
+            "height": 0.25,
+            "velocity_x": 0.6000000238418579,
+            "velocity_y": 0.6000000238418579,
+            "width": 0.25
+          },
+          "SpriteComponent": {
+            "texture_key": "boss"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": 790.890380859375,
+            "y": 790.630126953125
+          }
+        },
+        "layer": "Default",
+        "name": "Boss"
+      },
       {
-      "TransformComponent": { "x": 0.2, "y": 0.2, "rot": 0 },
-      "RenderComponent": { "w": 0.3, "h": 0.3, "r": 1, "g": 1, "b": 1, "a": 1 },
-      "SpriteComponent": { "texture_key": "boss" },
-      "RigidBodyComponent": { "velocity_x": 10, "velocity_y": 0, "width": 0.13, "height": 0.24 },
-      "EnemyComponent": {},
-      "EnemyAttackComponent": { "damage": 1, "attack_speed": 1.2 },
-      "EnemyHealthComponent": { "enemyHealth": 2, "enemyMaxHealth": 2 },
-      "EnemyDecisionTreeComponent": {},
-      "EnemyTypeComponent": { "type": "ranged" }
-      }
-    },
-    {
-      "name": "Enemy2",
-      "Components": 
+        "Components": {
+          "EnemyAttackComponent": {
+            "attack_speed": 1.2000000476837158,
+            "damage": 1
+          },
+          "EnemyComponent": {},
+          "EnemyDecisionTreeComponent": {},
+          "EnemyHealthComponent": {
+            "enemyHealth": 2,
+            "enemyMaxhealth": 2
+          },
+          "EnemyTypeComponent": {
+            "type": "ranged"
+          },
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.30000001192092896,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.30000001192092896
+          },
+          "RigidBodyComponent": {
+            "height": 0.23999999463558197,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 0.12999999523162842
+          },
+          "SpriteComponent": {
+            "texture_key": "boss"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": -0.18333281576633453,
+            "y": 0.20000000298023224
+          }
+        },
+        "layer": "Default",
+        "name": "Enemy1"
+      },
       {
-      "TransformComponent": { "x": -0.2, "y": -0.2, "rot": 0 },
-      "RenderComponent": { "w": 0.3, "h": 0.3, "r": 1, "g": 1, "b": 1, "a": 1 },
-      "SpriteComponent": { "texture_key": "boss" },
-      "RigidBodyComponent": { "velocity_x": 10, "velocity_y": 0, "width": 0.13, "height": 0.24 },
-      "EnemyComponent": {},
-      "EnemyAttackComponent": { "damage": 1, "attack_speed": 1.2 },
-      "EnemyHealthComponent": { "enemyHealth": 2, "enemyMaxHealth": 2 },
-      "EnemyDecisionTreeComponent": {},
-      "EnemyTypeComponent": { "type": "physical" }
+        "Components": {
+          "EnemyAttackComponent": {
+            "attack_speed": 1.2000000476837158,
+            "damage": 1
+          },
+          "EnemyComponent": {},
+          "EnemyDecisionTreeComponent": {},
+          "EnemyHealthComponent": {
+            "enemyHealth": 2,
+            "enemyMaxhealth": 2
+          },
+          "EnemyTypeComponent": {
+            "type": "physical"
+          },
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.30000001192092896,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.30000001192092896
+          },
+          "RigidBodyComponent": {
+            "height": 0.23999999463558197,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 0.12999999523162842
+          },
+          "SpriteComponent": {
+            "texture_key": "boss"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": -0.18333281576633453,
+            "y": -0.20000000298023224
+          }
+        },
+        "layer": "Default",
+        "name": "Enemy2"
       }
-    }
-    ]
+    ],
+    "name": "level"
   }
 }

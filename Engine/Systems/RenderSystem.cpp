@@ -45,6 +45,7 @@
 #endif
 
 #include "RenderSystem.h"
+#include "Core/PathUtils.h"
 #include <imgui.h>
 
 #include <GLFW/glfw3.h>
@@ -181,32 +182,7 @@ namespace Framework {
         editorCamera.SetViewHeight(editorCameraViewHeight);
     }
 
-    /*************************************************************************************
-      \brief  Return directory path of the running executable (platform-specific).
-      \return Filesystem path to exe’s parent directory.
-      \note   Used for probing asset/data roots when launching from different CWDs.
-    *************************************************************************************/
-    std::filesystem::path RenderSystem::GetExeDir() const
-    {
-#if defined(_WIN32)
-        char buf[MAX_PATH] = {};
-        GetModuleFileNameA(nullptr, buf, MAX_PATH);
-        return std::filesystem::path(buf).parent_path();
-#elif defined(__APPLE__)
-        char buf[2048];
-        uint32_t sz = sizeof(buf);
-        if (_NSGetExecutablePath(buf, &sz) == 0) return std::filesystem::path(buf).parent_path();
-        std::string s; s.resize(sz);
-        if (_NSGetExecutablePath(s.data(), &sz) == 0) return std::filesystem::path(s).parent_path();
-        return std::filesystem::current_path();
-#else
-        char buf[4096] = {};
-        ssize_t n = readlink("/proc/self/exe", buf, sizeof(buf) - 1);
-        if (n > 0) { buf[n] = 0; return std::filesystem::path(buf).parent_path(); }
-        return std::filesystem::current_path();
-#endif
-    }
-
+    
     /*************************************************************************************
       \brief  Probe for a Roboto font file in common asset locations.
       \return Absolute/relative path string to a usable Roboto .ttf, or empty if not found.
@@ -234,12 +210,19 @@ namespace Framework {
             "../../../assets/Fonts/Roboto-VariableFont_wdth,wght.ttf",
             "../../../assets/Fonts/Roboto-Italic-VariableFont_wdth,wght.ttf"
         };
+        // Prefer resolved asset roots when available (packaged builds).
+        const auto resolvedBlack = Framework::ResolveAssetPath("Fonts/Roboto-Black.ttf");
+        if (fs::exists(resolvedBlack))
+            return resolvedBlack.string();
+        const auto resolvedRegular = Framework::ResolveAssetPath("Fonts/Roboto-Regular.ttf");
+        if (fs::exists(resolvedRegular))
+            return resolvedRegular.string();
 
         for (auto r : rels)
             if (fs::exists(r))
                 return std::string(r);
 
-        std::vector<fs::path> roots{ fs::current_path(), GetExeDir() };
+        std::vector<fs::path> roots{ fs::current_path(), Framework::GetExecutableDir() };
 
         auto try_pick = [&](const fs::path& fontsDir) -> std::string {
             fs::path rb = fontsDir / "Roboto-Black.ttf";
@@ -282,7 +265,7 @@ namespace Framework {
     std::filesystem::path RenderSystem::FindAssetsRoot() const
     {
         namespace fs = std::filesystem;
-        std::vector<fs::path> roots{ fs::current_path(), GetExeDir() };
+        std::vector<fs::path> roots{ fs::current_path(), Framework::GetExecutableDir() };
 
         for (const auto& root : roots)
         {
@@ -317,7 +300,8 @@ namespace Framework {
             return fs::exists(candidate, ec) && fs::is_directory(candidate, ec);
             };
 
-        std::vector<fs::path> roots{ fs::current_path(), GetExeDir() };
+        std::vector<fs::path> roots{ fs::current_path(), Framework::GetExecutableDir() };
+
 
         for (const auto& root : roots)
         {
@@ -1294,7 +1278,16 @@ namespace Framework {
     *************************************************************************************/
     void RenderSystem::Initialize()
     {
-        WindowConfig cfg = LoadWindowConfig("../../Data_Files/window.json");
+        dataFilesRoot = FindDataFilesRoot();
+
+        auto resolveData = [](const std::filesystem::path& rel) {
+            return Framework::ResolveDataPath(rel).string();
+            };
+        auto resolveAsset = [](const std::filesystem::path& rel) {
+            return Framework::ResolveAssetPath(rel).string();
+            };
+
+        WindowConfig cfg = LoadWindowConfig(resolveData("window.json"));
         screenW = cfg.width;
         screenH = cfg.height;
         if (window)
@@ -1310,9 +1303,9 @@ namespace Framework {
         gfx::Graphics::initialize();
 
         std::cout << "[CWD] " << std::filesystem::current_path() << "\n";
-        std::cout << "[EXE] " << GetExeDir() << "\n";
+        std::cout << "[EXE] " << Framework::GetExecutableDir() << "\n";
 
-        imguiLayoutPath = "../../Data_Files/imgui_layout.ini";
+        imguiLayoutPath = resolveData("imgui_layout.ini");
 
         if (auto fontPath = FindRoboto(); !fontPath.empty())
         {
@@ -1328,15 +1321,15 @@ namespace Framework {
             textReadyTitle = textReadyHint = false;
         }
 
-        Resource_Manager::load("player_png", "../../assets/Textures/player.png");
+        Resource_Manager::load("player_png", resolveAsset("Textures/player.png"));
         playerTex = Resource_Manager::resources_map["player_png"].handle;
 
-        Resource_Manager::load("ming_idle", "../../assets/Textures/Idle Sprite .png");
-        Resource_Manager::load("ming_run", "../../assets/Textures/Running Sprite .png");
-        Resource_Manager::load("ming_attack1", "../../assets/Textures/Character/Ming_Sprite/1st_Attack Sprite.png");
-        Resource_Manager::load("ming_attack2", "../../assets/Textures/Character/Ming_Sprite/2nd_Attack Sprite.png");
-        Resource_Manager::load("ming_attack3", "../../assets/Textures/Character/Ming_Sprite/3rd_Attack Sprite.png");
-        Resource_Manager::load("ming_knife", "../../assets/Textures/Character/Ming_Sprite/Knife_Sprite.png");
+        Resource_Manager::load("ming_idle", resolveAsset("Textures/Idle Sprite .png"));
+        Resource_Manager::load("ming_run", resolveAsset("Textures/Running Sprite .png"));
+        Resource_Manager::load("ming_attack1", resolveAsset("Textures/Character/Ming_Sprite/1st_Attack Sprite.png"));
+        Resource_Manager::load("ming_attack2", resolveAsset("Textures/Character/Ming_Sprite/2nd_Attack Sprite.png"));
+        Resource_Manager::load("ming_attack3", resolveAsset("Textures/Character/Ming_Sprite/3rd_Attack Sprite.png"));
+        Resource_Manager::load("ming_knife", resolveAsset("Textures/Character/Ming_Sprite/Knife_Sprite.png"));
 
         idleTex = Resource_Manager::resources_map["ming_idle"].handle;
         runTex = Resource_Manager::resources_map["ming_run"].handle;
@@ -1353,7 +1346,7 @@ namespace Framework {
         {
             ImGuiLayer::Initialize(*window, config);
             ImGuiIO& io = ImGui::GetIO();
-            io.IniFilename = "../../Data_Files/imgui_layout.ini";
+            io.IniFilename = imguiLayoutPath.c_str();
         }
         else
         {
@@ -1361,6 +1354,14 @@ namespace Framework {
         }
 
         assetsRoot = FindAssetsRoot();
+        if (assetsRoot.empty())
+        {
+            std::error_code ec;
+            auto cwdAssets = std::filesystem::current_path(ec) / "assets";
+            if (!ec && std::filesystem::exists(cwdAssets, ec) && std::filesystem::is_directory(cwdAssets, ec))
+                assetsRoot = std::filesystem::weakly_canonical(cwdAssets, ec);
+        }
+
         if (!assetsRoot.empty())
         {
             assetBrowser.Initialize(assetsRoot);
@@ -1368,7 +1369,7 @@ namespace Framework {
             AudioImGui::SetAssetsRoot(assetsRoot);
         }
 
-        dataFilesRoot = FindDataFilesRoot();
+
         jsonEditor.Initialize(dataFilesRoot);
 
         if (window && window->raw())
@@ -1461,6 +1462,30 @@ namespace Framework {
             // Now handle picking with the correct (current) camera matrices.
             HandleViewportPicking();
 
+            // Layering
+            std::vector<unsigned> sortedIds;
+            sortedIds.reserve(FACTORY->Objects().size());
+
+            for (auto& [id, objPtr] : FACTORY->Objects())
+                sortedIds.push_back(id);
+
+            // Sort by RenderComponent::layer
+            std::sort(sortedIds.begin(), sortedIds.end(), 
+                [](unsigned a, unsigned b) 
+                {
+                    auto* objA = FACTORY->GetObjectWithId(a); 
+                    auto* objB = FACTORY->GetObjectWithId(b); 
+
+                    auto* rcA = objA ? objA->GetComponentType<RenderComponent>(ComponentTypeId::CT_RenderComponent) : nullptr; 
+                    auto* rcB = objB ? objB->GetComponentType<RenderComponent>(ComponentTypeId::CT_RenderComponent) : nullptr; 
+
+                    int la = rcA ? rcA->layer : 0; 
+                    int lb = rcB ? rcB->layer : 0; 
+
+                    return la < lb; 
+                });
+
+
             auto t0 = clock::now();
 
             static unsigned hawkerFloorTex = 0;
@@ -1483,12 +1508,13 @@ namespace Framework {
                     }
                 };
 
-            ensureBackgroundTexture(hawkerFloorTex,
-                "hawker_floor_bg",
-                "../../assets/Textures/Environment/lvl 1_Hawker/Floor.png");
-            ensureBackgroundTexture(hawkerHdbTex,
-                "hawker_hdb_bg",
-                "../../assets/Textures/Environment/lvl 1_Hawker/HDB.png");
+            const std::string floorPath =
+                Framework::ResolveAssetPath("Textures/Environment/lvl 1_Hawker/Floor.png").string();
+            const std::string hdbPath =
+                Framework::ResolveAssetPath("Textures/Environment/lvl 1_Hawker/HDB.png").string();
+
+            ensureBackgroundTexture(hawkerFloorTex, "hawker_floor_bg", floorPath.c_str());
+            ensureBackgroundTexture(hawkerHdbTex, "hawker_hdb_bg", hdbPath.c_str());
 
             if (hawkerFloorTex && hawkerHdbTex)
             {
@@ -1514,21 +1540,24 @@ namespace Framework {
                 std::unordered_map<unsigned, std::vector<gfx::Graphics::SpriteInstance>> spriteBatches;
                 spriteBatches.reserve(64);
 
-                const auto& animState = logic.Animation();
-                const int animCols = std::max(1, CurrentColumns());
-                const int animRows = std::max(1, CurrentRows());
+                //const auto& animState = logic.Animation();
+                //const int animCols = std::max(1, CurrentColumns());
+                //const int animRows = std::max(1, CurrentRows());
 
                 // Pass 1: Sprites (instanced)
-                for (auto& [id, objPtr] : FACTORY->Objects())
+                for (unsigned id : sortedIds)
                 {
-                    (void)id;
-                    auto* obj = objPtr.get();
+                    auto& objPtr = FACTORY->Objects().at(id); 
+                    GOC* obj = objPtr.get(); 
                     if (!obj) continue;
                     if (!mygame::ShouldRenderLayer(obj->GetLayerName())) continue;
 
                     auto* tr = obj->GetComponentType<Framework::TransformComponent>(
                         Framework::ComponentTypeId::CT_TransformComponent);
                     if (!tr) continue;
+
+                    auto* animComp = obj->GetComponentType<Framework::SpriteAnimationComponent>(
+                        Framework::ComponentTypeId::CT_SpriteAnimationComponent);
 
                     if (auto* sp = obj->GetComponentType<Framework::SpriteComponent>(
                         Framework::ComponentTypeId::CT_SpriteComponent))
@@ -1555,22 +1584,14 @@ namespace Framework {
                         unsigned tex = sp->texture_id;
                         glm::vec4 uvRect(0.0f, 0.0f, 1.0f, 1.0f);
 
-                        if (IsPlayerObject(obj) && idleTex && runTex)
+                        if (animComp && animComp->HasSpriteSheets())
                         {
-                            tex = CurrentPlayerTexture();
-                            if (tex)
-                            {
-                                const int frame = animState.frame;
-                                const float sxUV = 1.0f / static_cast<float>(animCols);
-                                const float syUV = 1.0f / static_cast<float>(animRows);
-                                const int c = frame % animCols;
-                                const int rIdx = frame / animCols;
-                                uvRect = glm::vec4(
-                                    static_cast<float>(c) * sxUV,
-                                    static_cast<float>(rIdx) * syUV,
-                                    sxUV, syUV);
-                            }
+                            auto sample = animComp->CurrentSheetSample();
+                            if (sample.texture)
+                                tex = sample.texture;
+                            uvRect = sample.uv;
                         }
+                        
                         else if (!tex && !sp->texture_key.empty())
                         {
                             tex = Resource_Manager::getTexture(sp->texture_key);
@@ -1641,10 +1662,10 @@ namespace Framework {
                 }
 
                 // Pass 2: Rectangles (non-sprite quads)
-                for (auto& [id, objPtr] : FACTORY->Objects())
+                for (unsigned id : sortedIds) 
                 {
-                    (void)id;
-                    auto* obj = objPtr.get();
+                    auto& objPtr = FACTORY->Objects().at(id); 
+                    GOC* obj = objPtr.get();  
                     if (!obj) continue;
                     if (!mygame::ShouldRenderLayer(obj->GetLayerName())) continue;
 
@@ -1684,10 +1705,10 @@ namespace Framework {
                 }
 
                 // Pass 3: Circles
-                for (auto& [id, objPtr] : FACTORY->Objects())
+                for (unsigned id : sortedIds) 
                 {
-                    (void)id;
-                    auto* obj = objPtr.get();
+                    auto& objPtr = FACTORY->Objects().at(id); 
+                    GOC* obj = objPtr.get(); 
                     if (!obj) continue;
                     if (!mygame::ShouldRenderLayer(obj->GetLayerName())) continue;
 
@@ -1716,10 +1737,10 @@ namespace Framework {
                                     gfx::Graphics::renderRectangleOutline(x, y, rot, w, h, 1.f, 1.f, 0.f, 1.f, 2.f);
                             };
 
-                        for (auto& [id, objPtr] : FACTORY->Objects())
+                        for (unsigned id : sortedIds) 
                         {
-                            (void)id;
-                            auto* obj = objPtr.get();
+                            auto& objPtr = FACTORY->Objects().at(id); 
+                            GOC* obj = objPtr.get(); 
                             if (!obj) continue;
                             if (!mygame::ShouldRenderLayer(obj->GetLayerName())) continue;
 
@@ -1757,10 +1778,10 @@ namespace Framework {
 
                     if (showPhysicsHitboxes && logic.hitBoxSystem)
                     {
-                        for (auto& [id, objPtr] : FACTORY->Objects())
+                        for (unsigned id : sortedIds) 
                         {
-                            (void)id;
-                            auto* obj = objPtr.get();
+                            auto& objPtr = FACTORY->Objects().at(id); 
+                            GOC* obj = objPtr.get(); 
                             if (!obj) continue;
 
                             auto* tr = obj->GetComponentType<Framework::TransformComponent>(
@@ -1788,6 +1809,8 @@ namespace Framework {
                                         0.0f, 1.0f, 0.0f, 1.0f, // green outline for enemy attacks
                                         2.0f
                                     );
+                                    std::cout << "Hit Box produced at coordinate:" << activeHit.hitbox->spawnX
+                                        << "," << activeHit.hitbox->spawnY << std::endl;
                                 }
                             }
                         }
@@ -1824,6 +1847,19 @@ namespace Framework {
 
             RestoreFullViewport(); // Restore full window viewport for ImGui.
 
+            if (showEditor)
+            {
+                if (ImGui::BeginMainMenuBar())
+                {
+                    if (ImGui::BeginMenu("View"))
+                    {
+                        ImGui::MenuItem("Animation Editor", nullptr, &showAnimationEditor);
+                        ImGui::EndMenu();
+                    }
+                    ImGui::EndMainMenuBar();
+                }
+            }
+
             t0 = clock::now();
 
             DrawDockspace();
@@ -1836,6 +1872,7 @@ namespace Framework {
                 mygame::DrawSpawnPanel();
                 mygame::DrawPropertiesEditor();
                 mygame::DrawInspectorWindow();
+                mygame::DrawAnimationEditor(showAnimationEditor);
 
                 if (ImGui::Begin("Crash Tests"))
                 {

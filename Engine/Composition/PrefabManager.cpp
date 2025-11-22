@@ -21,7 +21,8 @@
 #include "PrefabManager.h"
 #include <iostream>
 #include "Factory/Factory.h"
-
+#include "Core/PathUtils.h"
+#include <filesystem>
 
 namespace Framework {
 
@@ -42,80 +43,90 @@ namespace Framework {
     *************************************************************************************/
     void LoadPrefabs()
     {
-        if (auto* c = FACTORY->CreateTemplate("../../Data_Files/circle.json"))
+        auto resolveData = [](const std::string& name) {
+            return Framework::ResolveDataPath(std::filesystem::path(name)).string();
+            };
+
+        if (auto* c = FACTORY->CreateTemplate(resolveData("circle.json")))
             master_copies["Circle"].reset(c);
 
-        if (auto* r = FACTORY->CreateTemplate("../../Data_Files/rect.json"))
+        if (auto* r = FACTORY->CreateTemplate(resolveData("rect.json")))
             master_copies["Rect"].reset(r);
         
-        if (auto* e = FACTORY->CreateTemplate("../../Data_Files/enemy.json"))
+        if (auto* e = FACTORY->CreateTemplate(resolveData("enemy.json")))
             master_copies["Enemy"].reset(e);
 
-        if (auto* p = FACTORY->CreateTemplate("../../Data_Files/player.json")) {
+        if (auto* p = FACTORY->CreateTemplate(resolveData("player.json"))) {
             master_copies["Player"].reset(p);
         }
-        if (auto* b = FACTORY->CreateTemplate("../../Data_Files/boss.json")) {
+        if (auto* b = FACTORY->CreateTemplate(resolveData("boss.json"))) {
             master_copies["Boss"].reset(b);
         }
         else {
             std::cerr << "[Prefab] Failed to create 'boss' from boss.json\n";
         }
-        if (auto* h1 = FACTORY->CreateTemplate("../../Data_Files/hang_clothes_01.json")) {
+        if (auto* h1 = FACTORY->CreateTemplate(resolveData("hang_clothes_01.json"))) {
             master_copies["Hang_Clothes_01"].reset(h1);
         }
 
-        if (auto* h2 = FACTORY->CreateTemplate("../../Data_Files/hang_clothes_02.json")) {
+        if (auto* h2 = FACTORY->CreateTemplate(resolveData("hang_clothes_02.json"))) {
             master_copies["Hang_Clothes_02"].reset(h2);
         }
-        
-        if (auto* flag = FACTORY->CreateTemplate("../../Data_Files/hawker_flag.json")) {
+
+        if (auto* flag = FACTORY->CreateTemplate(resolveData("hawker_flag.json"))) {
             master_copies["Hawker_Flag"].reset(flag);
         }
-        if (auto* table = FACTORY->CreateTemplate("../../Data_Files/hawker_table.json")) {
+        if (auto* table = FACTORY->CreateTemplate(resolveData("hawker_table.json"))) {
             master_copies["Hawker_Table"].reset(table);
         }
 
-        if (auto* store = FACTORY->CreateTemplate("../../Data_Files/hawker_store.json")) {
+        if (auto* store = FACTORY->CreateTemplate(resolveData("hawker_store.json"))) {
             master_copies["Hawker_Store"].reset(store);
         }
 
-        if (auto* floor = FACTORY->CreateTemplate("../../Data_Files/hawker_floor_background.json")) {
+        if (auto* floor = FACTORY->CreateTemplate(resolveData("hawker_floor_background.json"))) {
             master_copies["Hawker_Floor"].reset(floor);
         }
 
-        if (auto* hdb = FACTORY->CreateTemplate("../../Data_Files/hawker_hdb_background.json")) {
+        if (auto* hdb = FACTORY->CreateTemplate(resolveData("hawker_hdb_background.json"))) {
             master_copies["Hawker_HDB"].reset(hdb);
         }
 
-        if (auto* bin = FACTORY->CreateTemplate("../../Data_Files/hawker_bin.json")) {
+        if (auto* bin = FACTORY->CreateTemplate(resolveData("hawker_bin.json"))) {
             master_copies["Hawker_Bin"].reset(bin);
         }
 
-        if (auto* bucket = FACTORY->CreateTemplate("../../Data_Files/hawker_bucket.json")) {
+        if (auto* bucket = FACTORY->CreateTemplate(resolveData("hawker_bucket.json"))) {
             master_copies["Hawker_Bucket"].reset(bucket);
         }
 
-        if (auto* cart = FACTORY->CreateTemplate("../../Data_Files/hawker_cleaning_cart.json")) {
+        if (auto* cart = FACTORY->CreateTemplate(resolveData("hawker_cleaning_cart.json"))) {
             master_copies["Cleaning_Cart"].reset(cart);
         }
 
-        if (auto* cs1 = FACTORY->CreateTemplate("../../Data_Files/hawker_cleaning_sign_01.json")) {
+        if (auto* cs1 = FACTORY->CreateTemplate(resolveData("hawker_cleaning_sign_01.json"))) {
             master_copies["Cleaning_Sign_01"].reset(cs1);
         }
 
-        if (auto* cs2 = FACTORY->CreateTemplate("../../Data_Files/hawker_cleaning_sign_02.json")) {
+        if (auto* cs2 = FACTORY->CreateTemplate(resolveData("hawker_cleaning_sign_02.json"))) {
             master_copies["Cleaning_Sign_02"].reset(cs2);
         }
 
-        if (auto* tray = FACTORY->CreateTemplate("../../Data_Files/hawker_tray_return.json")) {
+        if (auto* tray = FACTORY->CreateTemplate(resolveData("hawker_tray_return.json"))) {
             master_copies["Tray_Return"].reset(tray);
         }
 
-        if (auto* gate = FACTORY->CreateTemplate("../../Data_Files/hawker_gate.json")) {
+        if (auto* gate = FACTORY->CreateTemplate(resolveData("hawker_gate.json"))) {
             master_copies["Hawker_Gate"].reset(gate);
         }
 
-       
+        if (auto* artasset = FACTORY->CreateTemplate(resolveData("artassets.json"))) {
+            master_copies["Art_Asset"].reset(artasset); 
+        }
+
+        if (auto* artassetForward = FACTORY->CreateTemplate(resolveData("artassetsForward.json"))) {
+            master_copies["Art_Asset_Forward"].reset(artassetForward);
+        }
        
     }
 

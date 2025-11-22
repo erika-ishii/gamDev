@@ -20,7 +20,7 @@
             All rights reserved.
 *********************************************************************************************/
 #include "Graphics.hpp"
-
+#include "Core/PathUtils.h"
 #include <vector>
 #include <cmath>
 #include <iostream>
@@ -275,7 +275,7 @@ namespace gfx {
         glEnableVertexAttribArray(1);
 
         // --- Load textures (via Resource_Manager) ---
-        Resource_Manager::loadAll("../../assets/Textures");
+        Resource_Manager::loadAll(Framework::ResolveAssetPath("Textures").string());
 
         // Use the string ID directly
         bgTexture = Resource_Manager::resources_map["house"].handle;

@@ -111,14 +111,21 @@ void GUISystem::Update(Framework::InputSystem* /*input*/) {
     GLFWwindow* w = glfwGetCurrentContext();
     if (!w) return;
 
-    // Cursor in window coords (top-left origin), flip Y to bottom-left.
-    double mx, myTop;
-    glfwGetCursorPos(w, &mx, &myTop);
-
-    int winW = 0, winH = 0;
+    // Cursor in window coords (top-left origin). Convert to framebuffer space so it matches
+  // the projection used by UI rendering (which relies on framebuffer dimensions).
+    double mxLogical = 0.0, myTopLogical = 0.0;
+    glfwGetCursorPos(w, &mxLogical, &myTopLogical);
+    int winW = 1, winH = 1;
     glfwGetWindowSize(w, &winW, &winH);
-    const double my = static_cast<double>(winH) - myTop;
+  
+    int fbW = winW, fbH = winH;
+    glfwGetFramebufferSize(w, &fbW, &fbH);
 
+    const double scaleX = winW > 0 ? static_cast<double>(fbW) / static_cast<double>(winW) : 1.0;
+    const double scaleY = winH > 0 ? static_cast<double>(fbH) / static_cast<double>(winH) : 1.0;
+
+    const double mx = mxLogical * scaleX;
+    const double my = (static_cast<double>(winH) - myTopLogical) * scaleY;
     // Hover test for all buttons.
     for (auto& b : buttons_) {
         b.hovered = Contains(b, mx, my);

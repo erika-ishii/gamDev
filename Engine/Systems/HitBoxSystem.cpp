@@ -243,7 +243,7 @@ namespace Framework
 				if (!Collision::CheckCollisionRectToRect(hitboxAABB, targetAABB))
 					continue;
 				
-				
+				bool validTargetHit = false;
 				if (isEnemyTarget)
 				{
 					auto* typeComp = obj->GetComponentType<EnemyTypeComponent>(ComponentTypeId::CT_EnemyTypeComponent);
@@ -255,6 +255,7 @@ namespace Framework
 						if (!validHit) continue;
 						if (auto* health = obj->GetComponentType<EnemyHealthComponent>(ComponentTypeId::CT_EnemyHealthComponent))
 							health->TakeDamage(static_cast<int>(HB->damage));
+						validTargetHit = true;
 					}
 				}
 				
@@ -263,6 +264,27 @@ namespace Framework
 					auto* health = obj->GetComponentType<PlayerHealthComponent>(ComponentTypeId::CT_PlayerHealthComponent);
 					if (health)
 						health->TakeDamage(static_cast<int>(HB->damage));
+				}
+				auto* attackerTr = attacker->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
+				auto* targetRb = obj->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);
+				if (validTargetHit)
+				{
+					if (attackerTr && targetRb)
+					{
+						float dx = tr->x - attackerTr->x;
+						float dy = tr->y - attackerTr->y;
+						float len = std::sqrt(dx * dx + dy * dy);
+						if (len > 0.001f)
+						{
+							dx /= len;
+							dy /= len;
+						}
+
+						const float knockStrength = 5.0f;
+						targetRb->velX = dx * knockStrength;
+						targetRb->velY = dy * knockStrength * 0.4f;
+					}
+
 				}
 				hit = true;
 				break;

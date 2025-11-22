@@ -43,14 +43,23 @@ namespace Framework {
             file and re-fetch its ID.
         *************************************************************************************/
         void initialize() override {
-            if (!texture_key.empty()) {
+            if (texture_key.empty())
+                return;
+
+            texture_id = Resource_Manager::getTexture(texture_key);
+            if (texture_id)
+                return;
+
+            if (path.empty())
+                return;
+
+            const auto resolvedPath = Framework::ResolveAssetPath(std::filesystem::path(path));
+            const std::string& pathStr = resolvedPath.empty() ? path : resolvedPath.string();
+
+            // load file and re-fetch id
+            if (Resource_Manager::load(texture_key, pathStr)) {
                 texture_id = Resource_Manager::getTexture(texture_key);
-                if (!texture_id && !path.empty()) {
-                    // load file and re-fetch id
-                    if (Resource_Manager::load(texture_key, path)) {
-                        texture_id = Resource_Manager::getTexture(texture_key);
-                    }
-                }
+          
             }
         }
 

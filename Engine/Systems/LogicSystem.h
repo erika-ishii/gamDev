@@ -120,6 +120,8 @@ namespace Framework {
         std::string GetName() override { return "LogicSystem"; }
 
     private:
+
+        std::filesystem::path resolveData(std::string_view name) const;
         // Extended to support combo attacks.
         enum class AnimState { Idle, Run, Attack1, Attack2, Attack3 };
 
@@ -148,6 +150,10 @@ namespace Framework {
         AnimState         AttackStateForIndex(int comboIndex) const;
         float             AttackDurationForState(AnimState state) const;
         AnimationInfo::Mode ModeForState(AnimState state) const;
+        std::string_view  AnimNameForState(AnimState state) const;
+        int               AnimationIndexForState(const SpriteAnimationComponent* comp, AnimState state) const;
+        AnimConfig        ConfigFromSpriteSheet(const SpriteAnimationComponent* comp, AnimState state) const;
+        void              ApplyAnimationStateToComponent(AnimState state);
 
         bool  IsAlive(GOC* obj) const;
         void  CachePlayerSize();

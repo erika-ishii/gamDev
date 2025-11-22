@@ -25,6 +25,7 @@
 #include "Component/RenderComponent.h"
 #include "Component/SpriteComponent.h"
 #include "Component/TransformComponent.h"
+#include "Component/SpriteAnimationComponent.h"
 #include "Component/EnemyAttackComponent.h"
 #include "Component/PlayerAttackComponent.h"
 
@@ -37,6 +38,7 @@
 #include "Debug/HierarchyPanel.h"
 #include "Debug/InspectorPanel.h"
 #include "Debug/AssetBrowserPanel.h"
+#include "Debug/AnimationEditorPanel.h"
 #include "Debug/JsonEditorPanel.h"
 
 #include "Factory/Factory.h"
@@ -129,7 +131,6 @@ namespace Framework {
 
     private:
         // --- Filesystem / asset resolution ------------------------------------------------
-        std::filesystem::path GetExeDir() const;
         std::string           FindRoboto() const;
         std::filesystem::path FindAssetsRoot() const;
         std::filesystem::path FindDataFilesRoot() const;
@@ -214,6 +215,7 @@ namespace Framework {
 
         // --- Editor layout flags ---------------------------------------------------------
         bool  showEditor = false;  //!< Toggle editor UI visibility.
+        bool  showAnimationEditor = false; //!< Toggle Animation Editor visibility.
         bool  gameViewportFullWidth = false; //!< Maximize viewport width.
         bool  gameViewportFullHeight = false; //!< Maximize viewport height.
         float heightRatio = 0.8f;   //!< Viewport height vs window height.

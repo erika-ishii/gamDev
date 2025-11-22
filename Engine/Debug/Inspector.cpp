@@ -39,11 +39,9 @@ namespace {
     {
         gNameBufferObject = id;
         std::fill(gNameBuffer.begin(), gNameBuffer.end(), '\0');
+
         if (!name.empty())
-        {
-            std::strncpy(gNameBuffer.data(), name.c_str(), gNameBuffer.size() - 1);
-            gNameBuffer.back() = '\0';
-        }
+            std::snprintf(gNameBuffer.data(), gNameBuffer.size(), "%s", name.c_str());
     }
 }
 

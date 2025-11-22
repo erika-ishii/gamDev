@@ -13,8 +13,10 @@
 *********************************************************************************************/
 
 #include "../Engine/Core/Core.hpp"
+#include "../Engine/Core/PathUtils.h"
 #include "Game.hpp"
 #include "Config/WindowConfig.h"
+#include <filesystem>
 
 #ifdef _MSC_VER
 #define _CRTDBG_MAP_ALLOC
@@ -27,9 +29,14 @@ int main()
     // Enable MSVC CRT leak checks (prints leaks in the Output window at exit).
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
-
+    // Ensure the working directory matches the executable so relative paths resolve in builds.
+    if (auto exeDir = Framework::GetExecutableDir(); !exeDir.empty())
+    {
+        std::error_code ec;
+        std::filesystem::current_path(exeDir, ec);
+    }
     // Load window config (falls back to some defaults if file is missing).
-    WindowConfig cfg = LoadWindowConfig("../../Data_Files/window.json");
+    WindowConfig cfg = LoadWindowConfig(Framework::ResolveDataPath("window.json").string());
     if (cfg.width <= 0)  cfg.width = 1280;
     if (cfg.height <= 0) cfg.height = 720;
     if (cfg.title.empty()) cfg.title = "SofaSpuds Engine";

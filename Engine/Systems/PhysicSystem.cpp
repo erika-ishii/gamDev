@@ -113,60 +113,6 @@ namespace Framework {
             tr->x = newX;
             tr->y = newY;
         }
-
-        // --- Enemy hitbox vs player collision --------------------------------------------
-        for (auto& [id, obj] : objects)
-        {
-            if (!obj)
-                continue;
-
-            auto* enemyAttack = obj->GetComponentType<EnemyAttackComponent>(ComponentTypeId::CT_EnemyAttackComponent);
-            if (!enemyAttack || !enemyAttack->hitbox || !enemyAttack->hitbox->active)
-                continue;
-
-            // Enemy hitbox AABB
-            AABB enemyHitBox(
-                enemyAttack->hitbox->spawnX,
-                enemyAttack->hitbox->spawnY,
-                enemyAttack->hitbox->width,
-                enemyAttack->hitbox->height
-            );
-
-            // Compare with all players
-            for (auto& [pid, playerObj] : FACTORY->Objects())
-            {
-                if (!playerObj)
-                    continue;
-
-                // Only objects tagged as Player (by component)
-                auto* playerComp = playerObj->GetComponent(ComponentTypeId::CT_PlayerComponent);
-                if (!playerComp)
-                    continue;
-
-                auto* trP = playerObj->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
-                auto* rbP = playerObj->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);
-                if (!trP || !rbP)
-                    continue;
-
-                AABB playerBox(trP->x, trP->y, rbP->width, rbP->height);
-
-                if (Collision::CheckCollisionRectToRect(enemyHitBox, playerBox))
-                {
-                    std::cout << "Player hit! Took " << enemyAttack->damage
-                        << " damage from enemy at ("
-                        << enemyAttack->hitbox->spawnX << ", "
-                        << enemyAttack->hitbox->spawnY << ")\n";
-
-                    // Apply damage if health component exists
-                    if (auto* health = playerObj->GetComponentType<PlayerHealthComponent>(
-                        ComponentTypeId::CT_PlayerHealthComponent))
-                    {health->TakeDamage(enemyAttack->damage);}
-
-                    // One-shot: prevent damage every frame
-                    enemyAttack->hitbox->DeactivateHurtBox();
-                }
-            }
-        }
     }
 
     /*************************************************************************************

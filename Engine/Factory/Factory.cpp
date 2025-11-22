@@ -326,7 +326,8 @@ namespace Framework {
                {"g", rc.g},
                {"b", rc.b},
                {"a", rc.a},
-               {"visible", rc.visible}
+               {"visible", rc.visible},
+               {"layer", rc.layer}
             };
             if (!rc.texture_key.empty())
                 out["texture_key"] = rc.texture_key;
@@ -346,21 +347,41 @@ namespace Framework {
             return out;
         }
         case ComponentTypeId::CT_SpriteAnimationComponent: {
-            auto const& anim = static_cast<SpriteAnimationComponent const&>(component);
-            json frames = json::array();
-            for (const auto& frame : anim.frames) {
-                json entry = json::object();
-                if (!frame.texture_key.empty()) entry["texture_key"] = frame.texture_key;
-                if (!frame.path.empty()) entry["path"] = frame.path;
-                frames.push_back(entry);
+            auto const& anim = static_cast<const SpriteAnimationComponent&>(component);
+
+            json animations = json::array();
+            for (auto const& a : anim.animations) {
+                json cfg = {
+                    {"totalFrames", a.config.totalFrames},
+                    {"rows",        a.config.rows},
+                    {"columns",     a.config.columns},
+                    {"startFrame",  a.config.startFrame},
+                    {"endFrame",    a.config.endFrame},
+                    {"fps",         a.config.fps},
+                    {"loop",        a.config.loop}
+                };
+
+                json entry = {
+                    {"name",            a.name},
+                    {"textureKey",      a.textureKey},
+                    {"spriteSheetPath", a.spriteSheetPath},
+                    {"config",          cfg},
+                    {"currentFrame",    a.currentFrame}
+                };
+
+                animations.push_back(entry);
             }
+
             return json{
                 {"fps", anim.fps},
                 {"loop", anim.loop},
                 {"play", anim.play},
-                {"frames", frames}
+                {"frames", /* legacy frames array */ json::array()},
+                {"animations", animations},
+                {"activeAnimation", anim.ActiveAnimationIndex()}
             };
         }
+
         case ComponentTypeId::CT_RigidBodyComponent: {
             auto const& rb = static_cast<RigidBodyComponent const&>(component);
             return json{
@@ -785,34 +806,67 @@ namespace Framework {
         case ComponentTypeId::CT_SpriteAnimationComponent:
         {
             auto& anim = static_cast<SpriteAnimationComponent&>(component);
+
             readFloat("fps", anim.fps);
+
             if (auto it = data.find("loop"); it != data.end())
-            {
-                if (it->is_boolean()) anim.loop = it->get<bool>();
-                else if (it->is_number_integer()) anim.loop = it->get<int>() != 0;
-            }
+                anim.loop = it->get<bool>();
+
             if (auto it = data.find("play"); it != data.end())
-            {
-                if (it->is_boolean()) anim.play = it->get<bool>();
-                else if (it->is_number_integer()) anim.play = it->get<int>() != 0;
-            }
-            if (auto it = data.find("frames"); it != data.end() && it->is_array())
-            {
-                anim.frames.clear();
-                for (const auto& frameData : *it)
-                {
-                    if (!frameData.is_object())
-                        continue;
-                    SpriteAnimationFrame frame;
-                    if (auto keyIt = frameData.find("texture_key"); keyIt != frameData.end() && keyIt->is_string())
-                        frame.texture_key = keyIt->get<std::string>();
-                    if (auto pathIt = frameData.find("path"); pathIt != frameData.end() && pathIt->is_string())
-                        frame.path = pathIt->get<std::string>();
-                    anim.frames.emplace_back(std::move(frame));
+                anim.play = it->get<bool>();
+
+            // legacy frames
+            anim.frames.clear();
+            if (auto it = data.find("frames"); it != data.end() && it->is_array()) {
+                for (auto const& f : *it) {
+                    SpriteAnimationFrame fr;
+                    if (f.contains("texture_key")) fr.texture_key = f["texture_key"];
+                    if (f.contains("path"))        fr.path = f["path"];
+                    anim.frames.push_back(fr);
                 }
             }
+
+            // NEW: sprite-sheet animations
+            anim.animations.clear();
+            if (auto it = data.find("animations"); it != data.end() && it->is_array())
+            {
+                for (auto const& a : *it)
+                {
+                    SpriteAnimationComponent::SpriteSheetAnimation sheet{};
+
+                    if (a.contains("name"))            sheet.name = a["name"];
+                    if (a.contains("textureKey"))      sheet.textureKey = a["textureKey"];
+                    if (a.contains("spriteSheetPath")) sheet.spriteSheetPath = a["spriteSheetPath"];
+
+                    if (a.contains("config"))
+                    {
+                        auto const& c = a["config"];
+                        sheet.config.totalFrames = c["totalFrames"];
+                        sheet.config.rows = c["rows"];
+                        sheet.config.columns = c["columns"];
+                        sheet.config.startFrame = c["startFrame"];
+                        sheet.config.endFrame = c["endFrame"];
+                        sheet.config.fps = c["fps"];
+                        sheet.config.loop = c["loop"];
+                    }
+
+                    if (a.contains("currentFrame"))
+                        sheet.currentFrame = a["currentFrame"];
+
+                    sheet.accumulator = 0.0f;
+                    sheet.textureId = 0; // will be lazily loaded
+
+                    anim.animations.push_back(sheet);
+                }
+            }
+
+            if (auto it = data.find("activeAnimation"); it != data.end())
+                anim.activeAnimation = it->get<int>();
+
             break;
         }
+
+
         case ComponentTypeId::CT_RigidBodyComponent:
         {
             auto& rb = static_cast<RigidBodyComponent&>(component);
