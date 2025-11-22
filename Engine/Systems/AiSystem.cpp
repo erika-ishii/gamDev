@@ -72,8 +72,7 @@ void AiSystem::Update(float dt)
             ai->tree = CreateDefaultEnemyTree(goc, logic); // Pass LogicSystem pointer from AiSystem
             std::cout << "[AiSystem] Initialized decision tree for enemy ID: " << id << "\n";
         }
-        if (ai->tree)
-            ai->tree->run(dt);
+       
         UpdateDefaultEnemyTree(goc, dt, logic);
     }
 }

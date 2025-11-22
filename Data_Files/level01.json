@@ -179,57 +179,46 @@
             "r": 1.0,
             "visible": true,
             "w": 1.4,
-            "texture_key": "storef0",
-            "texture_path": "../../assets/Textures/Environment/lvl 1_Hawker/Stores/Stores_00000.png"
+            "texture_key": "store_left_sheet",
+            "texture_path": "../../assets/Textures/Environment/lvl 1_Hawker/Stores_Left_Sprite.png"
           },
           "RigidBodyComponent": {
-            "height": 1.0,
+            "height": 0.8,
             "velocity_x": 0.0,
             "velocity_y": 0.0,
-            "width": 1.4
+            "width": 1.12
           },
           "SpriteComponent": {
-            "texture_key": "storef0"
+            "texture_key": "store_left_sheet"
           },
           "SpriteAnimationComponent": {
-            "fps": 6.0,
-            "loop": 1,
-            "play": 1,
-            "frames": [
+            "activeAnimation": 0,
+            "animations": [
               {
-                "texture_key": "storef0",
-                "path": "../../assets/Textures/Environment/lvl 1_Hawker/Stores/Stores_00000.png"
-              },
-              {
-                "texture_key": "storef1",
-                "path": "../../assets/Textures/Environment/lvl 1_Hawker/Stores/Stores_00001.png"
-              },
-              {
-                "texture_key": "storef2",
-                "path": "../../assets/Textures/Environment/lvl 1_Hawker/Stores/Stores_00002.png"
-              },
-              {
-                "texture_key": "storef3",
-                "path": "../../assets/Textures/Environment/lvl 1_Hawker/Stores/Stores_00003.png"
-              },
-              {
-                "texture_key": "storef4",
-                "path": "../../assets/Textures/Environment/lvl 1_Hawker/Stores/Stores_00004.png"
-              },
-              {
-                "texture_key": "storef5",
-                "path": "../../assets/Textures/Environment/lvl 1_Hawker/Stores/Stores_00005.png"
-              },
-              {
-                "texture_key": "storef6",
-                "path": "../../assets/Textures/Environment/lvl 1_Hawker/Stores/Stores_00006.png"
+                "config": {
+                  "columns": 6,
+                  "endFrame": 5,
+                  "fps": 6.0,
+                  "loop": true,
+                  "rows": 1,
+                  "startFrame": 0,
+                  "totalFrames": 6
+                },
+                "currentFrame": 0,
+                "name": "idle",
+                "spriteSheetPath": "../../assets/Textures/Environment/lvl 1_Hawker/Stores_Left_Sprite.png",
+                "textureKey": "store_left_sheet"
               }
-            ]
+            ],
+            "fps": 6.0,
+            "frames": [],
+            "loop": true,
+            "play": true
           },
           "TransformComponent": {
             "rot": 0.0,
             "x": -0.5,
-            "y": -1.3
+            "y": -0.9
           }
         },
         "layer": "Default",

@@ -23,7 +23,8 @@
 #include "../Component/EnemyDecisionTreeComponent.h"
 #include "../Component/EnemyHealthComponent.h"
 #include "../Component/EnemyTypeComponent.h"
-
+#include "../Component/SpriteAnimationComponent.h"
+#include <unordered_map>
 
 
 namespace Framework {
@@ -52,6 +53,7 @@ namespace Framework {
     private:
         gfx::Window* window;          // Non-owning window handle used by the system.
         std::vector<GOCId> gameObjectIds;
+        std::unordered_map<GOCId, float> deathTimers;
     };
 
 } // namespace Framework

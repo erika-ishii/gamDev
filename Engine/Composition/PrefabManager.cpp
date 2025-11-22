@@ -115,6 +115,10 @@ namespace Framework {
         if (auto* tray = FACTORY->CreateTemplate(resolveData("hawker_tray_return.json"))) {
             master_copies["Tray_Return"].reset(tray);
         }
+        if (auto* storeAnimated = FACTORY->CreateTemplate(resolveData("hawker_store_animated.json"))) {
+            master_copies["Hawker_Store_Animated"].reset(storeAnimated);
+        }
+
 
         if (auto* gate = FACTORY->CreateTemplate(resolveData("hawker_gate.json"))) {
             master_copies["Hawker_Gate"].reset(gate);

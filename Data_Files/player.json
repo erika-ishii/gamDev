@@ -1,39 +1,37 @@
 {
   "GameObject":{
-  "Components": {
-  "TransformComponent": { "x": -0.5, "y": -0.5, "rot": 0.0 },
-      "RenderComponent": { "w": 0.25, "h": 0.25, "r": 1, "g": 1, "b": 1, "a": 1 },
+    "Components": {
+      "TransformComponent": {
+        "x": -0.5,
+        "y": -0.5,
+        "rot": 0.0
+      },
+      "RenderComponent": {
+        "w": 0.25,
+        "h": 0.25,
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 1,
+        "layer": 1
+      },
       "SpriteComponent": { "texture_key": "player" },
-      "RigidBodyComponent": { "velocity_x": 0.0, "velocity_y": 0.0, "width": 0.1, "height": 0.21 },
-      "PlayerComponent": {},
-      "PlayerHealthComponent": { "playerHealth": 5, "playerMaxhealth": 5 },
-    "PlayerAttackComponent": {
-      "damage": 1,
-      "attack_speed": 1.2
-    },
-     "SpriteAnimationComponent": {},
-    "HitBoxComponent": {
-      "width": 0.15,
-      "height": 0.15,
-      "duration": 0.15
-    },
-    "AudioComponent":
-    {
-      "sounds": 
-      {
-        "footsteps": { "id": "footsteps", "loop": true },
-        "Slash1": { "id": "Slash1", "loop": false },
-        "GrappleShoot1": { "id": "GrappleShoot1", "loop": false }
+      "RigidBodyComponent": {
+        "velocity_x": 0.0,
+        "velocity_y": 0.0,
+        "width": 0.1,
+        "height": 0.21
       },
       "PlayerComponent": {},
       "PlayerHealthComponent": {
-        "playerHealth": 100,
-        "playerMaxhealth": 100
+        "playerHealth": 5,
+        "playerMaxhealth": 5
       },
       "PlayerAttackComponent": {
-        "damage": 50,
-        "attack_speed": 1.0
+        "damage": 1,
+        "attack_speed": 1.2
       },
+      "SpriteAnimationComponent": {},
       "HitBoxComponent": {
         "width": 0.15,
         "height": 0.15,
@@ -41,13 +39,51 @@
       },
       "AudioComponent": {
         "sounds": {
-          "footsteps":     { "id": "footsteps",     "loop": true },
-          "Slash1":        { "id": "Slash1",        "loop": false },
-          "GrappleShoot1": { "id": "GrappleShoot1", "loop": false }
+          "footsteps": {
+            "id": "footsteps",
+            "loop": true
+          },
+          "Slash1": {
+            "id": "Slash1",
+            "loop": false
+          },
+          "GrappleShoot1": {
+            "id": "GrappleShoot1",
+            "loop": false
+          }
         },
-        "volume": 1.0,
-        "playing": 0
+        "PlayerComponent": {},
+        "PlayerHealthComponent": {
+          "playerHealth": 100,
+          "playerMaxhealth": 100
+        },
+        "PlayerAttackComponent": {
+          "damage": 50,
+          "attack_speed": 1.0
+        },
+        "HitBoxComponent": {
+          "width": 0.15,
+          "height": 0.15,
+          "duration": 0.15
+        },
+        "AudioComponent": {
+          "sounds": {
+            "footsteps": {
+              "id": "footsteps",
+              "loop": true
+            },
+            "Slash1": {
+              "id": "Slash1",
+              "loop": false
+            },
+            "GrappleShoot1": {
+              "id": "GrappleShoot1",
+              "loop": false
+            }
+          },
+          "volume": 1.0,
+          "playing": 0
+        }
       }
     }
-  }
 }}

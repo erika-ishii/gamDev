@@ -491,6 +491,44 @@ namespace Framework {
 
         levelObjects = factory->CreateLevel(resolveData("level.json").string());
 
+        const bool hasAnimatedStore = std::any_of(levelObjects.begin(), levelObjects.end(), [](Framework::GOC* obj) {
+            if (!obj)
+                return false;
+
+            const std::string& name = obj->GetObjectName();
+            return name == "HawkerStoreAnimated" || name == "Hawker_Store_Animated";
+            });
+
+        if (!hasAnimatedStore)
+        {
+            auto storePath = resolveData("hawker_store_animated.json");
+            if (!std::filesystem::exists(storePath))
+            {
+                std::cerr << "[Prefab] Missing hawker_store_animated.json at " << storePath << "\n";
+            }
+            else if (auto* store = factory->Create(storePath.string()))
+            {
+                if (auto* tr = store->GetComponentType<Framework::TransformComponent>(
+                    Framework::ComponentTypeId::CT_TransformComponent))
+                {
+                    tr->x = -0.5f;
+                    tr->y = -0.9f;
+                    tr->rot = 0.0f;
+                }
+
+                if (auto* render = store->GetComponentType<Framework::RenderComponent>(
+                    Framework::ComponentTypeId::CT_RenderComponent))
+                {
+                    render->visible = true;
+                }
+
+                levelObjects.push_back(store);
+            }
+            else
+            {
+                std::cerr << "[Prefab] Failed to spawn Hawker_Store_Animated from " << storePath << "\n";
+            }
+        }
         RefreshLevelReferences();
 
         WindowConfig cfg = LoadWindowConfig(resolveData("window.json").string());

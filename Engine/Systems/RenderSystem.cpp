@@ -1462,6 +1462,45 @@ namespace Framework {
             // Now handle picking with the correct (current) camera matrices.
             HandleViewportPicking();
 
+            // Auto-load all textures referenced by objects
+            for (auto& [id, objPtr] : FACTORY->Objects())
+            {
+                GOC* obj = objPtr.get();
+                if (!obj) continue;
+                
+                // If object has SpriteComponent
+                if (auto* sp = obj->GetComponentType<SpriteComponent>(ComponentTypeId::CT_SpriteComponent)) 
+                {
+                    if (!sp->texture_key.empty())
+                    {
+                        unsigned tex = Resource_Manager::getTexture(sp->texture_key);
+                        if (!tex)
+                        {
+                            // Try load it if not already in memory
+                            Resource_Manager::load(sp->texture_key, sp->texture_key);
+                            tex = Resource_Manager::getTexture(sp->texture_key);
+                        }
+                        sp->texture_id = tex;
+                    }
+                }
+
+                // If object has RenderComponent
+                if (auto* rc = obj->GetComponentType<RenderComponent>(ComponentTypeId::CT_RenderComponent)) 
+                {
+                    if (!rc->texture_key.empty())
+                    {
+                        unsigned tex = Resource_Manager::getTexture(rc->texture_key); 
+                        if (!tex)
+                        {
+                            Resource_Manager::load(rc->texture_key, rc->texture_key); 
+                            tex = Resource_Manager::getTexture(rc->texture_key);
+                        }
+                        rc->texture_id = tex;
+                    }
+                }
+            }
+
+
             // Layering
             std::vector<unsigned> sortedIds;
             sortedIds.reserve(FACTORY->Objects().size());

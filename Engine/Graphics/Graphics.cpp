@@ -326,10 +326,32 @@ namespace gfx {
      \brief  Draw the fullscreen background (textured triangle list).
     ******************************************************************************************/
     void Graphics::renderBackground() {
+        static bool warnedMissingShader = false;
+        static bool warnedMissingUniform = false;
+
+        if (bgShader == 0 || bgTexture == 0)
+        {
+            if (!warnedMissingShader)
+            {
+                std::cerr << "[Graphics] Background shader/texture not initialized; skipping background draw.\n";
+                warnedMissingShader = true;
+            }
+            return;
+        }
         glUseProgram(bgShader);
         glActiveTexture(GL_TEXTURE0);
         int loc = glGetUniformLocation(bgShader, "backgroundTex");
-        if (loc < 0) throw std::runtime_error("renderBackground|uniform_missing|backgroundTex");
+        if (loc < 0)
+        {
+            if (!warnedMissingUniform)
+            {
+                std::cerr << "[Graphics] Background shader missing 'backgroundTex' uniform; skipping background draw.\n";
+                warnedMissingUniform = true;
+            }
+            glUseProgram(0);
+            return;
+        }
+
         glUniform1i(loc, 0);
         glBindTexture(GL_TEXTURE_2D, bgTexture);
         glBindVertexArray(VAO_bg);
