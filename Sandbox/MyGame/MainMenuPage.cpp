@@ -290,6 +290,21 @@ void MainMenuPage::Init(int screenW, int screenH)
 *************************************************************************************/
 void MainMenuPage::Update(Framework::InputSystem* input)
 {
+    const auto now = std::chrono::steady_clock::now();
+    if (showHowToPopup) {
+        if (!iconTimerInitialized) {
+            lastIconTick = now;
+            iconTimerInitialized = true;
+        }
+        else {
+            const std::chrono::duration<float> delta = now - lastIconTick;
+            iconAnimTime += delta.count();
+            lastIconTick = now;
+        }
+    }
+    else {
+        iconTimerInitialized = false;
+    }
     gui.Update(input);
 }
 
@@ -356,15 +371,19 @@ void MainMenuPage::Draw(Framework::RenderSystem* render)
         const size_t rowCount = std::max<size_t>(1, howToRows.size());
         const float rowHeight = availableHeight / static_cast<float>(rowCount);
 
-        const float iconHeight = rowHeight * 0.78f;
-        const float labelHeight = rowHeight * 0.58f;
-        const float iconX = howToPopup.x + howToPopup.w * 0.10f;
-        const float gap = howToPopup.w * 0.10f;
-
+        const float iconHeightBase = rowHeight * 0.78f;
+        const float labelHeightBase = rowHeight * 0.58f;
+        const float leftPad = howToPopup.w * 0.16f;
+        const float rightPad = howToPopup.w * 0.14f;
+        const float labelX = howToPopup.x + leftPad;
+        const float iconAnchorX = howToPopup.x + howToPopup.w - rightPad;
         const glm::mat4 uiOrtho = glm::ortho(0.0f, static_cast<float>(sw), 0.0f, static_cast<float>(sh), -1.0f, 1.0f);
         gfx::Graphics::setViewProjection(glm::mat4(1.0f), uiOrtho);
 
         for (size_t i = 0; i < howToRows.size(); ++i) {
+            const float sizeScale = (i < 2) ? 0.94f : 1.0f;
+            const float iconHeight = iconHeightBase * sizeScale;
+            const float labelHeight = labelHeightBase * sizeScale;
             const float rowBaseY = contentTop - rowHeight * (static_cast<float>(i) + 1.f);
             const float iconY = rowBaseY + (rowHeight - iconHeight) * 0.5f;
             const float labelY = rowBaseY + (rowHeight - labelHeight) * 0.5f;
@@ -375,6 +394,8 @@ void MainMenuPage::Draw(Framework::RenderSystem* render)
             const float iconAspect = textureAspect(howToRows[i].iconTex, howToRows[i].iconAspectFallback) *
                 (static_cast<float>(rows) / static_cast<float>(cols));
             const float iconW = iconHeight * iconAspect;
+            const float iconNudgeLeft = (i < 2) ? howToPopup.w * 0.01f : 0.0f;
+            const float iconX = iconAnchorX - iconW - iconNudgeLeft;
             if (howToRows[i].iconTex) {
                 const float fps = howToRows[i].fps > 0.0f ? howToRows[i].fps : 8.0f;
                 const int frameIndex = (frames > 1)
@@ -390,7 +411,7 @@ void MainMenuPage::Draw(Framework::RenderSystem* render)
             const float labelAspect = textureAspect(howToRows[i].labelTex, howToRows[i].labelAspectFallback);
             const float labelW = labelHeight * labelAspect;
             if (howToRows[i].labelTex) {
-                gfx::Graphics::renderSpriteUI(howToRows[i].labelTex, iconX + iconW + gap, labelY,
+                gfx::Graphics::renderSpriteUI(howToRows[i].labelTex, labelX, labelY,
                     labelW, labelHeight,
                     1.f, 1.f, 1.f, 1.f,
                     sw, sh);
