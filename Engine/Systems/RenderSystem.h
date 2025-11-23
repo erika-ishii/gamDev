@@ -102,7 +102,8 @@ namespace Framework {
         void BeginMenuFrame();
         /// \brief End drawing the menu bar frame.
         void EndMenuFrame();
-
+        /// \brief Handle fullscreen/editor shortcuts when only menu UI is rendering.
+        void HandleMenuShortcuts();
         /// \brief Returns true if the editor UI is visible (for other systems to adapt).
         static bool IsEditorVisible();
 

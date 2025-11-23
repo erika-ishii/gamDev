@@ -166,6 +166,7 @@ namespace mygame {
             {
             case GameState::MAIN_MENU:
                 if (gRenderSystem) {
+                    gRenderSystem->HandleMenuShortcuts();
                     gRenderSystem->BeginMenuFrame();
                     mainMenu.Draw(gRenderSystem);   // bg + GUI buttons
                     gRenderSystem->EndMenuFrame();
