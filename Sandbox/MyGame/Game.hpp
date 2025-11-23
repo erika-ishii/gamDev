@@ -31,7 +31,7 @@ namespace mygame {
     void update(float dt);
     void draw();
     void shutdown();
-
+    void onAppFocusChanged(bool suspended);
     // Editor simulation controls
     bool IsEditorSimulationRunning();
     void EditorPlaySimulation();

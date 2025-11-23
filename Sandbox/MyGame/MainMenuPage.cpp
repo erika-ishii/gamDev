@@ -29,6 +29,7 @@
 #include "Core/PathUtils.h"
 #include "Graphics/Graphics.hpp"
 #include "Resource_Manager/Resource_Manager.h"
+#include <algorithm>
 #include <glm/vec3.hpp>
 #include <initializer_list>
 #include <string>
@@ -70,32 +71,40 @@ void MainMenuPage::Init(int screenW, int screenH)
         };
     // --- Background ---
     const std::string menuBgPath =
-        Framework::ResolveAssetPath("Textures/menu.jpg").string();
+        Framework::ResolveAssetPath("Textures/UI/Start Menu/Start Menu Screen.jpg").string();
     menuBgTex = resolveTexture({ "menu_bg", "menu" }, menuBgPath.c_str());
 
     // --- Buttons ---
     const std::string startBtnPath =
-        Framework::ResolveAssetPath("Textures/start_btn.png").string();
-    startBtnIdleTex = resolveTexture({ "menu_start_btn", "start_btn", "start" },
+        Framework::ResolveAssetPath("Textures/UI/Start Menu/Button_Start.PNG").string();
+    startBtnIdleTex = resolveTexture({ "menu_start_btn_startmenu", "menu_start_btn", "start_btn", "start" },
         startBtnPath.c_str());
     startBtnHoverTex = startBtnIdleTex;
 
+    const std::string optionsBtnPath =
+        Framework::ResolveAssetPath("Textures/UI/Start Menu/Button_Options.PNG").string();
+    optionsBtnIdleTex = resolveTexture({ "menu_options_btn_startmenu", "menu_options_btn", "options_btn", "options" },
+        optionsBtnPath.c_str());
+    optionsBtnHoverTex = optionsBtnIdleTex;
+
+    const std::string howToBtnPath =
+        Framework::ResolveAssetPath("Textures/UI/Start Menu/Button_How To Play.png").string();
+    howToBtnIdleTex = resolveTexture({ "menu_howto_btn_startmenu", "menu_howto_btn", "howto_btn", "how_to_play" },
+        howToBtnPath.c_str());
+    howToBtnHoverTex = howToBtnIdleTex;
+
     const std::string exitBtnPath =
-        Framework::ResolveAssetPath("Textures/exit_btn.png").string();
-    exitBtnIdleTex = resolveTexture({ "menu_exit_btn", "exit_btn", "exit" },
+        Framework::ResolveAssetPath("Textures/UI/Start Menu/Button_Quit.PNG").string();
+    exitBtnIdleTex = resolveTexture({ "menu_exit_btn_startmenu", "menu_exit_btn", "exit_btn", "exit" },
         exitBtnPath.c_str());
     exitBtnHoverTex = exitBtnIdleTex;
 
-    //// --- Build GUI buttons with callbacks that flip latches ---
-    //gui.Clear();
-    //gui.AddButton(startBtn.x, startBtn.y, startBtn.w, startBtn.h, "Start",
-    //    startBtnIdleTex, startBtnHoverTex,
-    //    [this]() { startLatched = true; });
+    const std::string closeBtnPath =
+    Framework::ResolveAssetPath("Textures/UI/Pause Menu/XButton.png").string();
+    closePopupTex = resolveTexture({ "menu_popup_close", "popup_close", "close_x" },
+        closeBtnPath.c_str());
 
-    //gui.AddButton(exitBtn.x, exitBtn.y, exitBtn.w, exitBtn.h, "Exit",
-    //    exitBtnIdleTex, exitBtnHoverTex,
-    //    [this]() { exitLatched = true; });
-    BuildGui();
+    SyncLayout(sw, sh);
 }
 
 /*************************************************************************************
@@ -121,15 +130,41 @@ void MainMenuPage::Draw(Framework::RenderSystem* render)
     if (menuBgTex) {
         gfx::Graphics::renderFullscreenTexture(menuBgTex);
     }
+    // 1.5) How To Play popup (background + text)
+    if (showHowToPopup && render) {
+        const float overlayAlpha = 0.65f;
+        gfx::Graphics::renderRectangleUI(howToPopup.x, howToPopup.y,
+            howToPopup.w, howToPopup.h,
+            0.f, 0.f, 0.f, overlayAlpha,
+            sw, sh);
+
+        const float inset = 28.f;
+        const float textX = howToPopup.x + inset;
+        float textY = howToPopup.y + howToPopup.h - inset;
+        const float lineHeight = 34.f;
+        const float textScale = 0.6f;
+        const glm::vec3 textColor(0.93f, 0.93f, 0.93f);
+        if (render->IsTextReadyHint()) {
+            render->GetTextHint().RenderText("HOW TO PLAY", textX, textY, textScale, textColor);
+            textY -= lineHeight;
+            render->GetTextHint().RenderText("- Move with WASD Keys", textX, textY, textScale, textColor);
+            textY -= lineHeight;
+            render->GetTextHint().RenderText("- Left Click for melee attack", textX, textY, textScale, textColor);
+            textY -= lineHeight;
+            render->GetTextHint().RenderText("- Right Click for range attack", textX, textY, textScale, textColor);
+            textY -= lineHeight;
+            render->GetTextHint().RenderText("- Pause anytime to adjust settings", textX, textY, textScale, textColor);
+        }
+    }
 
     // 2) GUI (buttons + any labels handled by the GUI system)
     gui.Draw(render);
 
-    // 3) Optional hint text
-    if (render && render->IsTextReadyHint()) {
-        render->GetTextHint().RenderText("Click a button to continue",
-            58.f, 108.f, 0.55f, glm::vec3(0.9f, 0.9f, 0.9f));
-    }
+    //// 3) Optional hint text
+    //if (render && render->IsTextReadyHint()) {
+    //    render->GetTextHint().RenderText("Click a button to continue",
+    //        58.f, 108.f, 0.55f, glm::vec3(0.9f, 0.9f, 0.9f));
+//}
 }
 
 /*************************************************************************************
@@ -140,6 +175,20 @@ bool MainMenuPage::ConsumeStart()
 {
     if (!startLatched) return false;
     startLatched = false;
+    return true;
+}
+
+bool MainMenuPage::ConsumeOptions()
+{
+    if (!optionsLatched) return false;
+    optionsLatched = false;
+    return true;
+}
+
+bool MainMenuPage::ConsumeHowToPlay()
+{
+    if (!howToLatched) return false;
+    howToLatched = false;
     return true;
 }
 
@@ -156,8 +205,9 @@ bool MainMenuPage::ConsumeExit()
 
 void MainMenuPage::SyncLayout(int screenW, int screenH)
 {
-    if (screenW == sw && screenH == sh)
+    if (layoutInitialized && screenW == sw && screenH == sh)
         return;
+
 
     sw = screenW;
     sh = screenH;
@@ -168,10 +218,37 @@ void MainMenuPage::SyncLayout(int screenW, int screenH)
     const float scaleX = sw / baseW;
     const float scaleY = sh / baseH;
 
-    startBtn = { 100.f * scaleX, 260.f * scaleY, 220.f * scaleX, 58.f * scaleY };
-    exitBtn = { 100.f * scaleX, 180.f * scaleY, 220.f * scaleX, 58.f * scaleY };
+    const float sizeScale = 0.60f; // Slightly shrink the buttons for breathing room
+    const float btnW = 372.f * scaleX * sizeScale;   // Texture-native width
+    const float btnH = 109.f * scaleY * sizeScale;   // Texture-native height
+  
+    const float verticalSpacing = 24.f * scaleY;
+    const float blockHeight = btnH * 4.f + verticalSpacing * 3.f;
+   
+    const float downwardOffset = 180.f * scaleY; // Nudge stack downward a bit
+    const float baseY = std::max(0.f, (sh - blockHeight) * 0.5f - downwardOffset);
+    const float leftAlignedX = (sw - btnW) * 0.23f; // Lean the stack toward the left
+
+    const float popupW = std::min(sw * 0.55f, 560.f * scaleX);
+    const float popupH = std::min(sh * 0.6f, 360.f * scaleY);
+    const float popupX = std::max(32.f * scaleX, leftAlignedX - 18.f * scaleX);
+    const float popupY = std::min(sh - popupH - 32.f * scaleY, baseY + blockHeight + 32.f * scaleY);
+
+    const float closeSize = 56.f * scaleX;
+    closeBtn = { popupX + popupW - closeSize - 10.f * scaleX,
+        popupY + popupH - closeSize - 10.f * scaleY,
+        closeSize,
+        56.f * scaleY };
+
+    howToPopup = { popupX, popupY, popupW, popupH };
+
+    startBtn = { leftAlignedX, baseY + (btnH + verticalSpacing) * 3.f, btnW, btnH };
+    optionsBtn = { leftAlignedX, baseY + (btnH + verticalSpacing) * 2.f, btnW, btnH };
+    howToBtn = { leftAlignedX, baseY + (btnH + verticalSpacing), btnW, btnH };
+    exitBtn = { leftAlignedX, baseY, btnW, btnH };
 
     BuildGui();
+    layoutInitialized = true;
 }
 
 void MainMenuPage::BuildGui()
@@ -180,8 +257,20 @@ void MainMenuPage::BuildGui()
     gui.AddButton(startBtn.x, startBtn.y, startBtn.w, startBtn.h, "Start",
         startBtnIdleTex, startBtnHoverTex,
         [this]() { startLatched = true; });
+    gui.AddButton(optionsBtn.x, optionsBtn.y, optionsBtn.w, optionsBtn.h, "Options",
+        optionsBtnIdleTex, optionsBtnHoverTex,
+        [this]() { optionsLatched = true; });
+
+    gui.AddButton(howToBtn.x, howToBtn.y, howToBtn.w, howToBtn.h, "How To Play",
+        howToBtnIdleTex, howToBtnHoverTex,
+        [this]() { howToLatched = true; showHowToPopup = true; BuildGui(); });
 
     gui.AddButton(exitBtn.x, exitBtn.y, exitBtn.w, exitBtn.h, "Exit",
         exitBtnIdleTex, exitBtnHoverTex,
         [this]() { exitLatched = true; });
+    if (showHowToPopup && closePopupTex) {
+        gui.AddButton(closeBtn.x, closeBtn.y, closeBtn.w, closeBtn.h, "",
+            closePopupTex, closePopupTex,
+            [this]() { showHowToPopup = false; BuildGui(); }, true);
+    }
 }

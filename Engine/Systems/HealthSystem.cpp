@@ -11,6 +11,8 @@ namespace Framework
 {
     namespace
     {
+
+
         /*****************************************************************************************
          \brief  Find the index of a named animation on a SpriteAnimationComponent (case-insensitive).
 
@@ -156,13 +158,9 @@ namespace Framework
         : window(&win)
     {
     }
-
-    void HealthSystem::Initialize()
+    void HealthSystem::RefreshTrackedObjects()
     {
-        // Track by ID instead of raw pointers to avoid dangling references.
-        gameObjectIds.clear();
-        deathTimers.clear();
-
+  
         for (auto& [id, goc] : FACTORY->Objects())
         {
             if (!goc)
@@ -176,14 +174,30 @@ namespace Framework
                 goc->GetComponentType<PlayerHealthComponent>(
                     ComponentTypeId::CT_PlayerHealthComponent);
 
-            // Only track objects that actually have a health component.
-            if (enemyHealth || playerHealth)
-                gameObjectIds.push_back(id);
+            if (!(enemyHealth || playerHealth))
+                continue;
+
+            // Skip if we’re already tracking this object
+            if (std::find(gameObjectIds.begin(), gameObjectIds.end(), id) != gameObjectIds.end())
+                continue;
+
+            gameObjectIds.push_back(id);
         }
+    }
+
+
+    void HealthSystem::Initialize()
+    {
+        // Track by ID instead of raw pointers to avoid dangling references.
+        gameObjectIds.clear();
+        deathTimers.clear();
+
+        RefreshTrackedObjects();
     }
 
     void HealthSystem::Update(float dt)
     {
+        RefreshTrackedObjects();
         gameObjectIds.erase(
             std::remove_if(
                 gameObjectIds.begin(),

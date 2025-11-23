@@ -67,7 +67,7 @@ namespace Framework
          \brief  Helper to safely switch an animation by name if it exists on the given object.
                  Does nothing if the component or animation is missing.
          *****************************************************************************************/
-        void PlayAnimationIfAvailable(GOC* goc, std::string_view name)
+        void PlayAnimationIfAvailable(GOC* goc, std::string_view name, bool forceRestart = false)
         {
             if (!goc)
                 return;
@@ -81,6 +81,23 @@ namespace Framework
             {
                 anim->SetActiveAnimation(idx);
             }
+        }
+        
+        float GetAnimationDuration(GOC* enemy, const std::string& name)
+        {
+            auto* anim = enemy->GetComponentType<SpriteAnimationComponent>(
+                ComponentTypeId::CT_SpriteAnimationComponent);
+
+            if (!anim) return 0.2f;
+
+            for (auto& a : anim->animations)
+            {
+                if (a.name == name)
+                {
+                    return a.config.totalFrames / a.config.fps;
+                }
+            }
+            return 0.2f;
         }
     }
 
@@ -346,8 +363,10 @@ namespace Framework
                     // Spawn X just outside enemy's hitbox
                     float spawnX = tr->x + (direction * hbWidth * 0.25f);
                     float spawnY = tr->y; // centered vertically
-
-                    attack->hitbox->duration = baseDuration;
+                    
+                
+                    attack->hitbox->duration = GetAnimationDuration(enemy, "slashattack");
+                   
 
                     logic->hitBoxSystem->SpawnHitBox(
                         enemy,
@@ -361,24 +380,22 @@ namespace Framework
                     );
 
                     // Play attack animation when slashing
-                    PlayAnimationIfAvailable(enemy, "slashattack");
+                    PlayAnimationIfAvailable(enemy, "slashattack",true);
                 }
 
                 // Update hitbox lifetime and return to idle animation when not attacking
                 if (attack->hitbox->active)
                 {
-                    attack->hitbox->duration -= dt;
-                    if (attack->hitbox->duration <= 0.0f)
+                    attack->hitboxElapsed += dt;
+                    if (attack->hitboxElapsed >= attack->hitbox->duration)
                     {
                         attack->hitbox->active = false;
+                        attack->hitboxElapsed = 0.0f;
+                        PlayAnimationIfAvailable(enemy, "idle");
+                        
                     }
                 }
-                else
-                {
-                    // No active hitbox – switch back to idle animation
-                    PlayAnimationIfAvailable(enemy, "idle");
-                }
-
+ 
                 // Update chase duration state
                 if (distance > 0.5f)
                 {

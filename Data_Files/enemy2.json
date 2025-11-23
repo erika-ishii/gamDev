@@ -1,9 +1,24 @@
 {
   "GameObject": {
     "Components": {
-      "TransformComponent": { "x": 0, "y": 0, "rot": 0 },
-      "RenderComponent": { "w": 0.3, "h": 0.3, "r": 1, "g": 1, "b": 1, "a": 1 },
-     "SpriteComponent": { "texture_key": "water_idle" },
+      "TransformComponent": {
+        "rot": 0.0,
+        "x": -0.07999958097934723,
+        "y": -0.20000000298023224
+      },
+      "RenderComponent": {
+        "a": 1.0,
+        "b": 1.0,
+        "g": 1.0,
+        "h": 0.30000001192092896,
+        "layer": 0,
+        "r": 1.0,
+        "visible": true,
+        "w": 0.30000001192092896
+      },
+      "SpriteComponent": {
+        "texture_key": "water_idle"
+      },
       "SpriteAnimationComponent": {
         "activeAnimation": 0,
         "animations": [
@@ -34,7 +49,7 @@
             },
             "currentFrame": 0,
             "name": "slashattack",
-            "spriteSheetPath": "../../assets/Textures/Character/Water Enemy_Sprite/Attack.png",
+            "spriteSheetPath": "../../assets/Textures/Character/Water Enemy_Sprite/Slash Attack_Sprite.png",
             "textureKey": "water_slashattack"
           },
           {
@@ -73,24 +88,24 @@
         "loop": true,
         "play": true
       },
-      "RigidBodyComponent": { "velocity_x": 10, "velocity_y": 0, "width": 0.1, "height": 0.1 },
-
-      "EnemyComponent": {},
-      
-      "EnemyAttackComponent": {
-        "damage": 2,
-        "attack_speed": 1.2
+      "RigidBodyComponent": {
+        "height": 0.23999999463558197,
+        "velocity_x": -0.20000000298023224,
+        "velocity_y": 0.0,
+        "width": 0.12999999523162842
       },
-
+      "EnemyComponent": {},
+      "EnemyAttackComponent": {
+        "attack_speed": 1.2000000476837158,
+        "damage": 1
+      },
       "EnemyHealthComponent": {
         "enemyHealth": 2,
-        "enemyMaxHealth": 2
+        "enemyMaxhealth": 2
       },
-
       "EnemyDecisionTreeComponent": {},
-
       "EnemyTypeComponent": {
-        "type": "ranged"
+        "type": "physical"
       }
     }
   }

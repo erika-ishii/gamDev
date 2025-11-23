@@ -50,6 +50,7 @@ namespace Framework
         int damage{ 1 };               ///< Damage dealt by this enemy�s attack.
         float attack_speed{ 3.0f };     ///< Cooldown time (seconds) between consecutive attacks.
         float attack_timer{ 0.0f };     ///< Tracks elapsed time since the last attack.
+        float hitboxElapsed{ 0.0f };
         std::unique_ptr<HitBoxComponent> hitbox; ///< Managed hitbox instance used for attacks.
 
         /*************************************************************************************
@@ -137,13 +138,14 @@ namespace Framework
             attack_timer += dt;
 
             // Trigger attack when cooldown has elapsed
-            if (attack_timer >= attack_speed)
+            if (attack_timer >= attack_speed && !hitbox->active)
             {
                 attack_timer = 0.0f;
                 hitbox->active = true;
                 hitbox->spawnX = tr->x;
                 hitbox->spawnY = tr->y;
-                hitbox->duration = 0.15f;
+                hitbox->duration = 0.92f;
+                hitboxElapsed = 0.0f;
                 std::cout << "Enemy attacked! HitBox active at ("
                     << hitbox->spawnX << ", " << hitbox->spawnY << ")\n";
             }
@@ -155,7 +157,7 @@ namespace Framework
                 if (hitbox->duration <= 0.0f)
                 {
                     hitbox->DeactivateHurtBox();
-                    hitbox->duration = 0.1f;
+                    hitbox->duration = 0.92f;
                 }
             }
         }

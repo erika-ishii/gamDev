@@ -1,5 +1,5 @@
 {
-  "GameObject":{
+  "GameObject": {
     "Components": {
       "TransformComponent": {
         "x": -0.5,
@@ -15,7 +15,9 @@
         "a": 1,
         "layer": 1
       },
-      "SpriteComponent": { "texture_key": "player" },
+      "SpriteComponent": {
+        "texture_key": "idle_sheet"
+      },
       "RigidBodyComponent": {
         "velocity_x": 0.0,
         "velocity_y": 0.0,
@@ -31,7 +33,90 @@
         "damage": 1,
         "attack_speed": 1.2
       },
-      "SpriteAnimationComponent": {},
+      "SpriteAnimationComponent": {
+        "activeAnimation": 0,
+        "animations": [
+          {
+            "config": {
+              "columns": 5,
+              "endFrame": 4,
+              "fps": 6.0,
+              "loop": true,
+              "rows": 1,
+              "startFrame": 0,
+              "totalFrames": 5
+            },
+            "currentFrame": 3,
+            "name": "idle",
+            "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/Idle_Sprite.png",
+            "textureKey": "idle_sheet"
+          },
+          {
+            "config": {
+              "columns": 10,
+              "endFrame": 9,
+              "fps": 12.0,
+              "loop": true,
+              "rows": 1,
+              "startFrame": 0,
+              "totalFrames": 10
+            },
+            "currentFrame": 0,
+            "name": "run",
+            "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/Running_Sprite.png",
+            "textureKey": "run_sheet"
+          },
+          {
+            "config": {
+              "columns": 13,
+              "endFrame": 12,
+              "fps": 12.0,
+              "loop": true,
+              "rows": 1,
+              "startFrame": 0,
+              "totalFrames": 13
+            },
+            "currentFrame": 0,
+            "name": "attack1",
+            "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/1st_Attack Sprite.png",
+            "textureKey": "attack1_sheet"
+          },
+          {
+            "config": {
+              "columns": 8,
+              "endFrame": 7,
+              "fps": 12.0,
+              "loop": true,
+              "rows": 1,
+              "startFrame": 0,
+              "totalFrames": 8
+            },
+            "currentFrame": 7,
+            "name": "attack2",
+            "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/2nd_Attack Sprite.png",
+            "textureKey": "attack2_sheet"
+          },
+          {
+            "config": {
+              "columns": 9,
+              "endFrame": 8,
+              "fps": 12.0,
+              "loop": true,
+              "rows": 1,
+              "startFrame": 0,
+              "totalFrames": 9
+            },
+            "currentFrame": 0,
+            "name": "attack3",
+            "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/3rd_Attack Sprite.png",
+            "textureKey": "attack3_sheet"
+          }
+        ],
+        "fps": 6.0,
+        "frames": [],
+        "loop": true,
+        "play": true
+      },
       "HitBoxComponent": {
         "width": 0.15,
         "height": 0.15,
@@ -52,38 +137,9 @@
             "loop": false
           }
         },
-        "PlayerComponent": {},
-        "PlayerHealthComponent": {
-          "playerHealth": 100,
-          "playerMaxhealth": 100
-        },
-        "PlayerAttackComponent": {
-          "damage": 50,
-          "attack_speed": 1.0
-        },
-        "HitBoxComponent": {
-          "width": 0.15,
-          "height": 0.15,
-          "duration": 0.15
-        },
-        "AudioComponent": {
-          "sounds": {
-            "footsteps": {
-              "id": "footsteps",
-              "loop": true
-            },
-            "Slash1": {
-              "id": "Slash1",
-              "loop": false
-            },
-            "GrappleShoot1": {
-              "id": "GrappleShoot1",
-              "loop": false
-            }
-          },
-          "volume": 1.0,
-          "playing": 0
-        }
+        "volume": 1.0,
+        "playing": 0
       }
     }
-}}
+  }
+}

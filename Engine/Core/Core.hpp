@@ -27,6 +27,7 @@ public:
     using UpdateFn = void(*)(float);        // Called every frame with delta time (seconds)
     using RenderFn = void(*)();             // Called every frame to draw
     using ShutdownFn = void(*)();             // Called once at shutdown
+    using SuspendFn = void(*)(bool);         // Called when the app is suspended/resumed
 
     /// \brief Create a windowed application core.
     Core(int width, int height, const char* title, bool fullscreen);
@@ -42,6 +43,7 @@ public:
     void SetCallbacks(InitFn i, UpdateFn u, RenderFn r, ShutdownFn s) {
         init = i; update = u; render = r; shutdown = s;
     }
+    void SetSuspendCallback(SuspendFn s) { onSuspend = s; }
     int GetCurrentNumSteps() const noexcept { return m_CurrentNumSteps; }
     float GetFixedDeltaSeconds() const noexcept { return m_FixedStep.count(); }
 
@@ -58,4 +60,5 @@ private:
     UpdateFn   update{ nullptr };
     RenderFn   render{ nullptr };
     ShutdownFn shutdown{ nullptr };
+    SuspendFn  onSuspend{ nullptr };
 };

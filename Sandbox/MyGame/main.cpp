@@ -44,7 +44,7 @@ int main()
     // Create engine core and register game callbacks.
     Core core(cfg.width, cfg.height, cfg.title.c_str(), cfg.fullscreen);
     core.SetCallbacks(mygame::init, mygame::update, mygame::draw, mygame::shutdown);
-
+    core.SetSuspendCallback(mygame::onAppFocusChanged);
     // Run main loop.
     core.Run();
     return 0;

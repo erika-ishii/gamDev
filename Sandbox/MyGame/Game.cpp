@@ -14,6 +14,7 @@
 #include "Systems/EnemySystem.h"
 #include "Systems/AiSystem.h"
 #include "Systems/HealthSystem.h"
+#include "Audio/SoundManager.h"
 #include "Debug/CrashLogger.hpp"
 #include "Debug/Perf.h"
 
@@ -190,6 +191,16 @@ namespace mygame {
             }, "mygame::draw");
     }
 
+    void onAppFocusChanged(bool suspended)
+    {
+        // Halt/resume audio cleanly and flush transient input so keys do not stick.
+        SoundManager::getInstance().pauseAllSounds(suspended);
+        if (gInputSystem)
+        {
+            gInputSystem->Manager().ClearState();
+        }
+    }
+
     void shutdown()
     {
         std::cout << "[Game] Shutting down systems...\n";
@@ -223,13 +234,7 @@ namespace mygame {
 
     void EditorStopSimulation()
     {
-        if (!gLogicSystem)
-        {
-            editorSimulationRunning = false;
-            return;
-        }
 
-        gLogicSystem->ReloadLevel();
         editorSimulationRunning = false;
     }
 

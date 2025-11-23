@@ -80,6 +80,15 @@ namespace gfx {
             glfwTerminate();
             throw std::runtime_error("GLFW window creation failed");
         }
+        //Store this in the GLFW user pointer so static callbacks can retrieve the Window instance.
+        //Register:
+        //OnIconify(GLFWwindow* win, int iconified)
+        //OnFocus(GLFWwindow* win, int focused)
+        //initialize the flags from the current GLFW attributes via SyncFocusFromAttribs
+        glfwSetWindowUserPointer(s_window, this);
+        glfwSetWindowIconifyCallback(s_window, &Window::OnIconify);
+        glfwSetWindowFocusCallback(s_window, &Window::OnFocus);
+        SyncFocusFromAttribs(this, s_window);
 
         // Make the context current
         glfwMakeContextCurrent(s_window);
@@ -135,6 +144,37 @@ namespace gfx {
     void Window::swapBuffers() {
         glfwSwapBuffers(s_window);
     }
+
+    void Window::SyncFocusFromAttribs(Window* self, GLFWwindow* win)
+    {
+        if (!self || !win) return;
+        self->m_iconified = glfwGetWindowAttrib(win, GLFW_ICONIFIED) == GLFW_TRUE;
+        self->m_focused = glfwGetWindowAttrib(win, GLFW_FOCUSED) == GLFW_TRUE;
+    }
+
+    //When the window is minimized, m_iconified = true and you also clear m_focused
+    void Window::OnIconify(GLFWwindow* win, int iconified)
+    {
+        auto* self = static_cast<Window*>(glfwGetWindowUserPointer(win));
+        if (!self) return;
+        self->m_iconified = (iconified == GLFW_TRUE);
+        if (iconified == GLFW_TRUE)
+        {
+            self->m_focused = false;
+        }
+    }
+    //When focus changes, you:
+    //Update m_focused.
+    //Call SyncFocusFromAttribs to ensure both flags match GLFW’s view.
+    //So any ALT - TAB / CTRL - ALT - DEL transition will result in these booleans being set correctly.
+    void Window::OnFocus(GLFWwindow* win, int focused)
+    {
+        auto* self = static_cast<Window*>(glfwGetWindowUserPointer(win));
+        if (!self) return;
+        self->m_focused = (focused == GLFW_TRUE);
+        SyncFocusFromAttribs(self, win);
+    }
+
     void Window::ToggleFullscreen()
     {
         if (!s_window)

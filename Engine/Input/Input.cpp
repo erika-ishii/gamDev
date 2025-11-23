@@ -144,6 +144,19 @@ namespace Framework
     {
         return m_mouseState;
     }
+
+    //Clears all keyboard and mouse state arrays.
+    //Resets MouseState(position and button flags).
+    void InputManager::ClearState()
+    {
+        std::fill(m_keyHeld.begin(), m_keyHeld.end(), false);
+        std::fill(m_keyPressed.begin(), m_keyPressed.end(), false);
+        std::fill(m_keyReleased.begin(), m_keyReleased.end(), false);
+        std::fill(m_mouseHeld.begin(), m_mouseHeld.end(), false);
+        std::fill(m_mousePressed.begin(), m_mousePressed.end(), false);
+        std::fill(m_mouseReleased.begin(), m_mouseReleased.end(), false);
+        m_mouseState = MouseState{};
+    }
     /*****************************************************************************************
     \brief A boolean to check if the mouse button has been pressed
     \return True if it's pressed, false if it isn't

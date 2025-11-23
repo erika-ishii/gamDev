@@ -49,6 +49,7 @@ namespace Framework {
 
         // System name for diagnostics and registries.
         std::string GetName() override { return "HealthSystem"; }
+        void RefreshTrackedObjects();
 
     private:
         gfx::Window* window;          // Non-owning window handle used by the system.

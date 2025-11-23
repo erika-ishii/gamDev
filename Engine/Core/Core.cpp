@@ -44,10 +44,67 @@ void Core::Run() {
     SecondsF accumulator = SecondsF::zero();
     // safety cap to avoid a spiral of death
     constexpr int kMaxSubSteps = 5;
+    bool wasSuspended = false;
 
     while (m_Running && !m_Window->shouldClose()) {
         // Process input/events (keyboard, mouse, OS signals)
         m_Window->pollEvents();
+
+        // Determine whether the application should be suspended.
+       // Suspended when:
+       //   • Window is iconified (minimized)   → IsIconified() == true
+       //   • OR window has no focus (ALT-TAB, CTRL-ALT-DEL, Task Manager, etc.) → !HasFocus()
+        const bool suspended = m_Window->IsIconified() || !m_Window->HasFocus();
+
+        // -----------------------------------------------------------------------------
+        // ENTERING SUSPENDED STATE
+        // -----------------------------------------------------------------------------
+        // This block runs *only on the FIRST FRAME* that the app becomes suspended.
+        // (suspended == true, wasSuspended == false)
+        if (suspended) {
+            // Notify the game layer that the app is now suspended.
+            // The game uses this to pause audio and clear input state.
+            if (!wasSuspended && onSuspend)
+                onSuspend(true);
+
+            // Mark that we are now inside suspended mode.
+            wasSuspended = true;
+
+            // Reset timing accumulators so physics does NOT try to "catch up"
+            // with a giant dt when we return from ALT-TAB / CTRL-ALT-DEL.
+            accumulator = SecondsF::zero();
+            t_prev = Clock::now();
+
+            // Skip the entire update/render pipeline:
+            //    • No physics
+            //    • No logic
+            //    • No rendering
+            //    • No buffer swap
+            //
+            // The loop continues, but only polls events.
+            // This keeps the program lightweight & responsive.
+            continue;
+        }
+
+        // -----------------------------------------------------------------------------
+        // EXITING SUSPENDED STATE
+        // -----------------------------------------------------------------------------
+        // This block runs only on the FIRST FRAME when we come back from suspension.
+        // (suspended == false, wasSuspended == true)
+        if (wasSuspended) {
+            // Notify the game layer that the app has resumed.
+            // The game uses this to resume audio and flush input.
+            if (onSuspend)
+                onSuspend(false);
+
+            // Reset timing accumulators again so the first frame back
+            // does not produce a massive dt spike that would break physics.
+            accumulator = SecondsF::zero();
+            t_prev = Clock::now();
+
+            // Mark that suspension has ended.
+            wasSuspended = false;
+        }
 
         // Measure frame delta time (in seconds, as float)
         const auto t_now = Clock::now();

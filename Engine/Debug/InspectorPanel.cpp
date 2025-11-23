@@ -1,7 +1,7 @@
 /*********************************************************************************************
  \file      InspectorPanel.cpp
  \par       SofaSpuds
- \author    
+ \author     elvisshengjie.lim ( elvisshengjie.lim@digipen.edu) - Primary Author, 100%
  \brief     Implements a basic ImGui inspector window for viewing and editing the currently
             selected GameObject's properties and common component data.
 *********************************************************************************************/
@@ -14,6 +14,12 @@
 #include "Component/CircleRenderComponent.h"
 #include "Component/SpriteComponent.h"
 #include "Component/HitBoxComponent.h"
+#include "Component/HitBoxComponent.h"
+#include "Component/PlayerAttackComponent.h"
+#include "Component/EnemyAttackComponent.h"
+#include "Component/PlayerHealthComponent.h"
+#include "Component/EnemyHealthComponent.h"
+#include "Component/EnemyTypeComponent.h"
 #include "Physics/Dynamics/RigidBodyComponent.h"
 #include "Selection.h"
 #include "Factory/Factory.h"
@@ -27,6 +33,108 @@
 namespace
 {
     using namespace Framework;
+
+
+    void DrawHitBoxFields(HitBoxComponent& hb, const char* labelPrefix = "")
+    {
+        // Optional prefix so we can reuse this for nested hitboxes if needed.
+        auto MakeLabel = [labelPrefix](const char* base) -> const char*
+            {
+                static char buf[64];
+                if (labelPrefix && *labelPrefix) {
+                    std::snprintf(buf, sizeof(buf), "%s%s", labelPrefix, base);
+                    return (const char*)buf;   // force const
+                }
+                return base;
+            };
+        float size[2] = { hb.width, hb.height };
+        if (ImGui::DragFloat2(MakeLabel("Size##HitBox"), size, 0.01f, 0.0f, 1000.0f, "%.3f"))
+        {
+            hb.width = size[0];
+            hb.height = size[1];
+        }
+
+        float offset[2] = { hb.spawnX, hb.spawnY };
+        if (ImGui::DragFloat2(MakeLabel("Spawn Offset"), offset, 0.01f, -1000.0f, 1000.0f, "%.3f"))
+        {
+            hb.spawnX = offset[0];
+            hb.spawnY = offset[1];
+        }
+
+        ImGui::DragFloat(MakeLabel("Duration"), &hb.duration, 0.01f, 0.0f, 100.0f, "%.2f");
+        ImGui::DragFloat(MakeLabel("Damage##HitBox"), &hb.damage, 0.1f, 0.0f, 1000.0f, "%.1f");
+
+        const char* teamLabels[] = { "Player", "Enemy", "Neutral", "Thrown" };
+        int teamIndex = static_cast<int>(hb.team);
+        if (ImGui::Combo(MakeLabel("Team"), &teamIndex, teamLabels, IM_ARRAYSIZE(teamLabels)))
+        {
+            hb.team = static_cast<HitBoxComponent::Team>(teamIndex);
+        }
+
+        ImGui::Checkbox(MakeLabel("Active"), &hb.active);
+    }
+
+    void DrawHitBoxSection(HitBoxComponent& hb)
+    {
+        if (!ImGui::CollapsingHeader("HitBox", ImGuiTreeNodeFlags_DefaultOpen))
+            return;
+
+        DrawHitBoxFields(hb);
+    }
+
+    void DrawPlayerAttackSection(PlayerAttackComponent& atk)
+    {
+        if (!ImGui::CollapsingHeader("PlayerAttack", ImGuiTreeNodeFlags_DefaultOpen))
+            return;
+
+        ImGui::DragInt("Damage##PlayerAttack", &atk.damage, 1, 0, 999);
+        ImGui::DragFloat("Attack Speed", &atk.attack_speed, 0.01f, 0.0f, 10.0f, "%.2f");
+
+        if (atk.hitbox)
+        {
+            if (ImGui::TreeNode("HitBox Defaults"))
+            {
+                DrawHitBoxFields(*atk.hitbox, "HB ");
+                ImGui::TreePop();
+            }
+        }
+    }
+
+    void DrawEnemyAttackSection(EnemyAttackComponent& atk)
+    {
+        if (!ImGui::CollapsingHeader("EnemyAttack", ImGuiTreeNodeFlags_DefaultOpen))
+            return;
+
+        ImGui::DragInt("Damage##EnemyAttack", &atk.damage, 1, 0, 999);
+        ImGui::DragFloat("Attack Speed", &atk.attack_speed, 0.01f, 0.0f, 10.0f, "%.2f");
+
+        if (atk.hitbox)
+        {
+            if (ImGui::TreeNode("HitBox Defaults"))
+            {
+                DrawHitBoxFields(*atk.hitbox, "HB ");
+                ImGui::TreePop();
+            }
+        }
+    }
+
+    void DrawPlayerHealthSection(PlayerHealthComponent& hp)
+    {
+        if (!ImGui::CollapsingHeader("PlayerHealth", ImGuiTreeNodeFlags_DefaultOpen))
+            return;
+
+        ImGui::DragInt("Current HP", &hp.playerHealth, 1, 0, hp.playerMaxhealth);
+        ImGui::DragInt("Max HP", &hp.playerMaxhealth, 1, 1, 999);
+    }
+
+    void DrawEnemyHealthSection(EnemyHealthComponent& hp)
+    {
+        if (!ImGui::CollapsingHeader("EnemyHealth", ImGuiTreeNodeFlags_DefaultOpen))
+            return;
+
+        ImGui::DragInt("Current HP", &hp.enemyHealth, 1, 0, hp.enemyMaxhealth);
+        ImGui::DragInt("Max HP", &hp.enemyMaxhealth, 1, 1, 999);
+    }
 
     void DrawRigidBodySection(Framework::GOC& owner, RigidBodyComponent& rb)
     {
@@ -171,7 +279,20 @@ namespace
         if (ImGui::InputText("Texture Path", pathBuffer.data(), pathBuffer.size()))
             sprite.path = pathBuffer.data();
     }
+    void DrawEnemyTypeSection(EnemyTypeComponent& type)
+    {
+        if (!ImGui::CollapsingHeader("EnemyType", ImGuiTreeNodeFlags_DefaultOpen))
+            return;
 
+        const char* typeItems[] = { "physical", "ranged" };
+        int current = (type.Etype == EnemyTypeComponent::EnemyType::physical) ? 0 : 1;
+        if (ImGui::Combo("Type", &current, typeItems, IM_ARRAYSIZE(typeItems)))
+        {
+            type.Etype = (current == 0)
+                ? EnemyTypeComponent::EnemyType::physical
+                : EnemyTypeComponent::EnemyType::ranged;
+        }
+    }
 
 }
 
@@ -242,7 +363,22 @@ namespace mygame
             DrawSpriteSection(*sprite);
         if (auto* rb = object->GetComponentAs<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent))
             DrawRigidBodySection(*object, *rb);
+        if (auto* hit = object->GetComponentAs<HitBoxComponent>(ComponentTypeId::CT_HitBoxComponent))
+            DrawHitBoxSection(*hit);
 
+        if (auto* pAtk = object->GetComponentAs<PlayerAttackComponent>(ComponentTypeId::CT_PlayerAttackComponent))
+            DrawPlayerAttackSection(*pAtk);
+
+        if (auto* eAtk = object->GetComponentAs<EnemyAttackComponent>(ComponentTypeId::CT_EnemyAttackComponent))
+            DrawEnemyAttackSection(*eAtk);
+
+        if (auto* pHp = object->GetComponentAs<PlayerHealthComponent>(ComponentTypeId::CT_PlayerHealthComponent))
+            DrawPlayerHealthSection(*pHp);
+
+        if (auto* eHp = object->GetComponentAs<EnemyHealthComponent>(ComponentTypeId::CT_EnemyHealthComponent))
+            DrawEnemyHealthSection(*eHp);
+        if (auto* eType = object->GetComponentAs<EnemyTypeComponent>(ComponentTypeId::CT_EnemyTypeComponent))
+            DrawEnemyTypeSection(*eType);
 
         ImGui::End();
     }

@@ -62,6 +62,18 @@ namespace mygame {
         bool ConsumeStart();
 
         /*************************************************************************
+        \brief  Consume the Options latch (true once after an Options click).
+        \return true if Options was triggered this frame; false otherwise.
+      *************************************************************************/
+        bool ConsumeOptions();
+
+        /*************************************************************************
+          \brief  Consume the How To Play latch (true once after a How To Play click).
+          \return true if How To Play was triggered this frame; false otherwise.
+        *************************************************************************/
+        bool ConsumeHowToPlay();
+
+        /*************************************************************************
           \brief  Consume the Exit latch (true once after an Exit click).
           \return true if Exit was triggered this frame; false otherwise.
         *************************************************************************/
@@ -82,19 +94,34 @@ namespace mygame {
         // --- Button textures --------------------------------------------------------------
         unsigned startBtnIdleTex = 0;  //Start button idle texture.
         unsigned startBtnHoverTex = 0; //Start button hover texture.
+        unsigned optionsBtnIdleTex = 0; //Options button idle texture.
+        unsigned optionsBtnHoverTex = 0; //Options button hover texture.
+        unsigned howToBtnIdleTex = 0;   //How To Play button idle texture.
+        unsigned howToBtnHoverTex = 0;  //How To Play button hover texture.
         unsigned exitBtnIdleTex = 0;  //Exit button idle texture.
         unsigned exitBtnHoverTex = 0;  //Exit button hover texture.
+        unsigned closePopupTex = 0;    //Popup close button texture.
+
 
         // --- Latches ---------------------------------------------------------------------
         bool startLatched = false;     
         bool exitLatched = false;     
+        bool optionsLatched = false;
+        bool howToLatched = false;
+        bool showHowToPopup = false;
+   
 
         // --- GUI system ------------------------------------------------------------------
         GUISystem gui;                 //Immediate-mode GUI owner for menu buttons.
 
         // --- Layout (origin: bottom-left) ------------------------------------------------
         RectF startBtn{ 100.f, 260.f, 220.f, 58.f }; //Start button rectangle.
+        RectF optionsBtn{ 100.f, 260.f, 220.f, 58.f }; //options button rectangle.
+        RectF howToBtn{ 100.f, 180.f, 220.f, 58.f }; //how to play button rectangle.
         RectF exitBtn{ 100.f, 180.f, 220.f, 58.f }; //Exit button rectangle.
+        RectF howToPopup{ 72.f, 420.f, 520.f, 320.f }; //Popup background rectangle.
+        RectF closeBtn{ 0.f, 0.f, 56.f, 56.f };        //Close button rectangle.
+        bool layoutInitialized = false;
         void BuildGui();
     };
 

@@ -203,6 +203,22 @@ namespace Framework {
                 anim->accumulator = 0.0f;
             }
         }
+        // ---------------------------------------------------------------------
+       // Texture maintenance helpers (used after undo/redo)
+       // ---------------------------------------------------------------------
+        void RebindAllTextures() {
+            for (auto& anim : animations) {
+                // Try existing key first
+                if (!anim.textureKey.empty()) {
+                    anim.textureId = Resource_Manager::getTexture(anim.textureKey);
+                }
+
+                // If still missing, attempt to reload from spriteSheetPath
+                if (!anim.textureId && !anim.spriteSheetPath.empty()) {
+                    ReloadAnimationTexture(anim);
+                }
+            }
+        }
 
         // ---------------------------------------------------------------------
         // Old frame-array texture resolving

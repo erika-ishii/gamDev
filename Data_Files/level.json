@@ -278,7 +278,7 @@
                 },
                 "currentFrame": 0,
                 "name": "slashattack",
-                "spriteSheetPath": "../../assets/Textures/Character/Water Enemy_Sprite/SlashAttack_Sprite.png",
+                "spriteSheetPath": "../../assets/Textures/Character/Water Enemy_Sprite/Attack.png",
                 "textureKey": "water_slashattack"
               },
               {
@@ -390,7 +390,7 @@
                 },
                 "currentFrame": 0,
                 "name": "slashattack",
-                "spriteSheetPath": "../../assets/Textures/Character/Water Enemy_Sprite/SlashAttack_Sprite.png",
+                "spriteSheetPath": "../../assets/Textures/Character/Water Enemy_Sprite/Attack.png",
                 "textureKey": "water_slashattack"
               },
               {

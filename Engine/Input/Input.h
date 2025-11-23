@@ -51,6 +51,7 @@ namespace Framework
 		bool IsMousePressed(int button) const;
 		bool IsMouseHeld(int button) const;
 		bool IsMouseReleased(int button) const;
+		void ClearState();
 
 	private:
 		GLFWwindow* m_window;

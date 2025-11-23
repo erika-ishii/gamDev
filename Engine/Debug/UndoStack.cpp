@@ -111,9 +111,42 @@ namespace mygame
                         // to force the component to calculate its UV coordinates immediately.
                         // This prevents the whole sprite sheet from rendering.
                         anim->Advance(0.02f);
+
+                        // Make sure textures are rebound and push the active animation's
+                       // texture/key back into the sprite component so rendering uses the
+                       // animated sheet instead of a raw PNG.
+                        anim->RebindAllTextures();
+                        if (auto* sprite = object.GetComponentType<Framework::SpriteComponent>(
+                            Framework::ComponentTypeId::CT_SpriteComponent))
+                        {
+                            auto sample = anim->CurrentSheetSample();
+                            if (!sample.textureKey.empty())
+                                sprite->texture_key = sample.textureKey;
+                            if (sample.texture)
+                                sprite->texture_id = sample.texture;
+                        }
+                    }
+                }
+                // If an animation component exists but wasn't captured (e.g. asset edited
+              // between deletion and undo), still refresh bindings so sprites use the
+              // sheet UVs instead of the full texture.
+                if (auto* anim = object.GetComponentType<Framework::SpriteAnimationComponent>(
+                    Framework::ComponentTypeId::CT_SpriteAnimationComponent))
+                {
+                    anim->RebindAllTextures();
+                    auto* sprite = object.GetComponentType<Framework::SpriteComponent>(
+                        Framework::ComponentTypeId::CT_SpriteComponent);
+                    if (sprite)
+                    {
+                        auto sample = anim->CurrentSheetSample();
+                        if (!sample.textureKey.empty())
+                            sprite->texture_key = sample.textureKey;
+                        if (sample.texture)
+                            sprite->texture_id = sample.texture;
                     }
                 }
             }
+
         } // anonymous namespace
 
         TransformSnapshot CaptureTransformSnapshot(const Framework::GOC& object)

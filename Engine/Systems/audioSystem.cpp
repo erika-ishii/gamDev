@@ -115,6 +115,8 @@ namespace Framework {
     {
         // Unload all sounds
         SoundManager::getInstance().unloadAllSounds();
+        // Fully tear down the audio backend to release FMOD allocations
+        SoundManager::getInstance().shutdown();
         // Shutdown the audio ImGui UI
         AudioImGui::Shutdown();
         std::cout << "[AudioSystem] Audio system shutdown completed.\n";

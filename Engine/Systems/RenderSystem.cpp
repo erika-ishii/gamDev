@@ -169,6 +169,23 @@ namespace Framework {
                             rc->texture_id = handle;
                     }
                 }
+
+                if (auto* anim = obj->GetComponentType<Framework::SpriteAnimationComponent>(
+                    Framework::ComponentTypeId::CT_SpriteAnimationComponent))
+                {
+                    anim->RebindAllTextures();
+
+
+                    if (auto* sprite = obj->GetComponentType<Framework::SpriteComponent>(
+                        Framework::ComponentTypeId::CT_SpriteComponent))
+                    {
+                        auto sample = anim->CurrentSheetSample();
+                        if (!sample.textureKey.empty())
+                            sprite->texture_key = sample.textureKey;
+                        if (sample.texture)
+                            sprite->texture_id = sample.texture;
+                    }
+                }
             }
         }
     } // anonymous namespace

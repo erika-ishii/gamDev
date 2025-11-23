@@ -27,6 +27,7 @@ namespace Framework
 		float velY = 1.0f;
 		float width = 1.0f;
 		float height = 1.0f;
+		float knockbackTime = 0.0f;
 		float dampening = 0.7f;
 
 		void initialize() override {}

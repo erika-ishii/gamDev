@@ -55,6 +55,10 @@ namespace gfx {
         // Static GLFW error callback.
         static void error_cb(int error, const char* description);
 
+        // Window state queries useful for pause/resume handling.
+        bool IsIconified() const { return m_iconified; }
+        bool HasFocus() const { return m_focused; }
+
         // Toggle fullscreen/windowed at runtime (non-resizable windowed mode).
         void ToggleFullscreen();
         bool IsFullscreen() const { return m_fullscreen; }
@@ -69,6 +73,10 @@ namespace gfx {
     private:
         // Global raw pointer to the GLFW window. (kept static to match your original design)
         static GLFWwindow* s_window;
+        static void OnIconify(GLFWwindow* win, int iconified);
+        static void OnFocus(GLFWwindow* win, int focused);
+        static void SyncFocusFromAttribs(Window* self, GLFWwindow* win);
+
 
         int m_width;
         int m_height;
@@ -78,6 +86,8 @@ namespace gfx {
         int  m_windowedY = 100;
         int  m_windowedWidth = 0;
         int  m_windowedHeight = 0;
+        bool m_iconified = false;
+        bool m_focused = true;
     };
 
 } // namespace gfx
