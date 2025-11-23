@@ -125,7 +125,20 @@ namespace gfx {
     void Window::pollEvents() {
         glfwPollEvents();
 
-        
+        // Keep cached dimensions in sync with the actual framebuffer so callers (e.g.,
+    // RenderSystem / GUISystem) use the same pixel size for rendering and hit-testing
+    // even when the window is resized or running on HiDPI displays.
+        if (s_window)
+        {
+            int fbW = 0, fbH = 0;
+            glfwGetFramebufferSize(s_window, &fbW, &fbH);
+            if (fbW > 0 && fbH > 0)
+            {
+                m_width = fbW;
+                m_height = fbH;
+            }
+        }
+
         if (glfwGetKey(s_window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
             glfwSetWindowShouldClose(s_window, GLFW_TRUE);
         }

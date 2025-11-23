@@ -5,15 +5,17 @@
  \author    ChatGPT - Added pause overlay and navigation menu
  \brief     Declaration of an in-game pause menu with overlay, buttons, and latch events.
  \details   The pause page draws a dimmed overlay on top of the active scene, displays a
-            stylized card for clarity, and surfaces three actions: Resume, Main Menu, and
-            Quit. Button clicks set one-shot latches consumed by the game loop. Layout uses
-            absolute coordinates (bottom-left origin) and the GUISystem for interaction.
+             stylized note card, and surfaces actions for resuming, options/main menu,
+            how-to reference, and quit. Button clicks set one-shot latches consumed by the
+            game loop. Layout uses absolute coordinates (bottom-left origin) and the
+            GUISystem for interaction.
 *********************************************************************************************/
 
 #include "Systems/GUISystem.hpp"
 #include "Systems/InputSystem.h"
 #include "Systems/RenderSystem.h"
-
+#include <chrono>
+#include <vector>
 namespace mygame {
 
     /*************************************************************************************
@@ -24,7 +26,7 @@ namespace mygame {
 
     /*************************************************************************************
       \class  PauseMenuPage
-      \brief  Overlay pause menu with Resume/Main Menu/Quit actions.
+      \brief  Overlay pause menu with stylized parchment buttons (resume/options/how-to/quit).
     *************************************************************************************/
     class PauseMenuPage {
     public:
@@ -40,6 +42,8 @@ namespace mygame {
         // Consume latches (true once per click).
         bool ConsumeResume();
         bool ConsumeMainMenu();
+        bool ConsumeOptions();
+        bool ConsumeHowToPlay();
         bool ConsumeQuit();
 
         // Reset internal one-shot latches (used when reopening the pause menu).
@@ -47,24 +51,63 @@ namespace mygame {
 
         // Rebuild layout if the screen size changes (keeps buttons aligned with cursor).
         void SyncLayout(int screenW, int screenH);
+
+        // Rebuild GUI widgets for the current layout/state.
+        void BuildGui();
+
     private:
         int sw = 1280;
         int sh = 720;
+        bool layoutDirty = true;
 
-   /*     unsigned panelTex = 0;
+        unsigned noteTex = 0;
+        unsigned headerTex = 0;
         unsigned resumeTex = 0;
-        unsigned quitTex = 0;*/
+        unsigned optionsTex = 0;
+        unsigned howToTex = 0;
+        unsigned quitTex = 0;
+        unsigned closeTex = 0;
+
+        unsigned howToNoteTex = 0;
+        unsigned howToHeaderTex = 0;
+        unsigned howToCloseTex = 0;
+
+        struct HowToRowConfig {
+            unsigned iconTex = 0;
+            unsigned labelTex = 0;
+            int frameCount = 1;
+            int cols = 1;
+            int rows = 1;
+            float fps = 8.0f;
+            float iconAspectFallback = 1.0f;
+            float labelAspectFallback = 1.0f;
+        };
+
+        std::vector<HowToRowConfig> howToRows;
+        float iconAnimTime = 0.0f;
+        std::chrono::steady_clock::time_point lastIconTick{};
+        bool iconTimerInitialized = false;
+        bool showHowToPopup = false;
+
 
         bool resumeLatched = false;
         bool mainMenuLatched = false;
+        bool optionsLatched = false;
+        bool howToLatched = false;
         bool quitLatched = false;
 
         GUISystem gui;
 
         Quad panel{ 0.f, 0.f, 0.f, 0.f };
+        Quad note{ 0.f, 0.f, 0.f, 0.f };
+        Quad header{ 0.f, 0.f, 0.f, 0.f };
+        Quad closeBtn{ 0.f, 0.f, 0.f, 0.f };
         Quad resumeBtn{ 0.f, 0.f, 0.f, 0.f };
-        Quad mainMenuBtn{ 0.f, 0.f, 0.f, 0.f };
+        Quad optionsBtn{ 0.f, 0.f, 0.f, 0.f };
+        Quad howToBtn{ 0.f, 0.f, 0.f, 0.f };
         Quad quitBtn{ 0.f, 0.f, 0.f, 0.f };
+        Quad howToPopup{ 0.f, 0.f, 0.f, 0.f };
+        Quad howToCloseBtn{ 0.f, 0.f, 0.f, 0.f };
     };
 
 } // namespace mygame
