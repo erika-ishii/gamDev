@@ -20,7 +20,8 @@
 #include "Systems/GUISystem.hpp"
 #include "Systems/RenderSystem.h"
 #include "Systems/InputSystem.h"
-
+#include <chrono>
+#include <vector>
 namespace mygame {
 
     /*************************************************************************************
@@ -102,6 +103,25 @@ namespace mygame {
         unsigned exitBtnHoverTex = 0;  //Exit button hover texture.
         unsigned closePopupTex = 0;    //Popup close button texture.
 
+        // --- How To Play textures ---------------------------------------------------------
+        unsigned noteBackgroundTex = 0;    //Note-style popup background.
+        unsigned howToHeaderTex = 0;       //"How To Play" title art.
+        struct HowToRowConfig {
+            unsigned iconTex = 0;
+            unsigned labelTex = 0;
+            int frameCount = 1;
+            int cols = 1;
+            int rows = 1;
+            float fps = 8.0f;
+            float iconAspectFallback = 1.0f;
+            float labelAspectFallback = 1.0f;
+        };
+
+        // --- Animated UI sprites -----------------------------------------------------------
+        std::vector<HowToRowConfig> howToRows;                 //Config-driven how-to rows.
+        float iconAnimTime = 0.0f;                             //Accumulated seconds for animation.
+        std::chrono::steady_clock::time_point lastIconTick{};  //Monotonic timer snapshot.
+        bool iconTimerInitialized = false;                     //Guard to seed the timer once.
 
         // --- Latches ---------------------------------------------------------------------
         bool startLatched = false;     

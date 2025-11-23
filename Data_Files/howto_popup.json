@@ -1,0 +1,74 @@
+{
+  "howToPopup": {
+    "background": {
+      "key": "howto_note_bg",
+      "path": "Textures/UI/How To Play/Note.png"
+    },
+    "header": {
+      "key": "howto_header",
+      "path": "Textures/UI/How To Play/How To Play.png"
+    },
+    "close": {
+      "key": "menu_popup_close",
+      "path": "Textures/UI/How To Play/XButton.png"
+    },
+    "rows": [
+      {
+        "icon": {
+          "key": "howto_wasd_icon",
+          "path": "Textures/UI/How To Play/WASD_Sprite.png"
+        },
+        "label": {
+          "key": "howto_wasd_label",
+          "path": "Textures/UI/How To Play/WASD to move.png"
+        },
+        "frames": 0,
+        "fps": 8.0,
+        "iconAspect": 1.05,
+        "labelAspect": 3.4
+      },
+      {
+        "icon": {
+          "key": "howto_esc_icon",
+          "path": "Textures/UI/How To Play/ESC_Sprite.png"
+        },
+        "label": {
+          "key": "howto_esc_label",
+          "path": "Textures/UI/How To Play/Esc to pause.png"
+        },
+        "frames": 0,
+        "fps": 8.0,
+        "iconAspect": 1.8,
+        "labelAspect": 2.8
+      },
+      {
+        "icon": {
+          "key": "howto_melee_icon",
+          "path": "Textures/UI/How To Play/Left_Mouse_Sprite.png"
+        },
+        "label": {
+          "key": "howto_melee_label",
+          "path": "Textures/UI/How To Play/For melee attack.png"
+        },
+        "frames": 0,
+        "fps": 8.0,
+        "iconAspect": 0.72,
+        "labelAspect": 3.1
+      },
+      {
+        "icon": {
+          "key": "howto_range_icon",
+          "path": "Textures/UI/How To Play/Right_Mouse_Sprite.png"
+        },
+        "label": {
+          "key": "howto_range_label",
+          "path": "Textures/UI/How To Play/For Range attack.png"
+        },
+        "frames": 0,
+        "fps": 8.0,
+        "iconAspect": 0.72,
+        "labelAspect": 3.6
+      }
+    ]
+  }
+}

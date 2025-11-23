@@ -31,10 +31,140 @@
 #include "Resource_Manager/Resource_Manager.h"
 #include <algorithm>
 #include <glm/vec3.hpp>
+#include <filesystem>
+#include <fstream>
+#include <chrono>
+#include <glm/gtc/matrix_transform.hpp>
 #include <initializer_list>
 #include <string>
+#include <vector>
+#include <json.hpp>
 
 using namespace mygame;
+namespace {
+    struct TextureField {
+        std::string key;
+        std::string path;
+    };
+
+    struct HowToRowJson {
+        TextureField icon;
+        TextureField label;
+        int frames = 0;           // 0 = derive from strip size
+        float fps = 8.0f;
+        float iconAspect = 1.0f;
+        float labelAspect = 1.0f;
+        int cols = 0;             // 0 = derive from frames
+        int rows = 0;             // 0 or less = treated as 1 in Init
+    };
+
+    struct HowToPopupJson {
+        TextureField background;
+        TextureField header;
+        TextureField close;
+        std::vector<HowToRowJson> rows;
+    };
+
+    TextureField MakeTextureField(const std::string& key, const std::string& path)
+    {
+        return TextureField{ key, path };
+    }
+
+    HowToPopupJson DefaultHowToPopupConfig()
+    {
+        HowToPopupJson config{};
+        config.background = MakeTextureField("howto_note_bg", "Textures/UI/How To Play/Note.png");
+        config.header = MakeTextureField("howto_header", "Textures/UI/How To Play/How To Play.png");
+        config.close = MakeTextureField("menu_popup_close", "Textures/UI/How To Play/XButton.png");
+
+        config.rows = {
+            { MakeTextureField("howto_wasd_icon", "Textures/UI/How To Play/WASD_Sprite.png"),
+                MakeTextureField("howto_wasd_label", "Textures/UI/How To Play/WASD to move.png"),
+                0, 8.0f, 1.05f, 3.4f },
+            { MakeTextureField("howto_esc_icon", "Textures/UI/How To Play/ESC_Sprite.png"),
+                MakeTextureField("howto_esc_label", "Textures/UI/How To Play/Esc to pause.png"),
+                0, 8.0f, 1.8f, 2.8f },
+            { MakeTextureField("howto_melee_icon", "Textures/UI/How To Play/Left_Mouse_Sprite.png"),
+                MakeTextureField("howto_melee_label", "Textures/UI/How To Play/For melee attack.png"),
+                0, 8.0f, 0.72f, 3.1f },
+            { MakeTextureField("howto_range_icon", "Textures/UI/How To Play/Right_Mouse_Sprite.png"),
+                MakeTextureField("howto_range_label", "Textures/UI/How To Play/For Range attack.png"),
+                0, 8.0f, 0.72f, 3.6f },
+        };
+
+        return config;
+    }
+
+    bool PopulateTextureField(const nlohmann::json& obj, TextureField& out)
+    {
+        if (obj.contains("key")) out.key = obj["key"].get<std::string>();
+        if (obj.contains("path")) out.path = obj["path"].get<std::string>();
+        return obj.contains("key") || obj.contains("path");
+    }
+
+    HowToPopupJson LoadHowToPopupConfig()
+    {
+        HowToPopupJson config = DefaultHowToPopupConfig();
+
+        std::vector<std::filesystem::path> candidates;
+        candidates.emplace_back(Framework::ResolveDataPath("howto_popup.json"));
+        candidates.emplace_back(Framework::ResolveDataPath("HowToPopup.json"));
+        candidates.emplace_back(std::filesystem::path("Data_Files") / "howto_popup.json");
+
+        for (const auto& path : candidates)
+        {
+            std::ifstream stream(path);
+            if (!stream.is_open())
+                continue;
+
+            nlohmann::json j;
+            stream >> j;
+            if (!j.contains("howToPopup"))
+                return config;
+
+            const nlohmann::json& root = j["howToPopup"];
+            if (root.contains("background"))
+                PopulateTextureField(root["background"], config.background);
+            if (root.contains("header"))
+                PopulateTextureField(root["header"], config.header);
+            if (root.contains("close"))
+                PopulateTextureField(root["close"], config.close);
+
+            if (root.contains("rows") && root["rows"].is_array())
+            {
+                std::vector<HowToRowJson> rows;
+                rows.reserve(root["rows"].size());
+                for (size_t i = 0; i < root["rows"].size(); ++i)
+                {
+                    const auto& rowJson = root["rows"][i];
+                    HowToRowJson row = (i < config.rows.size()) ? config.rows[i] : HowToRowJson{};
+                    if (rowJson.contains("icon"))
+                        PopulateTextureField(rowJson["icon"], row.icon);
+                    if (rowJson.contains("label"))
+                        PopulateTextureField(rowJson["label"], row.label);
+                    if (rowJson.contains("frames"))
+                        row.frames = rowJson["frames"].get<int>();
+                    if (rowJson.contains("fps"))
+                        row.fps = rowJson["fps"].get<float>();
+                    if (rowJson.contains("iconAspect"))
+                        row.iconAspect = rowJson["iconAspect"].get<float>();
+                    if (rowJson.contains("labelAspect"))
+                        row.labelAspect = rowJson["labelAspect"].get<float>();
+                    if (rowJson.contains("cols"))
+                        row.cols = rowJson["cols"].get<int>();
+                    if (rowJson.contains("rows"))
+                        row.rows = rowJson["rows"].get<int>();
+                    rows.push_back(row);
+                }
+                if (!rows.empty())
+                    config.rows = std::move(rows);
+            }
+            break;
+        }
+
+        return config;
+    }
+}
 
 /*************************************************************************************
   \brief  Initialize menu textures, build GUI buttons, and set screen size.
@@ -99,13 +229,60 @@ void MainMenuPage::Init(int screenW, int screenH)
         exitBtnPath.c_str());
     exitBtnHoverTex = exitBtnIdleTex;
 
+    const HowToPopupJson popupConfig = LoadHowToPopupConfig();
     const std::string closeBtnPath =
-    Framework::ResolveAssetPath("Textures/UI/Pause Menu/XButton.png").string();
-    closePopupTex = resolveTexture({ "menu_popup_close", "popup_close", "close_x" },
+        Framework::ResolveAssetPath(popupConfig.close.path).string();
+    closePopupTex = resolveTexture({ popupConfig.close.key, "menu_popup_close", "popup_close", "close_x" },
         closeBtnPath.c_str());
+
+    const std::string noteBgPath =
+        Framework::ResolveAssetPath(popupConfig.background.path).string();
+    noteBackgroundTex = resolveTexture({ popupConfig.background.key, "howto_note_bg", "note_bg" }, noteBgPath.c_str());
+
+    const std::string headerPath =
+        Framework::ResolveAssetPath(popupConfig.header.path).string();
+    howToHeaderTex = resolveTexture({ popupConfig.header.key, "howto_header", "howto_title" }, headerPath.c_str());
+
+    howToRows.clear();
+    auto frameCountFromStrip = [](unsigned tex) {
+        int texW = 0, texH = 0;
+        if (tex && gfx::Graphics::getTextureSize(tex, texW, texH) && texH > 0) {
+            const int frames = texW / texH;
+            return std::max(1, frames);
+        }
+        return 1;
+        };
+
+    for (const auto& row : popupConfig.rows)
+    {
+        HowToRowConfig rowCfg{};
+        const std::string iconPath = Framework::ResolveAssetPath(row.icon.path).string();
+        rowCfg.iconTex = resolveTexture({ row.icon.key, "howto_icon" }, iconPath.c_str());
+        const std::string labelPath = Framework::ResolveAssetPath(row.label.path).string();
+        rowCfg.labelTex = resolveTexture({ row.label.key, "howto_label" }, labelPath.c_str());
+
+        const int derivedFrames = (row.frames > 0) ? row.frames : frameCountFromStrip(rowCfg.iconTex);
+        const int derivedCols = (row.cols > 0) ? row.cols : derivedFrames;
+        const int derivedRows = (row.rows > 0) ? row.rows : 1;
+
+        rowCfg.cols = std::max(1, derivedCols);
+        rowCfg.rows = std::max(1, derivedRows);
+
+        const int maxFrames = rowCfg.cols * rowCfg.rows;
+        rowCfg.frameCount = std::clamp(std::max(1, derivedFrames), 1, maxFrames);
+        rowCfg.fps = (row.fps > 0.0f) ? row.fps : 8.0f;
+        rowCfg.iconAspectFallback = row.iconAspect;
+        rowCfg.labelAspectFallback = row.labelAspect;
+        howToRows.push_back(rowCfg);
+    }
+
+    iconAnimTime = 0.0f;
+    iconTimerInitialized = false;
 
     SyncLayout(sw, sh);
 }
+
+
 
 /*************************************************************************************
   \brief  Update interactive state (hover/click) for menu widgets.
@@ -130,31 +307,96 @@ void MainMenuPage::Draw(Framework::RenderSystem* render)
     if (menuBgTex) {
         gfx::Graphics::renderFullscreenTexture(menuBgTex);
     }
-    // 1.5) How To Play popup (background + text)
+    // 1.5) How To Play popup (illustrated note)
     if (showHowToPopup && render) {
         const float overlayAlpha = 0.65f;
-        gfx::Graphics::renderRectangleUI(howToPopup.x, howToPopup.y,
-            howToPopup.w, howToPopup.h,
+        gfx::Graphics::renderRectangleUI(0.f, 0.f,
+            static_cast<float>(sw), static_cast<float>(sh),
             0.f, 0.f, 0.f, overlayAlpha,
             sw, sh);
 
-        const float inset = 28.f;
-        const float textX = howToPopup.x + inset;
-        float textY = howToPopup.y + howToPopup.h - inset;
-        const float lineHeight = 34.f;
-        const float textScale = 0.6f;
-        const glm::vec3 textColor(0.93f, 0.93f, 0.93f);
-        if (render->IsTextReadyHint()) {
-            render->GetTextHint().RenderText("HOW TO PLAY", textX, textY, textScale, textColor);
-            textY -= lineHeight;
-            render->GetTextHint().RenderText("- Move with WASD Keys", textX, textY, textScale, textColor);
-            textY -= lineHeight;
-            render->GetTextHint().RenderText("- Left Click for melee attack", textX, textY, textScale, textColor);
-            textY -= lineHeight;
-            render->GetTextHint().RenderText("- Right Click for range attack", textX, textY, textScale, textColor);
-            textY -= lineHeight;
-            render->GetTextHint().RenderText("- Pause anytime to adjust settings", textX, textY, textScale, textColor);
+        auto textureAspect = [](unsigned tex, float fallback) {
+            int texW = 0, texH = 0;
+            if (tex && gfx::Graphics::getTextureSize(tex, texW, texH) && texH > 0) {
+                return static_cast<float>(texW) / static_cast<float>(texH);
+            }
+            return fallback;
+            };
+
+        // Draw the parchment note background.
+        if (noteBackgroundTex) {
+            gfx::Graphics::renderSpriteUI(noteBackgroundTex, howToPopup.x, howToPopup.y,
+                howToPopup.w, howToPopup.h,
+                1.f, 1.f, 1.f, 1.f,
+                sw, sh);
         }
+        else {
+            gfx::Graphics::renderRectangleUI(howToPopup.x, howToPopup.y,
+                howToPopup.w, howToPopup.h,
+                0.1f, 0.08f, 0.05f, 0.95f,
+                sw, sh);
+        }
+
+        const float headerPadY = howToPopup.h * 0.07f;
+        const float headerHeight = howToPopup.h * 0.16f;
+        const float headerAspect = textureAspect(howToHeaderTex, 2.6f);
+        const float headerWidth = headerHeight * headerAspect;
+        const float headerX = howToPopup.x + (howToPopup.w - headerWidth) * 0.5f;
+        const float headerY = howToPopup.y + howToPopup.h - headerHeight - headerPadY;
+        if (howToHeaderTex) {
+            gfx::Graphics::renderSpriteUI(howToHeaderTex, headerX, headerY,
+                headerWidth, headerHeight,
+                1.f, 1.f, 1.f, 1.f,
+                sw, sh);
+        }
+
+        const float contentTop = headerY - howToPopup.h * 0.04f;
+        const float contentBottom = howToPopup.y + howToPopup.h * 0.08f;
+        const float availableHeight = std::max(0.1f, contentTop - contentBottom);
+        const size_t rowCount = std::max<size_t>(1, howToRows.size());
+        const float rowHeight = availableHeight / static_cast<float>(rowCount);
+
+        const float iconHeight = rowHeight * 0.78f;
+        const float labelHeight = rowHeight * 0.58f;
+        const float iconX = howToPopup.x + howToPopup.w * 0.10f;
+        const float gap = howToPopup.w * 0.10f;
+
+        const glm::mat4 uiOrtho = glm::ortho(0.0f, static_cast<float>(sw), 0.0f, static_cast<float>(sh), -1.0f, 1.0f);
+        gfx::Graphics::setViewProjection(glm::mat4(1.0f), uiOrtho);
+
+        for (size_t i = 0; i < howToRows.size(); ++i) {
+            const float rowBaseY = contentTop - rowHeight * (static_cast<float>(i) + 1.f);
+            const float iconY = rowBaseY + (rowHeight - iconHeight) * 0.5f;
+            const float labelY = rowBaseY + (rowHeight - labelHeight) * 0.5f;
+
+            const int frames = std::max(1, howToRows[i].frameCount);
+            const int cols = std::max(1, howToRows[i].cols);
+            const int rows = std::max(1, howToRows[i].rows);
+            const float iconAspect = textureAspect(howToRows[i].iconTex, howToRows[i].iconAspectFallback) *
+                (static_cast<float>(rows) / static_cast<float>(cols));
+            const float iconW = iconHeight * iconAspect;
+            if (howToRows[i].iconTex) {
+                const float fps = howToRows[i].fps > 0.0f ? howToRows[i].fps : 8.0f;
+                const int frameIndex = (frames > 1)
+                    ? (static_cast<int>(iconAnimTime * fps) % frames)
+                    : 0;
+
+                gfx::Graphics::renderSpriteFrame(howToRows[i].iconTex,
+                    iconX + iconW * 0.5f, iconY + iconHeight * 0.5f,
+                    0.f, iconW, iconHeight,
+                    frameIndex, cols, rows,
+                    1.f, 1.f, 1.f, 1.f);
+            }
+            const float labelAspect = textureAspect(howToRows[i].labelTex, howToRows[i].labelAspectFallback);
+            const float labelW = labelHeight * labelAspect;
+            if (howToRows[i].labelTex) {
+                gfx::Graphics::renderSpriteUI(howToRows[i].labelTex, iconX + iconW + gap, labelY,
+                    labelW, labelHeight,
+                    1.f, 1.f, 1.f, 1.f,
+                    sw, sh);
+            }
+        }
+        gfx::Graphics::resetViewProjection();
     }
 
     // 2) GUI (buttons + any labels handled by the GUI system)
@@ -164,7 +406,7 @@ void MainMenuPage::Draw(Framework::RenderSystem* render)
     //if (render && render->IsTextReadyHint()) {
     //    render->GetTextHint().RenderText("Click a button to continue",
     //        58.f, 108.f, 0.55f, glm::vec3(0.9f, 0.9f, 0.9f));
-//}
+    //}
 }
 
 /*************************************************************************************
@@ -208,7 +450,6 @@ void MainMenuPage::SyncLayout(int screenW, int screenH)
     if (layoutInitialized && screenW == sw && screenH == sh)
         return;
 
-
     sw = screenW;
     sh = screenH;
 
@@ -221,24 +462,35 @@ void MainMenuPage::SyncLayout(int screenW, int screenH)
     const float sizeScale = 0.60f; // Slightly shrink the buttons for breathing room
     const float btnW = 372.f * scaleX * sizeScale;   // Texture-native width
     const float btnH = 109.f * scaleY * sizeScale;   // Texture-native height
-  
+
     const float verticalSpacing = 24.f * scaleY;
     const float blockHeight = btnH * 4.f + verticalSpacing * 3.f;
-   
+
     const float downwardOffset = 180.f * scaleY; // Nudge stack downward a bit
     const float baseY = std::max(0.f, (sh - blockHeight) * 0.5f - downwardOffset);
     const float leftAlignedX = (sw - btnW) * 0.23f; // Lean the stack toward the left
 
-    const float popupW = std::min(sw * 0.55f, 560.f * scaleX);
-    const float popupH = std::min(sh * 0.6f, 360.f * scaleY);
-    const float popupX = std::max(32.f * scaleX, leftAlignedX - 18.f * scaleX);
-    const float popupY = std::min(sh - popupH - 32.f * scaleY, baseY + blockHeight + 32.f * scaleY);
+    const float defaultNoteAspect = 0.75f;
+    int noteW = 0, noteH = 0;
+    const bool hasNoteSize = noteBackgroundTex && gfx::Graphics::getTextureSize(noteBackgroundTex, noteW, noteH);
+    const float noteAspect = (hasNoteSize && noteH > 0) ? static_cast<float>(noteW) / static_cast<float>(noteH) : defaultNoteAspect;
 
-    const float closeSize = 56.f * scaleX;
-    closeBtn = { popupX + popupW - closeSize - 10.f * scaleX,
-        popupY + popupH - closeSize - 10.f * scaleY,
+    float popupW = sw * 0.58f;
+    float popupH = popupW / noteAspect;
+    const float maxPopupH = sh * 0.82f;
+    if (popupH > maxPopupH) {
+        popupH = maxPopupH;
+        popupW = popupH * noteAspect;
+    }
+
+    const float popupX = (sw - popupW) * 0.58f;
+    const float popupY = (sh - popupH) * 0.5f;
+    const float closeSize = std::min(popupW, popupH) * 0.14f;
+    closeBtn = { popupX + popupW - closeSize * 0.85f,
+        popupY + popupH - closeSize * 0.75f,
         closeSize,
-        56.f * scaleY };
+        closeSize
+    };
 
     howToPopup = { popupX, popupY, popupW, popupH };
 
@@ -263,7 +515,13 @@ void MainMenuPage::BuildGui()
 
     gui.AddButton(howToBtn.x, howToBtn.y, howToBtn.w, howToBtn.h, "How To Play",
         howToBtnIdleTex, howToBtnHoverTex,
-        [this]() { howToLatched = true; showHowToPopup = true; BuildGui(); });
+        [this]() {
+            howToLatched = true;
+            showHowToPopup = true;
+            iconAnimTime = 0.0f;
+            iconTimerInitialized = false;
+            BuildGui();
+        });
 
     gui.AddButton(exitBtn.x, exitBtn.y, exitBtn.w, exitBtn.h, "Exit",
         exitBtnIdleTex, exitBtnHoverTex,
