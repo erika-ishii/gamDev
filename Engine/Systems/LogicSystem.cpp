@@ -31,6 +31,7 @@
 #include "Core/PathUtils.h"
 #include "Systems/RenderSystem.h"      // for ScreenToWorld / camera-based world mapping
 #include "Debug/Selection.h"
+#include "Systems/VfxHelpers.h"
 #include <cctype>
 #include <string>
 #include <string_view>
@@ -577,6 +578,8 @@ namespace Framework {
             // Keep references fresh each frame in case of spawns/deletions.
             RefreshLevelReferences();
 
+            std::vector<GOC*> finishedVfx;
+
             auto AdvanceSpriteAnimations = [&](float step)
                 {
                     if (!factory)
@@ -621,11 +624,34 @@ namespace Framework {
                             if (tex)
                                 sprite->texture_id = tex;
                         }
+                        if (IsImpactVfxObject(obj))
+                        {
+                            if (auto* active = anim->ActiveAnimation())
+                            {
+                                if (!active->config.loop && active->name == "impact")
+                                {
+                                    const int total = std::max(1, active->config.totalFrames);
+                                    const int start = std::clamp(active->config.startFrame, 0, total - 1);
+                                    const int end = (active->config.endFrame >= 0)
+                                        ? std::clamp(active->config.endFrame, start, total - 1)
+                                        : total - 1;
+
+                                    const int current = std::clamp(active->currentFrame, 0, total - 1);
+                                    if (current >= end)
+                                        finishedVfx.push_back(obj);
+                                }
+                            }
+                        }
                     }
                 };
 
             AdvanceSpriteAnimations(dt);
 
+            for (auto* vfx : finishedVfx)
+            {
+                if (factory)
+                    factory->Destroy(vfx);
+            }
             // --- Enemy loop: reacts to player's ACTIVE hitbox if both sides are valid ---
             for (auto* obj : levelObjects)
             {

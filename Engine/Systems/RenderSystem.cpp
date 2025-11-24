@@ -1413,7 +1413,7 @@ namespace Framework {
         Resource_Manager::load("ming_attack2", resolveAsset("Textures/Character/Ming_Sprite/2nd_Attack Sprite.png"));
         Resource_Manager::load("ming_attack3", resolveAsset("Textures/Character/Ming_Sprite/3rd_Attack Sprite.png"));
         Resource_Manager::load("ming_knife", resolveAsset("Textures/Character/Ming_Sprite/Knife_Sprite.png"));
-
+        Resource_Manager::load("impact_vfx_sheet", resolveAsset("Textures/Character/Ming_Sprite/ImpactVFX_Sprite.png"));
         idleTex = Resource_Manager::resources_map["ming_idle"].handle;
         runTex = Resource_Manager::resources_map["ming_run"].handle;
         attackTex[0] = Resource_Manager::resources_map["ming_attack1"].handle;
