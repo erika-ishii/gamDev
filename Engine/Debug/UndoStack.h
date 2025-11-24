@@ -22,6 +22,8 @@ namespace mygame
             float x = 0.0f;
             float y = 0.0f;
             float rot = 0.0f;
+            float scaleX = 1.0f;
+            float scaleY = 1.0f;
 
             bool  hasRect = false;
             float width = 1.0f;
@@ -37,11 +39,15 @@ namespace mygame
             float a = 1.0f;
 
             // Visual State: Texture (for Sprite/Render)
-            std::string textureKey; // <--- ADDED
+            std::string textureKey; 
 
             // Visual State: Animation
             bool hasAnim = false;
-            int  animIndex = -1; // -1 means no active animation <--- ADDED
+            int  animIndex = -1; 
+            bool animPlaying = false;
+            std::size_t frameIndex = 0;
+            int sheetFrame = 0;
+            float sheetAccumulator = 0.0f;
         };
 
         TransformSnapshot CaptureTransformSnapshot(const Framework::GOC& object);

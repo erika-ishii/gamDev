@@ -10,6 +10,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include "Debug/UndoStack.h"
 
 #include <algorithm>
 #include <cmath>
@@ -43,6 +44,9 @@ namespace Framework {
 
             GizmoState gGizmoState{};
             EditorTransformMode gCurrentTransformMode = EditorTransformMode::Translate;
+            mygame::editor::TransformSnapshot gUndoStart{};
+            Framework::GOCId gUndoObjectId = 0;
+            bool gHasPendingUndo = false;
             
 
             bool MouseInRect(const ViewportRect& rect, const ImVec2& pos)
@@ -285,6 +289,10 @@ namespace Framework {
 
                 if (gGizmoState.activePart != GizmoPart::None)
                 {
+                    gUndoStart = mygame::editor::CaptureTransformSnapshot(*obj);
+                    gUndoObjectId = obj->GetId();
+                    gHasPendingUndo = true;
+
                     gGizmoState.startPos = position;
                     gGizmoState.startScale = scale;
                     gGizmoState.startRot = rotation;
@@ -357,6 +365,20 @@ namespace Framework {
                 default:
                     break;
                 }
+            }
+
+
+            if (!mouseDown && gHasPendingUndo)
+            {
+                if (FACTORY && gUndoObjectId != 0)
+                {
+                    if (auto* target = FACTORY->GetObjectWithId(gUndoObjectId))
+                    {
+                        mygame::editor::RecordTransformChange(*target, gUndoStart);
+                    }
+                }
+                gHasPendingUndo = false;
+                gUndoObjectId = 0;
             }
 
             const ImU32 translateXColor = ImGui::GetColorU32(ImVec4(0.94f, 0.32f, 0.32f, 1.0f));

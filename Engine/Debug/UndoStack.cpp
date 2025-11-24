@@ -5,7 +5,7 @@
 
 #include "Debug/UndoStack.h"
 #include <vector>
-
+#include <algorithm>
 // Components
 #include "Component/TransformComponent.h"
 #include "Component/RenderComponent.h"
@@ -13,7 +13,6 @@
 #include "Component/SpriteComponent.h"           // Needed for texture key capture
 #include "Component/SpriteAnimationComponent.h"  // Needed for animation state capture/restore
 #include "Resource_Manager/Resource_Manager.h"
-
 #include "Factory/Factory.h"
 #include "Debug/Selection.h"
 
@@ -37,6 +36,44 @@ namespace mygame
             constexpr std::size_t kMaxUndoDepth = 50;
             std::vector<UndoAction> gUndoStack;
 
+            // Push the animation component's current visual state back into the sprite
+           // so rendering uses the active frame (either sprite sheet or frame array).
+            void SyncSpriteWithAnimation(Framework::SpriteAnimationComponent& anim, Framework::GOC& object)
+            {
+                // Always ensure texture handles are valid before sampling.
+                anim.RebindAllTextures();
+
+                // Prime animation UVs so the sampled frame has valid coordinates.
+                anim.Advance(0.016f);
+
+                if (auto* sprite = object.GetComponentType<Framework::SpriteComponent>(
+                    Framework::ComponentTypeId::CT_SpriteComponent))
+                {
+                    if (anim.HasSpriteSheets())
+                    {
+                        auto sample = anim.CurrentSheetSample();
+                        if (!sample.textureKey.empty())
+                            sprite->texture_key = sample.textureKey;
+                        if (sample.texture)
+                            sprite->texture_id = sample.texture;
+                    }
+                    else if (anim.HasFrames())
+                    {
+                        const size_t frameIndex = anim.CurrentFrameIndex();
+                        if (frameIndex < anim.frames.size())
+                        {
+                            const auto& frame = anim.frames[frameIndex];
+                            if (!frame.texture_key.empty())
+                                sprite->texture_key = frame.texture_key;
+
+                            const unsigned tex = anim.ResolveFrameTexture(frameIndex);
+                            if (tex)
+                                sprite->texture_id = tex;
+                        }
+                    }
+                }
+            }
+
             void PushAction(UndoAction action)
             {
                 if (gUndoStack.size() >= kMaxUndoDepth)
@@ -53,6 +90,7 @@ namespace mygame
                         Framework::ComponentTypeId::CT_TransformComponent))
                     {
                         tr->x = state.x; tr->y = state.y; tr->rot = state.rot;
+                        tr->scaleX = state.scaleX; tr->scaleY = state.scaleY;
                     }
                 }
 
@@ -106,25 +144,22 @@ namespace mygame
 
                         // Set the correct animation (this resets currentFrame and accumulator)
                         anim->SetActiveAnimation(targetIndex);
+                        // Restore animation playback flags and frame index for both sprite-sheet
+                       // and legacy frame-array animations so the object resumes animating.
+                        anim->play = state.animPlaying;
+                        anim->SetFrame(state.frameIndex);
 
-                        // CRITICAL FIX: Force Advance/Update. Use 0.02f (approx 1 frame @ 60fps) 
-                        // to force the component to calculate its UV coordinates immediately.
-                        // This prevents the whole sprite sheet from rendering.
-                        anim->Advance(0.02f);
-
-                        // Make sure textures are rebound and push the active animation's
-                       // texture/key back into the sprite component so rendering uses the
-                       // animated sheet instead of a raw PNG.
-                        anim->RebindAllTextures();
-                        if (auto* sprite = object.GetComponentType<Framework::SpriteComponent>(
-                            Framework::ComponentTypeId::CT_SpriteComponent))
+                        if (auto* active = anim->ActiveAnimation())
                         {
-                            auto sample = anim->CurrentSheetSample();
-                            if (!sample.textureKey.empty())
-                                sprite->texture_key = sample.textureKey;
-                            if (sample.texture)
-                                sprite->texture_id = sample.texture;
+                            const int totalFrames = std::max(1, active->config.totalFrames);
+                            const int maxFrame = totalFrames - 1;
+                            active->currentFrame = std::clamp(state.sheetFrame, 0, maxFrame);
+                            active->accumulator = std::max(0.0f, state.sheetAccumulator);
                         }
+                        // Sync the sprite visuals with whichever animation style the component
+                          // is using (sheet or frame-array) so the object does not render the
+                          // full sheet after an undo.
+                        SyncSpriteWithAnimation(*anim, object);
                     }
                 }
                 // If an animation component exists but wasn't captured (e.g. asset edited
@@ -133,17 +168,7 @@ namespace mygame
                 if (auto* anim = object.GetComponentType<Framework::SpriteAnimationComponent>(
                     Framework::ComponentTypeId::CT_SpriteAnimationComponent))
                 {
-                    anim->RebindAllTextures();
-                    auto* sprite = object.GetComponentType<Framework::SpriteComponent>(
-                        Framework::ComponentTypeId::CT_SpriteComponent);
-                    if (sprite)
-                    {
-                        auto sample = anim->CurrentSheetSample();
-                        if (!sample.textureKey.empty())
-                            sprite->texture_key = sample.textureKey;
-                        if (sample.texture)
-                            sprite->texture_id = sample.texture;
-                    }
+                    SyncSpriteWithAnimation(*anim, object);
                 }
             }
 
@@ -159,6 +184,7 @@ namespace mygame
             {
                 state.hasTransform = true;
                 state.x = tr->x; state.y = tr->y; state.rot = tr->rot;
+                state.scaleX = tr->scaleX; state.scaleY = tr->scaleY;
             }
 
             // 2. Capture Rect
@@ -193,6 +219,14 @@ namespace mygame
             {
                 state.hasAnim = true;
                 state.animIndex = anim->ActiveAnimationIndex();
+                state.animPlaying = anim->play;
+                state.frameIndex = anim->CurrentFrameIndex();
+
+                if (auto* active = anim->ActiveAnimation())
+                {
+                    state.sheetFrame = active->currentFrame;
+                    state.sheetAccumulator = active->accumulator;
+                }
             }
 
             return state;
@@ -271,6 +305,15 @@ namespace mygame
                         mygame::SetSelectedObjectId(restored->GetId());
                         // Important: Apply snapshot *after* instantiation
                         ApplyTransformSnapshot(*restored, action.before);
+
+                        // If the restored object owns an animation component, refresh its
+                        // textures and push the current animation frame back into the sprite
+                        // component so animation resumes immediately after undo.
+                        if (auto* anim = restored->GetComponentType<Framework::SpriteAnimationComponent>(
+                            Framework::ComponentTypeId::CT_SpriteAnimationComponent))
+                        {
+                            SyncSpriteWithAnimation(*anim, *restored);
+                        }
                         undoApplied = true;
                         requiresFactorySweep = true;
                     }
