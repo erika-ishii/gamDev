@@ -9,7 +9,7 @@
             as the foundation for positioning and orientation in the game world.
 
  \copyright
-            All content © 2025 DigiPen Institute of Technology Singapore.
+            All content ?2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 
@@ -32,13 +32,14 @@ namespace Framework {
         float x{ 0.0f };   ///< X-coordinate position of the object
         float y{ 0.0f };   ///< Y-coordinate position of the object
         float rot{ 0.0f }; ///< Rotation angle (in radians or degrees depending on convention)
-
+        float scaleX{ 1.0f }; ///< Scale factor along the X axis
+        float scaleY{ 1.0f }; ///< Scale factor along the Y axis
         /*************************************************************************************
           \brief Initializes the transform component.
           \note  Logs the current transform state to the console for debugging purposes.
         *************************************************************************************/
         void initialize() override {
-            std::cout << "[TransformComponent] init: x=" << x << " y=" << y << " rot=" << rot << "\n";
+            std::cout << "[TransformComponent] init: x=" << x << " y=" << y << " rot=" << rot << " sx=" << scaleX << " sy=" << scaleY << "\n";
         }
 
         /*************************************************************************************
@@ -56,10 +57,12 @@ namespace Framework {
           \note  Reads x, y, and rot values if present in the JSON definition.
         *************************************************************************************/
         void Serialize(ISerializer& s) override {
-            // We are already inside { "TransformComponent": { ... } } thanks to the factory
+            
             if (s.HasKey("x"))   StreamRead(s, "x", x);
             if (s.HasKey("y"))   StreamRead(s, "y", y);
             if (s.HasKey("rot")) StreamRead(s, "rot", rot);
+            if (s.HasKey("scale_x")) StreamRead(s, "scale_x", scaleX);
+            if (s.HasKey("scale_y")) StreamRead(s, "scale_y", scaleY);
         }
 
         /*************************************************************************************
@@ -75,6 +78,8 @@ namespace Framework {
             copy->x = x;
             copy->y = y;
             copy->rot = rot;
+            copy->scaleX = scaleX;
+            copy->scaleY = scaleY;
             //Transfer ownership to whoever call clone()
             return copy;
         }

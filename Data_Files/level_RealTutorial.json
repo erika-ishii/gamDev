@@ -300,7 +300,7 @@
           },
           "RigidBodyComponent": {
             "height": 0.20999999344348907,
-            "velocity_x": 1.401298464324817e-45,
+            "velocity_x": -1.401298464324817e-45,
             "velocity_y": -1.401298464324817e-45,
             "width": 0.10000000149011612
           },
@@ -309,8 +309,8 @@
           },
           "TransformComponent": {
             "rot": 0.0,
-            "x": -2.250532865524292,
-            "y": -0.1183333545923233
+            "x": -3.48193621635437,
+            "y": -1.1798820495605469
           }
         },
         "layer": "Default",
@@ -454,7 +454,7 @@
           "TransformComponent": {
             "rot": 0.0,
             "x": 3.3499999046325684,
-            "y": 0.40400001406669617
+            "y": 0.4039999842643738
           }
         },
         "layer": "Default",
@@ -1251,6 +1251,350 @@
         },
         "layer": "Default",
         "name": "Hawker_Store_Animated"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.5,
+            "layer": 15,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.5
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Bucket.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": -0.9690967798233032,
+            "y": -1.664929986000061
+          }
+        },
+        "layer": "Default",
+        "name": "Art_Asset_Front_Of_Player"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.5,
+            "layer": 15,
+            "r": 1.0,
+            "visible": true,
+            "w": -0.5
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Bucket.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": -0.610243022441864,
+            "y": -1.7076386213302612
+          }
+        },
+        "layer": "Default",
+        "name": "Art_Asset_Front_Of_Player"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.5,
+            "layer": 15,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.5
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Cleaning_Sign_01.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": -0.8130207657814026,
+            "y": -1.6748254299163818
+          }
+        },
+        "layer": "Default",
+        "name": "Art_Asset_Front_Of_Player"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.5,
+            "layer": 15,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.5
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Cleaning_Sign_02.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": -0.3833320736885071,
+            "y": -1.7604155540466309
+          }
+        },
+        "layer": "Default",
+        "name": "Art_Asset_Front_Of_Player"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.5,
+            "layer": 15,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.5
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Bin.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": -4.045136451721191,
+            "y": -1.20277738571167
+          }
+        },
+        "layer": "Default",
+        "name": "Art_Asset_Front_Of_Player"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.699999988079071,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.699999988079071
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Cleaning_Cart.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": -4.081040382385254,
+            "y": -0.9190945029258728
+          }
+        },
+        "layer": "Default",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.5,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.5
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Cleaning_Sign_01.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": 2.529512405395508,
+            "y": -0.9401041269302368
+          }
+        },
+        "layer": "Default",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.5,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.5
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Cleaning_Sign_02.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": 2.5274782180786133,
+            "y": -1.2024304866790771
+          }
+        },
+        "layer": "Default",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.5,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.5
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Cleaning_Sign_02.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": -4.055552959442139,
+            "y": -0.05727282911539078
+          }
+        },
+        "layer": "Default",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.5,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.5
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Cleaning_Sign_01.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": -4.0404486656188965,
+            "y": 0.2682291865348816
+          }
+        },
+        "layer": "Default",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.5,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": -0.5
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Bin.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": 2.533161163330078,
+            "y": -0.044270798563957214
+          }
+        },
+        "layer": "Default",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.699999988079071,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": -0.699999988079071
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Cleaning_Cart.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": 2.5748212337493896,
+            "y": 0.278645783662796
+          }
+        },
+        "layer": "Default",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.5,
+            "layer": 0,
+            "r": 1.0,
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Tray_Return.png",
+            "visible": true,
+            "w": 0.5
+          },
+          "RigidBodyComponent": {
+            "height": 0.36000001430511475,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 0.07999999821186066
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": -0.7118062376976013,
+            "y": -1.085937261581421
+          }
+        },
+        "layer": "Default",
+        "name": "Rect"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.5,
+            "layer": 0,
+            "r": 1.0,
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Tray_Return.png",
+            "visible": true,
+            "w": 0.5
+          },
+          "RigidBodyComponent": {
+            "height": 0.36000001430511475,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 0.07999999821186066
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "x": -0.7120000123977661,
+            "y": 0.0572916604578495
+          }
+        },
+        "layer": "Default",
+        "name": "Rect"
       }
     ],
     "name": "level_RealTutorial"

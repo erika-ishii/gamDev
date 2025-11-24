@@ -225,7 +225,9 @@ namespace Framework {
         bool  editorToggleHeld = false;  //!< Debounce toggle key (F10).
         bool  fullscreenToggleHeld = false;  //!< Debounce fullscreen toggle (F11).
         bool  deleteKeyHeld = false;  //!< Debounce Delete shortcut for removing objects.
-
+        bool  translateKeyHeld = false; //!< Debounce translate gizmo hotkey (T).
+        bool  rotateKeyHeld = false;    //!< Debounce rotate gizmo hotkey (R).
+        bool  scaleKeyHeld = false;     //!< Debounce scale gizmo hotkey (S).
         bool  showPhysicsHitboxes = true;   //!< Debug: draw physics hitboxes.
 
         // --- Mouse drag selection --------------------------------------------------------

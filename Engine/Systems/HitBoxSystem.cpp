@@ -414,8 +414,7 @@ namespace Framework
                     // Trigger knockback animation on the enemy if it exists.
                     PlayAnimationIfAvailable(obj, "knockback");
                 }
-
-                hit = true;
+                if (validTargetHit) { hit = true; }
                 break;
             }
 

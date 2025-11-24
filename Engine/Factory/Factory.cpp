@@ -315,7 +315,7 @@ namespace Framework {
         switch (component.GetTypeId()) {
         case ComponentTypeId::CT_TransformComponent: {
             auto const& tr = static_cast<TransformComponent const&>(component);
-            return json{ {"x", tr.x}, {"y", tr.y}, {"rot", tr.rot} };
+            return json{ {"x", tr.x}, {"y", tr.y}, {"rot", tr.rot}, {"scale_x", tr.scaleX}, {"scale_y", tr.scaleY} };
         }
         case ComponentTypeId::CT_RenderComponent: {
             auto const& rc = static_cast<RenderComponent const&>(component);

@@ -135,6 +135,9 @@ namespace Framework {
             master_copies["Art_Asset_Forward"].reset(artassetForward);
         }
        
+        if (auto* artassetFrontOfPlayer = FACTORY->CreateTemplate(resolveData("artassetsFrontOfPlayer.json"))) {
+            master_copies["Art_Asset_Front_Of_Player"].reset(artassetFrontOfPlayer);
+        }
     }
 
     /*************************************************************************************
