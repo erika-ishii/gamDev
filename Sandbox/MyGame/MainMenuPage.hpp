@@ -143,6 +143,7 @@ namespace mygame {
         RectF closeBtn{ 0.f, 0.f, 56.f, 56.f };        //Close button rectangle.
         bool layoutInitialized = false;
         void BuildGui();
+        void BuildGui(float x, float bottomY, float w, float h, float spacing);
     };
 
 } // namespace mygame

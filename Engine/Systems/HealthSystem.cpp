@@ -11,8 +11,6 @@ namespace Framework
 {
     namespace
     {
-
-
         /*****************************************************************************************
          \brief  Find the index of a named animation on a SpriteAnimationComponent (case-insensitive).
 
@@ -158,9 +156,9 @@ namespace Framework
         : window(&win)
     {
     }
+
     void HealthSystem::RefreshTrackedObjects()
     {
-  
         for (auto& [id, goc] : FACTORY->Objects())
         {
             if (!goc)
@@ -177,14 +175,13 @@ namespace Framework
             if (!(enemyHealth || playerHealth))
                 continue;
 
-            // Skip if we’re already tracking this object
+            // Skip if we're already tracking this object
             if (std::find(gameObjectIds.begin(), gameObjectIds.end(), id) != gameObjectIds.end())
                 continue;
 
             gameObjectIds.push_back(id);
         }
     }
-
 
     void HealthSystem::Initialize()
     {
@@ -271,32 +268,69 @@ namespace Framework
                     }
 
                     // ---------------------------------------------------------
-                    // Player health handling (instant destroy when health <= 0)
+                    // Player health handling (plays death animation before destroy)
                     // ---------------------------------------------------------
                     if (auto* playerHealth =
                         goc->GetComponentType<PlayerHealthComponent>(
                             ComponentTypeId::CT_PlayerHealthComponent))
                     {
-                        if (playerHealth->isInvulnerable)
+                        constexpr std::string_view deathAnimName = "death";
+                        auto* anim = goc->GetComponentType<SpriteAnimationComponent>(
+                            ComponentTypeId::CT_SpriteAnimationComponent);
+
+                        if (!playerHealth->isDead)
                         {
-                            playerHealth->invulnTime -= dt;
-                            if (playerHealth->invulnTime <= 0.0f)
+                            if (playerHealth->isInvulnerable)
                             {
-                                playerHealth->invulnTime = 0.0f;
-                                playerHealth->isInvulnerable = false;
-                                std::cout << "[PlayerHealthComponent] Invulnerability ended.\n";
+                                playerHealth->invulnTime -= dt;
+                                if (playerHealth->invulnTime <= 0.0f)
+                                {
+                                    playerHealth->invulnTime = 0.0f;
+                                    playerHealth->isInvulnerable = false;
+                                    std::cout << "[PlayerHealthComponent] Invulnerability ended.\n";
+                                }
                             }
                         }
 
                         if (playerHealth->playerHealth <= 0)
                         {
-                            FACTORY->Destroy(goc);
+                            float& timer = deathTimers[id];
 
-                            std::cout << "[HealthSystem] Player "
-                                << goc->GetId()
-                                << " destroyed.\n";
-                            return true; // remove from tracked IDs
+                            if (!playerHealth->isDead)
+                            {
+                                playerHealth->isDead = true;
+
+                                PlayAnimationIfAvailable(goc, deathAnimName);
+                                timer = std::max(AnimationDuration(anim, deathAnimName), 0.2f);
+                            }
+                            else
+                            {
+                                timer = std::max(0.0f, timer - dt);
+                            }
+
+                            const bool hasAnimation = anim && FindAnimationIndex(anim, deathAnimName) >= 0;
+                            const bool animationFinished = hasAnimation
+                                ? IsAnimationFinished(anim, deathAnimName)
+                                : true; // if no animation, rely on timer only
+
+                            if (timer <= 0.0f && animationFinished)
+                            {
+                                FACTORY->Destroy(goc);
+                                deathTimers.erase(id);
+
+                                std::cout << "[HealthSystem] Player "
+                                    << goc->GetId()
+                                    << " destroyed.\n";
+                                return true; // remove from tracked IDs
+                            }
+
+                            // Keep player around until animation finishes
+                            return false;
                         }
+
+                        // Player is alive; clear any stale death timers / flags.
+                        deathTimers.erase(id);
+                        playerHealth->isDead = false;
                     }
 
                     // Keep tracking this ID.

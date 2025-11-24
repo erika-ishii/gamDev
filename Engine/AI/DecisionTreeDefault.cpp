@@ -69,6 +69,7 @@ namespace Framework
          *****************************************************************************************/
         void PlayAnimationIfAvailable(GOC* goc, std::string_view name, bool forceRestart = false)
         {
+            (void)forceRestart;
             if (!goc)
                 return;
 
@@ -324,7 +325,6 @@ namespace Framework
                 float distance = std::sqrt(dx * dx + dy * dy);
 
                 const float speed = 1.0f;
-                const float baseDuration = 0.15f;
                 const float accel = 2.0f;
 
                 // Smoothly move towards the player

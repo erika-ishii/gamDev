@@ -40,6 +40,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <iostream>
+#include <Debug/UndoStack.h>
 
 namespace Framework {
 
@@ -67,11 +68,13 @@ namespace Framework {
     {
         switch (state)
         {
-        case AnimState::Idle:    return idleConfig;
-        case AnimState::Run:     return runConfig;
-        case AnimState::Attack1: return attackConfigs[0];
-        case AnimState::Attack2: return attackConfigs[1];
-        case AnimState::Attack3: return attackConfigs[2];
+        case AnimState::Idle:      return idleConfig;
+        case AnimState::Run:       return runConfig;
+        case AnimState::Attack1:   return attackConfigs[0];
+        case AnimState::Attack2:   return attackConfigs[1];
+        case AnimState::Attack3:   return attackConfigs[2];
+        case AnimState::Knockback: return knockbackConfig;
+        case AnimState::Death:     return deathConfig;
         }
         // Fallback
         return idleConfig;
@@ -148,10 +151,12 @@ namespace Framework {
     {
         switch (state)
         {
-        case AnimState::Run:     return AnimationInfo::Mode::Run;
-        case AnimState::Attack1: return AnimationInfo::Mode::Attack1;
-        case AnimState::Attack2: return AnimationInfo::Mode::Attack2;
-        case AnimState::Attack3: return AnimationInfo::Mode::Attack3;
+        case AnimState::Run:       return AnimationInfo::Mode::Run;
+        case AnimState::Attack1:   return AnimationInfo::Mode::Attack1;
+        case AnimState::Attack2:   return AnimationInfo::Mode::Attack2;
+        case AnimState::Attack3:   return AnimationInfo::Mode::Attack3;
+        case AnimState::Knockback: return AnimationInfo::Mode::Knockback;
+        case AnimState::Death:     return AnimationInfo::Mode::Death;
         case AnimState::Idle:
         default:                 return AnimationInfo::Mode::Idle;
         }
@@ -161,10 +166,12 @@ namespace Framework {
     {
         switch (state)
         {
-        case AnimState::Run:     return "run";
-        case AnimState::Attack1: return "attack1";
-        case AnimState::Attack2: return "attack2";
-        case AnimState::Attack3: return "attack3";
+        case AnimState::Run:       return "run";
+        case AnimState::Attack1:   return "attack1";
+        case AnimState::Attack2:   return "attack2";
+        case AnimState::Attack3:   return "attack3";
+        case AnimState::Knockback: return "knockback";
+        case AnimState::Death:     return "death";
         case AnimState::Idle:
         default:                 return "idle";
         }
@@ -340,6 +347,8 @@ namespace Framework {
         if (!IsAlive(collisionTarget))
             collisionTarget = nullptr;
 
+        gateController.SetPlayer(player);
+
         auto nameEqualsIgnoreCase = [](const std::string& lhs, std::string_view rhs)
             {
                 if (lhs.size() != rhs.size())
@@ -366,6 +375,8 @@ namespace Framework {
             }
         }
 
+        gateController.RefreshGateReference(levelObjects);
+
         if (player && !captured)
         {
             CachePlayerSize();
@@ -384,8 +395,28 @@ namespace Framework {
         {
             animComp = player->GetComponentType<SpriteAnimationComponent>(ComponentTypeId::CT_SpriteAnimationComponent);
         }
+        auto* rb = IsAlive(player)
+            ? player->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent)
+            : nullptr;
+        auto* health = IsAlive(player)
+            ? player->GetComponentType<PlayerHealthComponent>(ComponentTypeId::CT_PlayerHealthComponent)
+            : nullptr;
+
+        if (rb && rb->knockbackTime > 0.0f)
+            rb->knockbackTime = std::max(0.0f, rb->knockbackTime - dt);
+
+        const bool playerDead = health && health->playerHealth <= 0;
+
+        if (playerDead)
+        {
+            SetAnimState(AnimState::Death);
+        }
+        else if (rb && rb->knockbackTime > 0.0f)
+        {
+            SetAnimState(AnimState::Knockback);
+        }
         // If we are in an attack animation, let it run to completion.
-        if (IsAttackState(animState))
+        else if (IsAttackState(animState))
         {
             attackTimer -= dt;
             if (attackTimer <= 0.f)
@@ -482,6 +513,7 @@ namespace Framework {
 
         RegisterComponent(AudioComponent);
         FACTORY = factory.get();
+        gateController.SetFactory(factory.get());
         LoadPrefabs();
 
  
@@ -738,13 +770,56 @@ namespace Framework {
             }
 
             // Rotation controls (Q/E), clamped to [-pi, +pi], R to reset.
-            if (targetTr)
+
+            if (targetTr && targetId != 0)
             {
-                if (input.IsKeyPressed(GLFW_KEY_Q)) targetTr->rot += rotSpeed * dt * accel;
-                if (input.IsKeyPressed(GLFW_KEY_E)) targetTr->rot -= rotSpeed * dt * accel;
+                // Static state to track dragging/holding
+                static bool isRotating = false;
+                static mygame::editor::TransformSnapshot rotationSnapshot;
+
+                // Check Start of Rotation (Capture State)
+                bool qPressed = input.IsKeyPressed(GLFW_KEY_Q);
+                bool ePressed = input.IsKeyPressed(GLFW_KEY_E);
+
+                if (!isRotating && (qPressed || ePressed))
+                {
+                    if (auto* obj = factory->GetObjectWithId(targetId))
+                    {
+                        rotationSnapshot = mygame::editor::CaptureTransformSnapshot(*obj);
+                        isRotating = true;
+                    }
+                }
+
+                // Apply Rotation Smoothly using IsKeyHeld (fixes lag)
+                bool qHeld = input.IsKeyHeld(GLFW_KEY_Q);
+                bool eHeld = input.IsKeyHeld(GLFW_KEY_E);
+
+                if (qHeld) targetTr->rot += rotSpeed * dt * accel;
+                if (eHeld) targetTr->rot -= rotSpeed * dt * accel;
+
+                // Clamp rotation to keep values sane
                 if (targetTr->rot > 3.14159265f)  targetTr->rot -= 6.28318530f;
                 if (targetTr->rot < -3.14159265f) targetTr->rot += 6.28318530f;
-                if (input.IsKeyPressed(GLFW_KEY_R)) targetTr->rot = 0.f;
+                // Check End of Rotation (Record Undo)
+                if (isRotating && !qHeld && !eHeld)
+                {
+                    if (auto* obj = factory->GetObjectWithId(targetId))
+                    {
+                        mygame::editor::RecordTransformChange(*obj, rotationSnapshot);
+                    }
+                    isRotating = false;
+                }
+
+                // Reset Rotation (R Key) - Now supports Undo!
+                if (input.IsKeyPressed(GLFW_KEY_R))
+                {
+                    if (auto* obj = factory->GetObjectWithId(targetId))
+                    {
+                        auto before = mygame::editor::CaptureTransformSnapshot(*obj);
+                        targetTr->rot = 0.f;
+                        mygame::editor::RecordTransformChange(*obj, before);
+                    }
+                }
             }
 
             // Scaling controls (Z/X), clamped; R resets scale and size. Works for selected object or player.
@@ -957,6 +1032,13 @@ namespace Framework {
             // Finally, advance the main character animation (idle/run/attack combo)
             UpdateAnimation(dt, wantRun);
 
+            gateController.UpdateGateUnlockState();
+            if (gateController.ShouldTransitionOnPlayerContact(pendingLevelTransition))
+            {
+                pendingLevelTransition = true;
+                LoadLevelAndResetState(resolveData("RealLevel1.json"));
+            }
+
             // Collision debug info (player vs a target rect)
             collisionInfo.playerValid = false;
             collisionInfo.targetValid = false;
@@ -982,19 +1064,12 @@ namespace Framework {
             }, "LogicSystem::Update");
     }
 
-    /*****************************************************************************************
-      \brief Reload the current level (or a default one) and reset cached state.
-             - Destroys all live objects, recreates the level, clears cached pointers/state,
-               then refreshes references and caches player size again.
-    *****************************************************************************************/
-    void LogicSystem::ReloadLevel()
+ 
+    void LogicSystem::LoadLevelAndResetState(const std::filesystem::path& levelPath)
     {
         if (!factory)
             return;
 
-        std::filesystem::path levelPath = factory->LastLevelPath();
-        if (levelPath.empty())
-            levelPath = resolveData("level.json");
 
 
         for (auto const& [id, obj] : factory->Objects())
@@ -1010,6 +1085,7 @@ namespace Framework {
         player = nullptr;
         collisionTarget = nullptr;
         scaleStates.clear();
+        pendingLevelTransition = false;
         captured = false;
         rectScale = 1.f;
         rectBaseW = 0.5f;
@@ -1021,9 +1097,28 @@ namespace Framework {
         comboStep = 0;
         animInfo = AnimationInfo{};
         collisionInfo = CollisionInfo{};
+        gateController.Reset();
+        gateController.SetPlayer(nullptr);
 
         RefreshLevelReferences();
         CachePlayerSize();
+    }
+
+    /*****************************************************************************************
+   \brief Reload the current level (or a default one) and reset cached state.
+          - Destroys all live objects, recreates the level, clears cached pointers/state,
+            then refreshes references and caches player size again.
+ *****************************************************************************************/
+    void LogicSystem::ReloadLevel()
+    {
+        if (!factory)
+            return;
+
+        std::filesystem::path levelPath = factory->LastLevelPath();
+        if (levelPath.empty())
+            levelPath = resolveData("level.json");
+
+        LoadLevelAndResetState(levelPath);
     }
 
     /*****************************************************************************************
@@ -1036,6 +1131,8 @@ namespace Framework {
         levelObjects.clear();
         collisionTarget = nullptr;
         player = nullptr;
+        gateController.Reset();
+        gateController.SetFactory(nullptr);
 
         if (factory) {
             factory->Shutdown();

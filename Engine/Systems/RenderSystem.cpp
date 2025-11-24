@@ -317,6 +317,29 @@ namespace Framework {
             std::error_code ec;
             return fs::exists(candidate, ec) && fs::is_directory(candidate, ec);
             };
+        auto pick_newest = [](const std::vector<fs::path>& candidates)
+            {
+                fs::file_time_type newest = fs::file_time_type::min();
+                fs::path best;
+
+                for (const auto& c : candidates)
+                {
+                    std::error_code ec;
+                    const auto ts = fs::last_write_time(c, ec);
+                    if (ec)
+                        continue;
+
+                    if (ts > newest)
+                    {
+                        newest = ts;
+                        best = c;
+                    }
+                }
+
+                return best.empty() ? (candidates.empty() ? fs::path{} : candidates.front()) : best;
+            };
+
+        std::vector<fs::path> candidates;
 
         std::vector<fs::path> roots{ fs::current_path(), Framework::GetExecutableDir() };
 
@@ -334,7 +357,7 @@ namespace Framework {
                 {
                     std::error_code canonicalEc;
                     auto canonical = fs::weakly_canonical(candidate, canonicalEc);
-                    return canonicalEc ? candidate : canonical;
+                    candidates.emplace_back(canonicalEc ? candidate : canonical);
                 }
                 probe = probe.parent_path();
             }
@@ -354,11 +377,10 @@ namespace Framework {
             {
                 std::error_code canonicalEc;
                 auto canonical = fs::weakly_canonical(candidate, canonicalEc);
-                return canonicalEc ? candidate : canonical;
+                candidates.emplace_back(canonicalEc ? candidate : canonical);
             }
         }
-
-        return {};
+        return pick_newest(candidates);
     }
 
     /*************************************************************************************
@@ -380,6 +402,9 @@ namespace Framework {
             return attackTex[1] ? attackTex[1] : idleTex;
         case Mode::Attack3:
             return attackTex[2] ? attackTex[2] : idleTex;
+        //case Mode::Knockback:
+        //case Mode::Death:
+            return idleTex ? idleTex : playerTex;
         case Mode::Idle:
         default:
             return idleTex ? idleTex : playerTex;

@@ -47,6 +47,7 @@ namespace Framework
         int playerMaxhealth{ 100 };     ///< Maximum health value of the player.
         bool isInvulnerable = false;
         float invulnTime = 0.0f;
+        bool isDead = false;
 
         /*************************************************************************************
           \brief Initializes the component.
@@ -89,6 +90,9 @@ namespace Framework
             auto copy = std::make_unique<PlayerHealthComponent>();
             copy->playerHealth = playerHealth;
             copy->playerMaxhealth = playerMaxhealth;
+            copy->isInvulnerable = isInvulnerable;
+            copy->invulnTime = invulnTime;
+            copy->isDead = isDead;
             return copy;
         }
 

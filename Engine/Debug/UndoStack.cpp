@@ -6,12 +6,16 @@
 #include "Debug/UndoStack.h"
 #include <vector>
 #include <algorithm>
+
 // Components
 #include "Component/TransformComponent.h"
 #include "Component/RenderComponent.h"
 #include "Component/CircleRenderComponent.h"
-#include "Component/SpriteComponent.h"           // Needed for texture key capture
-#include "Component/SpriteAnimationComponent.h"  // Needed for animation state capture/restore
+#include "Component/SpriteComponent.h"           
+#include "Component/SpriteAnimationComponent.h"  
+// PHYSICS FIX: Include RigidBodyComponent so we can sync physics during undo
+#include "Physics/Dynamics/RigidBodyComponent.h"
+
 #include "Resource_Manager/Resource_Manager.h"
 #include "Factory/Factory.h"
 #include "Debug/Selection.h"
@@ -37,7 +41,7 @@ namespace mygame
             std::vector<UndoAction> gUndoStack;
 
             // Push the animation component's current visual state back into the sprite
-           // so rendering uses the active frame (either sprite sheet or frame array).
+            // so rendering uses the active frame (either sprite sheet or frame array).
             void SyncSpriteWithAnimation(Framework::SpriteAnimationComponent& anim, Framework::GOC& object)
             {
                 // Always ensure texture handles are valid before sampling.
@@ -89,8 +93,24 @@ namespace mygame
                     if (auto* tr = object.GetComponentType<Framework::TransformComponent>(
                         Framework::ComponentTypeId::CT_TransformComponent))
                     {
-                        tr->x = state.x; tr->y = state.y; tr->rot = state.rot;
-                        tr->scaleX = state.scaleX; tr->scaleY = state.scaleY;
+                        // --- MAKE SURE THIS LINE IS HERE ---
+                        tr->x = state.x;
+                        tr->y = state.y;
+                        tr->rot = state.rot; 
+                        tr->scaleX = state.scaleX;
+                        tr->scaleY = state.scaleY;
+                        // -----------------------------------
+
+                        // Physics Fix (Ensures object stops moving after undo)
+                        if (auto* rb = object.GetComponentType<Framework::RigidBodyComponent>(
+                            Framework::ComponentTypeId::CT_RigidBodyComponent))
+                        {
+
+                            // Stop the object from moving so it stays at the undone position
+                            rb->velX = 0.0f;
+                            rb->velY = 0.0f;
+                        }
+                        // -----------------------------
                     }
                 }
 
@@ -139,16 +159,24 @@ namespace mygame
                     if (auto* anim = object.GetComponentType<Framework::SpriteAnimationComponent>(
                         Framework::ComponentTypeId::CT_SpriteAnimationComponent))
                     {
-                        // Ensure a valid index. If snapshot was < 0, default to 0 (Idle).
+                        // ANIMATION FIX: If the recreated object is missing animations (due to JSON save failure),
+                        // restore them from the memory snapshot.
+                        if (anim->animations.empty() && !state.sheetAnimations.empty()) {
+                            anim->animations = state.sheetAnimations;
+                            anim->RebindAllTextures();
+                        }
+
+                        // Ensure a valid index. If snapshot was < 0, default to 0.
                         int targetIndex = (state.animIndex < 0) ? 0 : state.animIndex;
 
-                        // Set the correct animation (this resets currentFrame and accumulator)
+                        // Set the correct animation
                         anim->SetActiveAnimation(targetIndex);
-                        // Restore animation playback flags and frame index for both sprite-sheet
-                       // and legacy frame-array animations so the object resumes animating.
+
+                        // Restore animation playback flags and frame index
                         anim->play = state.animPlaying;
                         anim->SetFrame(state.frameIndex);
 
+                        // Restore runtime sheet values (Current Frame & Accumulator)
                         if (auto* active = anim->ActiveAnimation())
                         {
                             const int totalFrames = std::max(1, active->config.totalFrames);
@@ -156,16 +184,15 @@ namespace mygame
                             active->currentFrame = std::clamp(state.sheetFrame, 0, maxFrame);
                             active->accumulator = std::max(0.0f, state.sheetAccumulator);
                         }
-                        // Sync the sprite visuals with whichever animation style the component
-                          // is using (sheet or frame-array) so the object does not render the
-                          // full sheet after an undo.
+
+                        // Sync the sprite visuals immediately
                         SyncSpriteWithAnimation(*anim, object);
                     }
                 }
-                // If an animation component exists but wasn't captured (e.g. asset edited
-              // between deletion and undo), still refresh bindings so sprites use the
-              // sheet UVs instead of the full texture.
-                if (auto* anim = object.GetComponentType<Framework::SpriteAnimationComponent>(
+
+                // If an animation component exists but wasn't fully captured/restored above,
+                // ensure it is at least bound correctly.
+                else if (auto* anim = object.GetComponentType<Framework::SpriteAnimationComponent>(
                     Framework::ComponentTypeId::CT_SpriteAnimationComponent))
                 {
                     SyncSpriteWithAnimation(*anim, object);
@@ -222,6 +249,9 @@ namespace mygame
                 state.animPlaying = anim->play;
                 state.frameIndex = anim->CurrentFrameIndex();
 
+                // Capture structural data (Fixes "Missing Animations" bug)
+                state.sheetAnimations = anim->animations;
+
                 if (auto* active = anim->ActiveAnimation())
                 {
                     state.sheetFrame = active->currentFrame;
@@ -232,7 +262,6 @@ namespace mygame
             return state;
         }
 
-        // ... (RecordTransformChange, RecordObjectCreated, RecordObjectDeleted, UndoLastAction, CanUndo, StackDepth, StackCapacity functions remain unchanged)
         void RecordTransformChange(const Framework::GOC& object, const TransformSnapshot& before)
         {
             if (!Framework::FACTORY) return;
@@ -303,7 +332,7 @@ namespace mygame
                     if (restored)
                     {
                         mygame::SetSelectedObjectId(restored->GetId());
-                        // Important: Apply snapshot *after* instantiation
+                        // Important: Apply snapshot *after* instantiation to override default/missing values
                         ApplyTransformSnapshot(*restored, action.before);
 
                         // If the restored object owns an animation component, refresh its
@@ -336,5 +365,8 @@ namespace mygame
         bool CanUndo() { return !gUndoStack.empty(); }
         std::size_t StackDepth() { return gUndoStack.size(); }
         std::size_t StackCapacity() { return kMaxUndoDepth; }
+
+        void InitUndoSystem() { gUndoStack.reserve(kMaxUndoDepth); }
+        void ShutdownUndoSystem() { gUndoStack.clear(); }
     }
 }

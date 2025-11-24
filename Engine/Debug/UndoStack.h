@@ -1,62 +1,76 @@
 /*********************************************************************************************
  \file      UndoStack.h
- \brief     Lightweight editor undo system for transforms and object create/delete.
+ \brief     Interface for the editor undo/redo system.
 *********************************************************************************************/
-
 #pragma once
 
-#include <cstddef>
-#include <string> // Required for textureKey
-#include "Factory/Factory.h"
+#include "Core/Core.hpp"
+#include "Component/SpriteAnimationComponent.h" // Required for SpriteSheetAnimation struct
+#include <vector>
+#include <string>
 
 namespace mygame
 {
     namespace editor
     {
-        /**
-         * \brief Minimal snapshot of an object's spatial/visual data used for cheap transform undo.
-         */
+        // Snapshot of a game object's visual properties at a specific point in time.
         struct TransformSnapshot
         {
-            bool  hasTransform = false;
-            float x = 0.0f;
-            float y = 0.0f;
-            float rot = 0.0f;
-            float scaleX = 1.0f;
-            float scaleY = 1.0f;
+            // Transform
+            bool hasTransform = false;
+            float x = 0.f, y = 0.f, rot = 0.f;
+            float scaleX = 1.f, scaleY = 1.f;
 
-            bool  hasRect = false;
-            float width = 1.0f;
-            float height = 1.0f;
+            // Render / Rect
+            bool hasRect = false;
+            float width = 100.f, height = 100.f;
+            float r = 1.f, g = 1.f, b = 1.f, a = 1.f;
+            std::string textureKey;
 
-            bool  hasCircle = false;
-            float radius = 0.0f;
+            // Circle
+            bool hasCircle = false;
+            float radius = 50.f;
 
-            // Visual State: Color (for Render/Circle)
-            float r = 1.0f;
-            float g = 1.0f;
-            float b = 1.0f;
-            float a = 1.0f;
-
-            // Visual State: Texture (for Sprite/Render)
-            std::string textureKey; 
-
-            // Visual State: Animation
+            // Animation
             bool hasAnim = false;
-            int  animIndex = -1; 
-            bool animPlaying = false;
-            std::size_t frameIndex = 0;
+            int animIndex = 0;
+            bool animPlaying = true;
+
+            // Legacy Frame Array State
+            size_t frameIndex = 0;
+
+            // Sprite Sheet State (RUNTIME FIX)
             int sheetFrame = 0;
             float sheetAccumulator = 0.0f;
+
+            // DATA FIX: Store the actual list of animations. 
+            // This ensures that if JSON serialization fails to save the config, 
+            // the undo system can still restore the animations.
+            std::vector<Framework::SpriteAnimationComponent::SpriteSheetAnimation> sheetAnimations;
         };
 
-        TransformSnapshot CaptureTransformSnapshot(const Framework::GOC& object);
+        // Initialize the Undo System
+        void InitUndoSystem();
+
+        // Record a change in transform (Move/Rotate/Scale)
         void RecordTransformChange(const Framework::GOC& object, const TransformSnapshot& before);
+
+        // Record a newly created object
         void RecordObjectCreated(const Framework::GOC& object);
+
+        // Record an object being deleted
         void RecordObjectDeleted(const Framework::GOC& object);
+
+        // Helper to capture the current state of an object
+        TransformSnapshot CaptureTransformSnapshot(const Framework::GOC& object);
+
+        // Execute Undo
         bool UndoLastAction();
+
+        // Status queries
         bool CanUndo();
         std::size_t StackDepth();
         std::size_t StackCapacity();
+        void ShutdownUndoSystem();
     }
 }

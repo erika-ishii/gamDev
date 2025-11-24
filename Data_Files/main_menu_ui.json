@@ -1,0 +1,48 @@
+{
+  "background": {
+    "key": "menu_bg",
+    "path": "Textures/UI/Start Menu/Start Menu Screen.jpg"
+  },
+  "layout": {
+    "button_width": 372.0,
+    "button_height": 109.0,
+    "vertical_spacing": 24.0,
+    "scale_factor": 0.60,
+    "left_align_pct": 0.23,
+    "downward_offset": 180.0
+  },
+  "buttons": [
+    {
+      "label": "Start",
+      "action": "start",
+      "texture": {
+        "key": "menu_start_btn",
+        "path": "Textures/UI/Start Menu/Button_Start.PNG"
+      }
+    },
+    {
+      "label": "Options",
+      "action": "options",
+      "texture": {
+        "key": "menu_options_btn",
+        "path": "Textures/UI/Start Menu/Button_Options.PNG"
+      }
+    },
+    {
+      "label": "How To Play",
+      "action": "howto",
+      "texture": {
+        "key": "menu_howto_btn",
+        "path": "Textures/UI/Start Menu/Button_How To Play.png"
+      }
+    },
+    {
+      "label": "Exit",
+      "action": "exit",
+      "texture": {
+        "key": "menu_exit_btn",
+        "path": "Textures/UI/Start Menu/Button_Quit.PNG"
+      }
+    }
+  ]
+}

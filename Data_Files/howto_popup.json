@@ -22,7 +22,6 @@
           "key": "howto_wasd_label",
           "path": "Textures/UI/How To Play/WASD to move.png"
         },
-        "frames": 0,
         "fps": 8.0,
         "iconAspect": 1.05,
         "labelAspect": 3.4
@@ -36,7 +35,6 @@
           "key": "howto_esc_label",
           "path": "Textures/UI/How To Play/Esc to pause.png"
         },
-        "frames": 0,
         "fps": 8.0,
         "iconAspect": 1.8,
         "labelAspect": 2.8
@@ -50,7 +48,6 @@
           "key": "howto_melee_label",
           "path": "Textures/UI/How To Play/For melee attack.png"
         },
-        "frames": 0,
         "fps": 8.0,
         "iconAspect": 0.72,
         "labelAspect": 3.1
@@ -64,7 +61,6 @@
           "key": "howto_range_label",
           "path": "Textures/UI/How To Play/For Range attack.png"
         },
-        "frames": 0,
         "fps": 8.0,
         "iconAspect": 0.72,
         "labelAspect": 3.6

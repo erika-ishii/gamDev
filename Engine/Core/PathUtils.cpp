@@ -80,6 +80,15 @@ namespace Framework
                 && std::filesystem::is_directory(candidate, ec);
         }
 
+        bool HasSiblingDirectory(const std::filesystem::path& root, const char* sibling)
+        {
+            std::error_code ec;
+            auto candidate = root.parent_path() / sibling;
+            return std::filesystem::exists(candidate, ec)
+                && std::filesystem::is_directory(candidate, ec);
+        }
+
+
         int ScoreAssetsRoot(const std::filesystem::path& root)
         {
             int score = 0;
@@ -87,6 +96,23 @@ namespace Framework
                 score += 2; // Textures are the main bulk of visual assets
             if (HasSubdirectory(root, "Fonts"))
                 score += 1;
+            return score;
+        }
+
+        int ScoreDataFilesRoot(const std::filesystem::path& root)
+        {
+            int score = 0;
+
+            // Prefer the repository copy of Data_Files when available so edits are
+            // picked up immediately without needing a rebuild/recopy step.
+            if (HasSiblingDirectory(root, ".git"))
+                score += 3;
+
+            // Fallback heuristic: Data_Files that sits next to the top-level CMakeLists
+            // is more likely to be the canonical source tree than a copied build output.
+            if (HasSiblingDirectory(root, "Engine"))
+                score += 1;
+
             return score;
         }
 
@@ -193,8 +219,22 @@ namespace Framework
     {
         namespace fs = std::filesystem;
 
-        if (auto nearest = FindNearestDirectory("Data_Files"); !nearest.empty())
-            return nearest;
+        auto candidates = CollectNearbyDirectories("Data_Files");
+
+        int bestScore = -1;
+        fs::path best;
+        for (const auto& c : candidates)
+        {
+            const int score = ScoreDataFilesRoot(c);
+            if (score > bestScore)
+            {
+                bestScore = score;
+                best = c;
+            }
+        }
+
+        if (!best.empty())
+            return CanonicalIfPossible(best);
 
         static const char* rels[] = {
             "Data_Files",

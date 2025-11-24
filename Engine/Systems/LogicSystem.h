@@ -31,6 +31,7 @@
 #include "Component/EnemyTypeComponent.h"
 #include "Physics/Dynamics/RigidBodyComponent.h"
 #include <Serialization/JsonSerialization.h>
+#include "Logic/GateController.h"
 #include "InputSystem.h"
 #include "HitBoxSystem.h"
 #include "Config/WindowConfig.h"
@@ -66,7 +67,7 @@ namespace Framework {
     public:
         /*! \brief Lightweight snapshot of current sprite animation state. */
         struct AnimationInfo {
-            enum class Mode { Idle, Run, Attack1, Attack2, Attack3 };
+            enum class Mode { Idle, Run, Attack1, Attack2, Attack3, Knockback, Death };
 
             int  frame{ 0 };
             int  columns{ 1 };
@@ -123,7 +124,7 @@ namespace Framework {
 
         std::filesystem::path resolveData(std::string_view name) const;
         // Extended to support combo attacks.
-        enum class AnimState { Idle, Run, Attack1, Attack2, Attack3 };
+        enum class AnimState { Idle, Run, Attack1, Attack2, Attack3, Knockback, Death };
 
         struct AnimConfig {
             int   cols;
@@ -158,6 +159,7 @@ namespace Framework {
         bool  IsAlive(GOC* obj) const;
         void  CachePlayerSize();
         void  RefreshLevelReferences();
+        void  LoadLevelAndResetState(const std::filesystem::path& levelPath);
         void  UpdateAnimation(float dt, bool wantRun);
 
         gfx::Window* window;
@@ -168,6 +170,7 @@ namespace Framework {
 
         GOC* player{ nullptr };
         GOC* collisionTarget{ nullptr };
+        GateController gateController;
 
         float rectScale{ 1.f };
         float rectBaseW{ 0.5f };
@@ -177,7 +180,8 @@ namespace Framework {
         AnimConfig idleConfig{ 5,1,5,6.f };
         AnimConfig runConfig{ 8,1,8,10.f };
         AnimConfig attackConfigs[3]{ {13,1,13,12.f}, {8,1,8,12.f}, {9,1,9,12.f} };
-
+        AnimConfig knockbackConfig{ 4,1,4,5.f };
+        AnimConfig deathConfig{ 8,1,8,8.f };
         int    frame{ 0 };
         float  frameClock{ 0.f };
         float  attackTimer{ 0.f };
@@ -192,6 +196,7 @@ namespace Framework {
 
         bool                         captured{ false };
         bool                         crashTestLatched{ false };
+        bool                         pendingLevelTransition{ false };
         std::unique_ptr<CrashLogger> crashLogger;
 
         std::unordered_map<GOCId, ScaleState> scaleStates;
