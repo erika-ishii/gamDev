@@ -44,6 +44,7 @@ namespace Framework
     public:
         int enemyHealth{ 2 };      ///< Current health of the enemy.
         int enemyMaxhealth{ 2 };   ///< Maximum health value for the enemy.
+        bool isDead = false;
 
         /*************************************************************************************
           \brief Initializes the component.
