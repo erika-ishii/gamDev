@@ -467,6 +467,7 @@ namespace Framework {
         GLFWwindow* native = window->raw();
         if (!native)
             return;
+
         ImGuiIO& io = ImGui::GetIO();
         auto handleToggle = [&](int key, bool& held)
             {
@@ -476,15 +477,18 @@ namespace Framework {
                 return triggered;
             };
 
+        // Toggle editor panels
         if (handleToggle(GLFW_KEY_F10, editorToggleHeld))
             showEditor = !showEditor;
 
+        // Toggle OS fullscreen always (editor or not)
         if (handleToggle(GLFW_KEY_F11, fullscreenToggleHeld))
         {
             window->ToggleFullscreen();
             screenW = window->Width();
             screenH = window->Height();
         }
+
         if (ShouldUseEditorCamera())
         {
             if (handleToggle(GLFW_KEY_F, editorFrameHeld))
@@ -492,9 +496,10 @@ namespace Framework {
         }
         else
         {
-            // Keep state accurate so the next editor activation treats F as a fresh press.
+            // Keep state accurate so next editor activation treats F as a fresh press.
             editorFrameHeld = glfwGetKey(native, GLFW_KEY_F) == GLFW_PRESS;
         }
+
         if (showEditor)
         {
             if (handleToggle(GLFW_KEY_T, translateKeyHeld) && !io.WantCaptureKeyboard)
@@ -519,7 +524,6 @@ namespace Framework {
                     }
                     mygame::ClearSelection();
                 }
-                
             }
         }
         else
@@ -1005,10 +1009,10 @@ namespace Framework {
     }
 
     /*************************************************************************************
-      \brief  Compute and apply the game viewport rectangle inside the window.
-      \details Supports editor split width, optional full height, vertical centering, and notifies
-               cameras/text to update their projection/viewports. Calls glViewport accordingly.
-    *************************************************************************************/
+   \brief  Compute and apply the game viewport rectangle inside the window.
+   \details Supports editor split width, optional full height, centering, and notifies
+            cameras/text to update their projection/viewports. Calls glViewport accordingly.
+ *************************************************************************************/
     void RenderSystem::UpdateGameViewport()
     {
         if (!window)
@@ -1020,8 +1024,8 @@ namespace Framework {
             return;
 
         // When the editor is hidden (e.g., main menu or play mode), use the full window
-           // regardless of fullscreen/windowed state. This keeps UI hit-tests aligned with
-           // rendered buttons even when the viewport would otherwise be letterboxed.
+        // regardless of fullscreen/windowed state. This keeps UI hit-tests aligned with
+        // rendered buttons even when the viewport would otherwise be letterboxed.
         if (!showEditor)
         {
             gameViewport = { 0, 0, fullWidth, fullHeight };
@@ -1049,7 +1053,7 @@ namespace Framework {
         const float maxSplit = 0.7f;
         editorSplitRatio = std::clamp(editorSplitRatio, minSplit, maxSplit);
 
-        // Width
+        // --- Width ---
         int desiredWidth = fullWidth;
         if (showEditor && !gameViewportFullWidth)
         {
@@ -1058,26 +1062,36 @@ namespace Framework {
             desiredWidth = std::clamp(desiredWidth, 1, maxWidth);
         }
 
-        // Height
-        if (!gameViewportFullHeight) {
+        // --- Height ---
+        if (!gameViewportFullHeight)
+        {
             heightRatio = std::clamp(heightRatio, 0.30f, 1.0f);
         }
-        else {
+        else
+        {
             heightRatio = 1.0f;
         }
+
         int desiredHeight = static_cast<int>(std::lround(fullHeight * heightRatio));
         desiredHeight = std::clamp(desiredHeight, 1, fullHeight);
 
         // Center vertically when not using full height.
         int yOffset = (fullHeight - desiredHeight) / 2;
-        if (gameViewportFullHeight) yOffset = 0;
+        if (gameViewportFullHeight)
+            yOffset = 0;
+
+        // Center horizontally when not using full width.
+        int xOffset = (fullWidth - desiredWidth) / 2;
+        if (gameViewportFullWidth)
+            xOffset = 0;
 
         // Apply if changed.
         if (gameViewport.width != desiredWidth ||
             gameViewport.height != desiredHeight ||
-            gameViewport.y != yOffset)
+            gameViewport.y != yOffset ||
+            gameViewport.x != xOffset)
         {
-            gameViewport.x = 0;
+            gameViewport.x = xOffset;
             gameViewport.y = yOffset;
             gameViewport.width = desiredWidth;
             gameViewport.height = desiredHeight;

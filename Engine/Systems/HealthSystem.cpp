@@ -277,6 +277,17 @@ namespace Framework
                         goc->GetComponentType<PlayerHealthComponent>(
                             ComponentTypeId::CT_PlayerHealthComponent))
                     {
+                        if (playerHealth->isInvulnerable)
+                        {
+                            playerHealth->invulnTime -= dt;
+                            if (playerHealth->invulnTime <= 0.0f)
+                            {
+                                playerHealth->invulnTime = 0.0f;
+                                playerHealth->isInvulnerable = false;
+                                std::cout << "[PlayerHealthComponent] Invulnerability ended.\n";
+                            }
+                        }
+
                         if (playerHealth->playerHealth <= 0)
                         {
                             FACTORY->Destroy(goc);

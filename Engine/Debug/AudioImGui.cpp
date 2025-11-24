@@ -85,12 +85,22 @@ namespace Framework
         ImVec2 windowSize(400, 300);
         ImVec2 displaySize = ImGui::GetIO().DisplaySize;
         ImGuiIO& io = ImGui::GetIO();
+
+        // Allow ImGui to restore position normally
         ImGui::SetNextWindowSize(windowSize, ImGuiCond_FirstUseEver);
-        ImGui::SetNextWindowPos(ImVec2(displaySize.x - windowSize.x, 70), ImGuiCond_FirstUseEver);
-        if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+
+        // Only set a default pos IF NOT DOCKING
+        if (!(io.ConfigFlags & ImGuiConfigFlags_DockingEnable))
         {
-            ImGui::SetNextWindowDockID(ImGui::GetMainViewport()->ID, ImGuiCond_FirstUseEver);
+            // Use FirstUseEver so it applies only on the first launch 
+            ImGui::SetNextWindowPos(ImVec2(30, 70), ImGuiCond_FirstUseEver);
         }
+        else
+        {
+            // When docking is enabled, don't force position at all
+            // ImGui will dock it automatically based on saved layout
+        }
+
         if (ImGui::Begin("Audio Panel"))
         {
             auto& soundManager = SoundManager::getInstance();

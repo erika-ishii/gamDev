@@ -45,6 +45,8 @@ namespace Framework
     public:
         int playerHealth{ 100 };        ///< Current health of the player.
         int playerMaxhealth{ 100 };     ///< Maximum health value of the player.
+        bool isInvulnerable = false;
+        float invulnTime = 0.0f;
 
         /*************************************************************************************
           \brief Initializes the component.
@@ -97,6 +99,10 @@ namespace Framework
         *************************************************************************************/
         void TakeDamage(int dmg)
         {
+            if (isInvulnerable)
+                return;
+            isInvulnerable = true;
+            invulnTime = 2.0f;
             playerHealth = std::max(playerHealth - dmg, 0);
             std::cout << "[PlayerHealthComponent] Took " << dmg
                 << " damage, current health = " << playerHealth << "\n";

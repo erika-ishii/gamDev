@@ -353,6 +353,7 @@ namespace Framework
                 // Enemy hit logic, including type filtering.
                 if (isEnemyTarget)
                 {
+
                     auto* typeComp =
                         obj->GetComponentType<EnemyTypeComponent>(ComponentTypeId::CT_EnemyTypeComponent);
                     auto* health =
@@ -363,6 +364,11 @@ namespace Framework
 
                     if (typeComp)
                     {
+                        std::cout << "EnemyType at runtime: "
+                            << (typeComp->Etype == EnemyTypeComponent::EnemyType::physical ? "physical" : "ranged")
+                            << "\n";
+
+
                         bool validHit =
                             (typeComp->Etype == EnemyTypeComponent::EnemyType::physical &&
                                 HB->team == HitBoxComponent::Team::Player) ||
@@ -387,6 +393,8 @@ namespace Framework
                         obj->GetComponentType<PlayerHealthComponent>(ComponentTypeId::CT_PlayerHealthComponent);
                     if (health)
                     {
+                        if (health->isInvulnerable)
+                            continue;
                         health->TakeDamage(static_cast<int>(HB->damage));
                         validTargetHit = true;
                     }

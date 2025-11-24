@@ -14,7 +14,7 @@
 // Keep GL/GLFW only in the .cpp to avoid polluting headers.
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
+#include "../Sandbox/MyGame/Game.hpp"
 #include <iostream>
 #include <stdexcept>
 
@@ -126,9 +126,7 @@ namespace gfx {
         glfwPollEvents();
 
         
-        if (glfwGetKey(s_window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-            glfwSetWindowShouldClose(s_window, GLFW_TRUE);
-        }
+
     }
 
     void Window::beginFrame() {
@@ -238,9 +236,7 @@ namespace gfx {
             glClear(GL_COLOR_BUFFER_BIT);
             glfwSwapBuffers(Window::s_window);
             glfwPollEvents();
-            if (glfwGetKey(Window::s_window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-                glfwSetWindowShouldClose(Window::s_window, 1);
-            }
+
         }
     }
 
@@ -258,9 +254,7 @@ namespace gfx {
             glfwSwapBuffers(Window::s_window);
             glfwPollEvents();
 
-            if (glfwGetKey(Window::s_window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-                glfwSetWindowShouldClose(Window::s_window, 1);
-            }
+      
         }
     }
 

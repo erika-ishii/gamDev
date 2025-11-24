@@ -57,7 +57,7 @@ namespace Framework {
             master_copies["Enemy"].reset(e);
 
         if (auto * re = FACTORY->CreateTemplate(resolveData("enemyranged.json")))
-            master_copies["Ranged"].reset(re);
+            master_copies["Enemyranged"].reset(re);
 
         if (auto* p = FACTORY->CreateTemplate(resolveData("player.json"))) {
             master_copies["Player"].reset(p);

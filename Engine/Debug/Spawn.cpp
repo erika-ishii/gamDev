@@ -475,10 +475,7 @@ namespace mygame {
             }
         }
 
-        // Enemy type (kept same behavior as spawn)
-        if (auto* type = obj.GetComponentType<EnemyTypeComponent>(ComponentTypeId::CT_EnemyTypeComponent)) {
-            type->Etype = Framework::EnemyTypeComponent::EnemyType::physical;
-        }
+  
 
         // NOTE: layer is *not* changed here. For new spawns we still set layer in SpawnOnePrefab().
     }

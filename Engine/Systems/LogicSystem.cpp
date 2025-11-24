@@ -489,7 +489,7 @@ namespace Framework {
         std::cout << "[Prefab] Player path = " << std::filesystem::absolute(playerPrefab)
             << "  exists=" << std::filesystem::exists(playerPrefab) << "\n";
 
-        levelObjects = factory->CreateLevel(resolveData("level.json").string());
+        levelObjects = factory->CreateLevel(resolveData("level_RealTutorial.json").string());
 
         const bool hasAnimatedStore = std::any_of(levelObjects.begin(), levelObjects.end(), [](Framework::GOC* obj) {
             if (!obj)
