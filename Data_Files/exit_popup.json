@@ -1,0 +1,28 @@
+{
+  "exitPopup": {
+    "background": {
+      "key": "exit_popup_note",
+      "path": "Textures/UI/Exit/Note.png"
+    },
+    "title": {
+      "key": "exit_popup_title",
+      "path": "Textures/UI/Exit/Exit.png"
+    },
+    "prompt": {
+      "key": "exit_popup_prompt",
+      "path": "Textures/UI/Exit/Exit Anot_.png"
+    },
+    "close": {
+      "key": "exit_popup_close",
+      "path": "Textures/UI/Exit/XButton.png"
+    },
+    "yes": {
+      "key": "exit_popup_yes",
+      "path": "Textures/UI/Exit/Yes.png"
+    },
+    "no": {
+      "key": "exit_popup_no",
+      "path": "Textures/UI/Exit/No.png"
+    }
+  }
+}

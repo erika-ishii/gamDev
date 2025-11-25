@@ -69,6 +69,14 @@ namespace {
         TextureField close;
         std::vector<HowToRowJson> rows;
     };
+    struct ExitPopupJson {
+        TextureField background;
+        TextureField title;
+        TextureField prompt;
+        TextureField close;
+        TextureField yes;
+        TextureField no;
+    };
 
     // --- JSON Parsers ---
     TextureField MakeTextureField(const std::string& key, const std::string& path) {
@@ -132,7 +140,17 @@ namespace {
         // Add default rows here if needed, mirroring your original code
         return config;
     }
-
+    ExitPopupJson DefaultExitPopupConfig()
+    {
+        ExitPopupJson config{};
+        config.background = MakeTextureField("exit_popup_note", "Textures/UI/Exit/Note.png");
+        config.title = MakeTextureField("exit_popup_title", "Textures/UI/Exit/Exit.png");
+        config.prompt = MakeTextureField("exit_popup_prompt", "Textures/UI/Exit/Exit Anot_.png");
+        config.close = MakeTextureField("exit_popup_close", "Textures/UI/Exit/XButton.png");
+        config.yes = MakeTextureField("exit_popup_yes", "Textures/UI/Exit/Yes.png");
+        config.no = MakeTextureField("exit_popup_no", "Textures/UI/Exit/No.png");
+        return config;
+    }
     HowToPopupJson LoadHowToPopupConfig() {
         HowToPopupJson config = DefaultHowToPopupConfig();
 
@@ -182,7 +200,45 @@ namespace {
         return config;
     }
 }
+ExitPopupJson LoadExitPopupConfig()
+{
+    ExitPopupJson config = DefaultExitPopupConfig();
 
+    std::vector<std::filesystem::path> candidates;
+    candidates.emplace_back(Framework::ResolveDataPath("exit_popup.json"));
+    candidates.emplace_back(std::filesystem::path("assets/data/exit_popup.json"));
+    candidates.emplace_back(std::filesystem::path("Data_Files") / "exit_popup.json");
+
+    for (const auto& path : candidates)
+    {
+        std::ifstream stream(path);
+        if (!stream.is_open()) continue;
+
+        try
+        {
+            nlohmann::json j;
+            stream >> j;
+            if (!j.contains("exitPopup")) continue;
+
+            const auto& root = j["exitPopup"];
+            if (root.contains("background")) PopulateTextureField(root["background"], config.background);
+            if (root.contains("title")) PopulateTextureField(root["title"], config.title);
+            if (root.contains("prompt")) PopulateTextureField(root["prompt"], config.prompt);
+            if (root.contains("close")) PopulateTextureField(root["close"], config.close);
+            if (root.contains("yes")) PopulateTextureField(root["yes"], config.yes);
+            if (root.contains("no")) PopulateTextureField(root["no"], config.no);
+
+            std::cout << "[MainMenu] Loaded exit popup config from " << path << "\n";
+            return config;
+        }
+        catch (...)
+        {
+        }
+    }
+
+    std::cerr << "[MainMenu] Warning: Could not load exit_popup.json, using defaults.\n";
+    return config;
+}
 // Helper to resolve textures
 static unsigned ResolveTex(const TextureField& tf) {
     // 1. Try Resource Manager Cache
@@ -223,10 +279,20 @@ void MainMenuPage::Init(int screenW, int screenH)
     // 4. Load Popup Config & Textures
     // FIX: Ensure these member variables are populated!
     const HowToPopupJson popupConfig = LoadHowToPopupConfig();
+    const ExitPopupJson exitPopupConfig = LoadExitPopupConfig();
+
 
     closePopupTex = ResolveTex(popupConfig.close);
     noteBackgroundTex = ResolveTex(popupConfig.background);
     howToHeaderTex = ResolveTex(popupConfig.header);
+
+    exitPopupNoteTex = ResolveTex(exitPopupConfig.background);
+    exitPopupTitleTex = ResolveTex(exitPopupConfig.title);
+    exitPopupPromptTex = ResolveTex(exitPopupConfig.prompt);
+    exitPopupCloseTex = ResolveTex(exitPopupConfig.close);
+    exitPopupYesTex = ResolveTex(exitPopupConfig.yes);
+    exitPopupNoTex = ResolveTex(exitPopupConfig.no);
+
 
     // Clear old rows
     howToRows.clear();
@@ -299,9 +365,39 @@ void MainMenuPage::Draw(Framework::RenderSystem* render)
     if (menuBgTex) {
         gfx::Graphics::renderFullscreenTexture(menuBgTex);
     }
-
+    auto textureAspect = [](unsigned tex, float fallback) {
+        int texW = 0, texH = 0;
+        if (tex && gfx::Graphics::getTextureSize(tex, texW, texH) && texH > 0) {
+            return static_cast<float>(texW) / static_cast<float>(texH);
+        }
+        return fallback;
+        };
     // Popup Overlay
-    if (showHowToPopup && render) {
+    if (showExitPopup && render)
+    {
+        const float overlayAlpha = 0.65f;
+        gfx::Graphics::renderRectangleUI(0.f, 0.f, (float)sw, (float)sh, 0.f, 0.f, 0.f, overlayAlpha, sw, sh);
+
+        if (exitPopupNoteTex)
+        {
+            gfx::Graphics::renderSpriteUI(exitPopupNoteTex, exitPopup.x, exitPopup.y, exitPopup.w, exitPopup.h, 1.f, 1.f, 1.f, 1.f, sw, sh);
+        }
+        else
+        {
+            gfx::Graphics::renderRectangleUI(exitPopup.x, exitPopup.y, exitPopup.w, exitPopup.h, 0.1f, 0.08f, 0.05f, 0.95f, sw, sh);
+        }
+
+        if (exitPopupTitleTex)
+        {
+            gfx::Graphics::renderSpriteUI(exitPopupTitleTex, exitTitle.x, exitTitle.y, exitTitle.w, exitTitle.h, 1.f, 1.f, 1.f, 1.f, sw, sh);
+        }
+
+        if (exitPopupPromptTex)
+        {
+            gfx::Graphics::renderSpriteUI(exitPopupPromptTex, exitPrompt.x, exitPrompt.y, exitPrompt.w, exitPrompt.h, 1.f, 1.f, 1.f, 1.f, sw, sh);
+        }
+    }
+    else if (showHowToPopup && render) {
         const float overlayAlpha = 0.65f;
         gfx::Graphics::renderRectangleUI(0.f, 0.f, (float)sw, (float)sh, 0.f, 0.f, 0.f, overlayAlpha, sw, sh);
 
@@ -315,13 +411,6 @@ void MainMenuPage::Draw(Framework::RenderSystem* render)
         }
 
         // Header
-        auto textureAspect = [](unsigned tex, float fallback) {
-            int texW = 0, texH = 0;
-            if (tex && gfx::Graphics::getTextureSize(tex, texW, texH) && texH > 0) {
-                return static_cast<float>(texW) / static_cast<float>(texH);
-            }
-            return fallback;
-            };
 
         const float headerPadY = howToPopup.h * 0.07f;
         const float headerHeight = howToPopup.h * 0.16f;
@@ -446,7 +535,63 @@ void MainMenuPage::SyncLayout(int screenW, int screenH)
 
     const float closeSize = std::min(popupW, popupH) * 0.14f;
     closeBtn = { popupX + popupW - closeSize * 0.85f, popupY + popupH - closeSize * 0.75f, closeSize, closeSize };
+    auto textureAspect = [](unsigned tex, float fallback)
+        {
+            int texW = 0, texH = 0;
+            if (tex && gfx::Graphics::getTextureSize(tex, texW, texH) && texH > 0)
+            {
+                return static_cast<float>(texW) / static_cast<float>(texH);
+            }
+            return fallback;
+        };
 
+    // --- Exit Popup Layout ---
+    const float defaultExitAspect = 0.78f;
+    int exitNoteW = 0, exitNoteH = 0;
+    const bool hasExitNoteSize = exitPopupNoteTex && gfx::Graphics::getTextureSize(exitPopupNoteTex, exitNoteW, exitNoteH);
+    const float exitNoteAspect = (hasExitNoteSize && exitNoteH > 0) ? static_cast<float>(exitNoteW) / static_cast<float>(exitNoteH) : defaultExitAspect;
+
+    float exitPopupW = sw * 0.62f;
+    float exitPopupH = exitPopupW / exitNoteAspect;
+    const float maxExitPopupH = sh * 0.76f;
+    if (exitPopupH > maxExitPopupH)
+    {
+        exitPopupH = maxExitPopupH;
+        exitPopupW = exitPopupH * exitNoteAspect;
+    }
+
+    const float exitPopupX = (sw - exitPopupW) * 0.5f;
+    const float exitPopupY = (sh - exitPopupH) * 0.5f;
+    exitPopup = { exitPopupX, exitPopupY, exitPopupW, exitPopupH };
+
+    const float exitTitleHeight = exitPopupH * 0.22f;
+    const float exitTitleWidth = exitTitleHeight * textureAspect(exitPopupTitleTex, 2.7f);
+    exitTitle = { exitPopupX + (exitPopupW - exitTitleWidth) * 0.5f,
+        exitPopupY + exitPopupH - exitTitleHeight - exitPopupH * 0.08f,
+        exitTitleWidth, exitTitleHeight };
+
+    const float exitPromptHeight = exitPopupH * 0.15f;
+    const float exitPromptWidth = exitPromptHeight * textureAspect(exitPopupPromptTex, 2.3f);
+    const float exitPromptY = exitPopupY + exitPopupH * 0.52f - exitPromptHeight * 0.5f;
+    exitPrompt = { exitPopupX + (exitPopupW - exitPromptWidth) * 0.5f,
+        exitPromptY,
+        exitPromptWidth, exitPromptHeight };
+
+    const float exitCloseSize = std::min(exitPopupW, exitPopupH) * 0.13f;
+    exitCloseBtn = { exitPopupX + exitPopupW - exitCloseSize * 0.82f,
+        exitPopupY + exitPopupH - exitCloseSize * 0.78f,
+        exitCloseSize, exitCloseSize };
+
+    const float exitBtnHeight = exitPopupH * 0.18f;
+    const float exitYesAspect = textureAspect(exitPopupYesTex, 1.7f);
+    const float exitNoAspect = textureAspect(exitPopupNoTex, 1.7f);
+    const float exitYesWidth = exitBtnHeight * exitYesAspect;
+    const float exitNoWidth = exitBtnHeight * exitNoAspect;
+    const float exitBtnSpacing = exitPopupW * 0.06f;
+    const float exitBtnCenter = exitPopupX + exitPopupW * 0.5f;
+    const float exitBtnY = exitPopupY + exitPopupH * 0.18f;
+    exitYesBtn = { exitBtnCenter - exitBtnSpacing * 0.5f - exitYesWidth, exitBtnY, exitYesWidth, exitBtnHeight };
+    exitNoBtn = { exitBtnCenter + exitBtnSpacing * 0.5f, exitBtnY, exitNoWidth, exitBtnHeight };
     BuildGui(leftAlignedX, bottomY, btnW, btnH, vSpace);
     layoutInitialized = true;
 }
@@ -463,6 +608,36 @@ void MainMenuPage::BuildGui(float x, float bottomY, float w, float h, float spac
 {
     gui.Clear();
 
+    if (showExitPopup)
+    {
+        gui.AddButton(exitYesBtn.x, exitYesBtn.y, exitYesBtn.w, exitYesBtn.h, "YES",
+            exitPopupYesTex, exitPopupYesTex,
+            [this]()
+            {
+                exitLatched = true;
+                showExitPopup = false;
+                BuildGui();
+            });
+
+        gui.AddButton(exitNoBtn.x, exitNoBtn.y, exitNoBtn.w, exitNoBtn.h, "NO",
+            exitPopupNoTex, exitPopupNoTex,
+            [this]()
+            {
+                showExitPopup = false;
+                BuildGui();
+            });
+
+        gui.AddButton(exitCloseBtn.x, exitCloseBtn.y, exitCloseBtn.w, exitCloseBtn.h, "",
+            exitPopupCloseTex, exitPopupCloseTex,
+            [this]()
+            {
+                showExitPopup = false;
+                BuildGui();
+            });
+
+        return;
+    }
+
     size_t total = g_MenuConfig.buttons.size();
     for (size_t i = 0; i < total; ++i) {
         const auto& btnDef = g_MenuConfig.buttons[i];
@@ -477,7 +652,11 @@ void MainMenuPage::BuildGui(float x, float bottomY, float w, float h, float spac
         std::function<void()> callback = []() {};
         if (btnDef.action == "start")        callback = [this]() { startLatched = true; };
         else if (btnDef.action == "options") callback = [this]() { optionsLatched = true; };
-        else if (btnDef.action == "exit")    callback = [this]() { exitLatched = true; };
+        else if (btnDef.action == "exit")    callback = [this]() {
+            showExitPopup = true;
+            showHowToPopup = false;
+            BuildGui();
+            };
         else if (btnDef.action == "howto")   callback = [this]() {
             howToLatched = true;
             showHowToPopup = true;

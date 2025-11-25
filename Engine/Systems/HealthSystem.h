@@ -13,6 +13,7 @@
 #include "Component/EnemyDecisionTreeComponent.h"
 #include "Component/EnemyHealthComponent.h"
 #include "Component/EnemyTypeComponent.h"
+#include "Graphics/PlayerHUD.h"
 #include "Physics/Dynamics/RigidBodyComponent.h"
 // Enemy Components
 #include "../Component/RenderComponent.h"
@@ -55,6 +56,7 @@ namespace Framework {
         gfx::Window* window;          // Non-owning window handle used by the system.
         std::vector<GOCId> gameObjectIds;
         std::unordered_map<GOCId, float> deathTimers;
+        float lastDt = 0.0f;
     };
 
 } // namespace Framework

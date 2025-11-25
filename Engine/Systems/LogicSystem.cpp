@@ -513,6 +513,7 @@ namespace Framework {
         RegisterComponent(EnemyTypeComponent);
         RegisterComponent(AudioComponent);
         RegisterComponent(ZoomTriggerComponent);
+        RegisterComponent(PlayerHUDComponent);
         FACTORY = factory.get();
         gateController.SetFactory(factory.get());
         LoadPrefabs();
@@ -579,8 +580,12 @@ namespace Framework {
             Framework::ResolveAssetPath("Textures/Character/Fire Enemy_Sprite/Idle_Sprite.png").string()
         );
         Resource_Manager::load(
+            "fire_attack",
+            Framework::ResolveAssetPath("Textures/Character/Fire Enemy_Sprite/Fire Attack_Sprite.png").string()
+        );
+        Resource_Manager::load(
             "fire_projectile",
-            Framework::ResolveAssetPath("Textures/Character/Fire Enemy_Sprite/Fire Projectile_Sprite.png").string()
+            Framework::ResolveAssetPath("Textures/Character/Fire Enemy_Sprite/FireProjectileSprite.png").string()
         );
         Resource_Manager::load(
             "fire_knockback",
@@ -966,9 +971,12 @@ namespace Framework {
                     }
                 }
             }
+        
+            auto* playerHealth =
+                player->GetComponentType<PlayerHealthComponent>(ComponentTypeId::CT_PlayerHealthComponent);
 
             // Velocity intent set on RigidBody; an external system integrates it.
-            if (rb && tr)
+            if (rb && tr && !playerHealth->isDead)
             {
                 if (input.IsKeyHeld(GLFW_KEY_D)) rb->velX = std::max(rb->velX, 1.f);
                 if (input.IsKeyHeld(GLFW_KEY_A)) rb->velX = std::min(rb->velX, -1.f);
@@ -990,13 +998,13 @@ namespace Framework {
 
 
             // Update PlayerAttackComponent (handles hitbox lifetime)
-            if (attack && tr)
+            if (attack && tr && !playerHealth->isDead)
             {
                 attack->Update(dt, tr);
             }
 
             // Handle attack input: spawn through PlayerAttackComponent only (single source of truth).
-            if (input.IsMousePressed(GLFW_MOUSE_BUTTON_LEFT) && attack && tr && rc)
+            if (!playerHealth->isDead && input.IsMousePressed(GLFW_MOUSE_BUTTON_LEFT) && attack && tr && rc)
             {
                 // Only spawn if we have a valid direction (mouse in viewport & not exactly on player).
                 if (aimDirX != 0.0f || aimDirY != 0.0f)
@@ -1023,7 +1031,7 @@ namespace Framework {
                 }
 
             }
-            else if (input.IsMousePressed(GLFW_MOUSE_BUTTON_RIGHT) && attack && tr && rc)
+            else if (!playerHealth->isDead && input.IsMousePressed(GLFW_MOUSE_BUTTON_RIGHT) && attack && tr && rc)
             {
                 // Only spawn if we have a valid direction (mouse in viewport & not exactly on player).
                 if (aimDirX != 0.0f || aimDirY != 0.0f)

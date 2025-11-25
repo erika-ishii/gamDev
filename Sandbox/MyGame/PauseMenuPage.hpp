@@ -72,6 +72,13 @@ namespace mygame {
         unsigned howToHeaderTex = 0;
         unsigned howToCloseTex = 0;
 
+        unsigned exitPopupNoteTex = 0;
+        unsigned exitPopupTitleTex = 0;
+        unsigned exitPopupPromptTex = 0;
+        unsigned exitPopupCloseTex = 0;
+        unsigned exitPopupYesTex = 0;
+        unsigned exitPopupNoTex = 0;
+
         struct HowToRowConfig {
             unsigned iconTex = 0;
             unsigned labelTex = 0;
@@ -88,6 +95,7 @@ namespace mygame {
         std::chrono::steady_clock::time_point lastIconTick{};
         bool iconTimerInitialized = false;
         bool showHowToPopup = false;
+        bool showExitPopup = false;
 
 
         bool resumeLatched = false;
@@ -108,6 +116,12 @@ namespace mygame {
         Quad quitBtn{ 0.f, 0.f, 0.f, 0.f };
         Quad howToPopup{ 0.f, 0.f, 0.f, 0.f };
         Quad howToCloseBtn{ 0.f, 0.f, 0.f, 0.f };
+        Quad exitPopup{ 0.f, 0.f, 0.f, 0.f };
+        Quad exitCloseBtn{ 0.f, 0.f, 0.f, 0.f };
+        Quad exitYesBtn{ 0.f, 0.f, 0.f, 0.f };
+        Quad exitNoBtn{ 0.f, 0.f, 0.f, 0.f };
+        Quad exitTitle{ 0.f, 0.f, 0.f, 0.f };
+        Quad exitPrompt{ 0.f, 0.f, 0.f, 0.f };
     };
 
 } // namespace mygame

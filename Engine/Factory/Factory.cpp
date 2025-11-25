@@ -53,6 +53,7 @@
 #include "Component/EnemyDecisionTreeComponent.h"
 #include "Component/EnemyHealthComponent.h"
 #include "Component/EnemyTypeComponent.h"
+#include "Graphics/PlayerHUD.h"
 
 #include "Physics/Dynamics/RigidBodyComponent.h"
 
@@ -272,7 +273,11 @@ namespace Framework {
                 if (!s.EnterIndex(i)) continue; // now at GameObjects[i]
 
                 GOC* g = BuildFromCurrentJsonObject(s);
-                if (g) { out.push_back(g); }
+                if (g)
+                {
+                    g->initialize();
+                    out.push_back(g);
+                }
                 s.ExitObject();                     // leave GameObject[i]
             }
             s.ExitArray();
@@ -405,6 +410,8 @@ namespace Framework {
             auto const& atk = static_cast<PlayerAttackComponent const&>(component);
             return json{ {"damage", atk.damage}, {"attack_speed", atk.attack_speed} };
         }
+        case ComponentTypeId::CT_PlayerHUDComponent:
+            return json::object();
         case ComponentTypeId::CT_EnemyComponent:
         case ComponentTypeId::CT_EnemyDecisionTreeComponent:
             return json::object();
@@ -925,6 +932,10 @@ namespace Framework {
             auto& hp = static_cast<EnemyHealthComponent&>(component);
             readInt("enemyHealth", hp.enemyHealth);
             readInt("enemyMaxhealth", hp.enemyMaxhealth);
+            break;
+        }
+        case ComponentTypeId::CT_PlayerHUDComponent:
+        {
             break;
         }
         case ComponentTypeId::CT_EnemyTypeComponent:

@@ -330,7 +330,7 @@ namespace Framework
 
                         // Player is alive; clear any stale death timers / flags.
                         deathTimers.erase(id);
-                        playerHealth->isDead = false;
+                        
                     }
 
                     // Keep tracking this ID.
@@ -341,8 +341,30 @@ namespace Framework
 
     void HealthSystem::draw()
     {
-        // Currently no UI/visuals for health. Rendering of health bars or
-        // damage indicators could be added here in the future.
+        if (!window)
+            return;
+
+        const int screenW = window->Width();
+        const int screenH = window->Height();
+
+        for (GOCId id : gameObjectIds)
+        {
+            GOC* goc = FACTORY->GetObjectWithId(id);
+            if (!goc)
+                continue;
+
+            auto* playerHealth =
+                goc->GetComponentType<PlayerHealthComponent>(ComponentTypeId::CT_PlayerHealthComponent);
+            if (!playerHealth)
+                continue;
+
+            auto* hud = goc->GetComponentType<PlayerHUDComponent>(ComponentTypeId::CT_PlayerHUDComponent);
+            if (!hud)
+                continue;
+
+            hud->Update(lastDt);
+            hud->Draw(screenW, screenH);
+        }
     }
 
     void HealthSystem::Shutdown()

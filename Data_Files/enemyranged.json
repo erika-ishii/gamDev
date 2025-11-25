@@ -24,18 +24,18 @@
           },
           {
             "config": {
-              "columns": 5,
-              "endFrame": 4,
-              "fps": 12.0,
+              "columns": 15,
+              "endFrame": 14,
+              "fps": 10.0,
               "loop": false,
               "rows": 1,
               "startFrame": 0,
-              "totalFrames": 5
+              "totalFrames": 15
             },
             "currentFrame": 0,
             "name": "rangeattack",
-            "spriteSheetPath": "../../assets/Textures/Character/Fire Enemy_Sprite/FireProjectileSprite.png",
-            "textureKey": "fire_projectile"
+            "spriteSheetPath": "../../assets/Textures/Character/Fire Enemy_Sprite/Fire Attack_Sprite.png",
+            "textureKey": "fire_attack"
           },
           {
             "config": {

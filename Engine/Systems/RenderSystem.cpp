@@ -66,6 +66,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "Physics/Dynamics/RigidBodyComponent.h"
 #include "../../Sandbox/MyGame/Game.hpp"
+#include "Component/HitBoxComponent.h"
 
 namespace Framework {
 
@@ -1444,6 +1445,7 @@ namespace Framework {
         Resource_Manager::load("ming_attack2", resolveAsset("Textures/Character/Ming_Sprite/2nd_Attack Sprite.png"));
         Resource_Manager::load("ming_attack3", resolveAsset("Textures/Character/Ming_Sprite/3rd_Attack Sprite.png"));
         Resource_Manager::load("ming_knife", resolveAsset("Textures/Character/Ming_Sprite/Knife_Sprite.png"));
+        Resource_Manager::load("fire_projectile", resolveAsset("Textures/Character/Fire Enemy_Sprite/FireProjectileSprite.png"));
         Resource_Manager::load("impact_vfx_sheet", resolveAsset("Textures/Character/Ming_Sprite/ImpactVFX_Sprite.png"));
         idleTex = Resource_Manager::resources_map["ming_idle"].handle;
         runTex = Resource_Manager::resources_map["ming_run"].handle;
@@ -1451,6 +1453,7 @@ namespace Framework {
         attackTex[1] = Resource_Manager::resources_map["ming_attack2"].handle;
         attackTex[2] = Resource_Manager::resources_map["ming_attack3"].handle;
         knifeTex = Resource_Manager::resources_map["ming_knife"].handle;
+        fireProjectileTex = Resource_Manager::resources_map["fire_projectile"].handle;
 
         ImGuiLayerConfig config;
         config.glsl_version = "#version 330";
@@ -1780,20 +1783,13 @@ namespace Framework {
                         spriteBatches[tex].push_back(instance);
                     }
                 }
-
-                // NEW: Render knife projectiles using Knife_Sprite.png with its own anim.
-                if (knifeTex && logic.hitBoxSystem)
+                // Render projectiles with the correct sprite sheet (player knives vs fireballs).
+                if ((knifeTex || fireProjectileTex) && logic.hitBoxSystem)
                 {
                     const auto& activeHits = logic.hitBoxSystem->GetActiveHitBoxes();
                     if (!activeHits.empty())
                     {
-                        auto& knives = spriteBatches[knifeTex];
-                        constexpr int knifeCols = 4;
-                        constexpr int knifeRows = 1;
-                        constexpr int knifeFrames = 4;
-                        constexpr float knifeFps = 12.f;
-                        const float invCols = 1.0f / static_cast<float>(knifeCols);
-                        const float invRows = 1.0f / static_cast<float>(knifeRows);
+                        
 
                         for (const auto& activeHit : activeHits)
                         {
@@ -1801,6 +1797,32 @@ namespace Framework {
                                 continue;
 
                             const auto* hb = activeHit.hitbox.get();
+
+                            unsigned projTex = 0;
+                            int cols = 0;
+                            int rows = 1;
+                            int frames = 0;
+                            float fps = 12.0f;
+
+                            if (hb->team == HitBoxComponent::Team::Enemy && fireProjectileTex)
+                            {
+                                projTex = fireProjectileTex;
+                                cols = 5;
+                                frames = 5;
+                            }
+                            else if (knifeTex)
+                            {
+                                projTex = knifeTex;
+                                cols = 4;
+                                frames = 4;
+                            }
+
+                            if (!projTex || cols <= 0 || frames <= 0)
+                                continue;
+
+                            auto& batch = spriteBatches[projTex];
+                            const float invCols = 1.0f / static_cast<float>(cols);
+                            const float invRows = 1.0f / static_cast<float>(rows);
 
                             gfx::Graphics::SpriteInstance instance;
                             glm::mat4 model(1.0f);
@@ -1813,11 +1835,11 @@ namespace Framework {
 
                             const float duration = std::max(0.0001f, hb->duration);
                             const float elapsed = std::clamp(duration - activeHit.timer, 0.0f, duration);
-                            const int frameIdx = static_cast<int>(elapsed * knifeFps) % knifeFrames;
+                            const int frameIdx = static_cast<int>(elapsed * fps) % frames;
                             const float u = static_cast<float>(frameIdx) * invCols;
                             instance.uv = glm::vec4(u, 0.0f, invCols, invRows);
 
-                            knives.push_back(instance);
+                            batch.push_back(instance);
                         }
                     }
                 }
