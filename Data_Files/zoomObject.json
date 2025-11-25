@@ -1,0 +1,42 @@
+{
+  "GameObject": {
+    "name": "zoom_Object",
+    "layer": "Default",
+
+    "Components": {
+
+      "TransformComponent": {
+        "x": 0.0,
+        "y": 0.0,
+        "rot": 0.0,
+        "scale_x": 1.0,
+        "scale_y": 1.0
+      },
+
+      "RenderComponent": {
+        "w": 1.0,
+        "h": 1.0,
+        "r": 1.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.2,
+        "visible": true,
+        "layer": 0
+      },
+
+      "RigidBodyComponent": {
+        "width": 1.0,
+        "height": 1.0,
+        "velocity_x": 0.0,
+        "velocity_y": 0.0,
+        "isStatic": 1,
+        "isTrigger": 1
+      },
+
+      "ZoomTriggerComponent": {
+        "targetZoom": 2.0,
+        "oneShot": 1
+      }
+    }
+  }
+}

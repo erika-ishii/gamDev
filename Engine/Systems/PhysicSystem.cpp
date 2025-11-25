@@ -19,6 +19,8 @@
 #include <cctype>
 #include <string>
 
+#include "Component/ZoomTriggerComponent.h"
+#include "RenderSystem.h"
 namespace Framework {
 
     /*************************************************************************************
@@ -64,6 +66,12 @@ namespace Framework {
             if (!obj)
                 continue;
 
+            // Determine if THIS object is the Player (by name)
+            std::string objName = obj->GetObjectName();
+            std::transform(objName.begin(), objName.end(), objName.begin(),
+                [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+            const bool isPlayer = (objName == "player");
+
             auto* rb = obj->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);
             auto* tr = obj->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
             if (!rb || !tr)
@@ -91,6 +99,45 @@ namespace Framework {
                 auto* trO = otherObj->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
                 if (!rbO || !trO)
                     continue;
+
+        // -------------------------------------------------
+        // 1) Zoom trigger logic (does NOT block movement)
+        // -------------------------------------------------
+                if (isPlayer) // only player should trigger zoom
+                {
+                    if (auto* zoom = otherObj->GetComponentType<ZoomTriggerComponent>(
+                        ComponentTypeId::CT_ZoomTriggerComponent))
+                    {
+                        // AABB for player at new position
+                        AABB playerBoxTrigger(newX, newY, rb->width, rb->height);
+                        // AABB for the zoomObject (use its rigid body area)
+                        AABB triggerBox(trO->x, trO->y, rbO->width, rbO->height);
+
+                        if (Collision::CheckCollisionRectToRect(playerBoxTrigger, triggerBox))
+                        {
+                            if (!zoom->triggered)
+                            {
+                                zoom->triggered = true;
+
+                                if (auto* rs = RenderSystem::Get())
+                                {
+                                    // targetZoom is interpreted as "view height" here.
+                                    rs->SetCameraViewHeight(zoom->targetZoom);
+                                }
+
+                                if (zoom->oneShot)
+                                {
+                                    // Optional: remove the trigger so it doesn't fire again.
+                                    // FACTORY->Destroy(otherObj);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // -------------------------------------------------
+                // 2) Wall collision (existing code)
+                // -------------------------------------------------
 
                 // Case-insensitive name check for walls
                 std::string otherName = otherObj->GetObjectName();

@@ -34,7 +34,62 @@ namespace
 {
     using namespace Framework;
 
+    void DrawAudioSection(AudioComponent& audio)
+    {
+        if (!ImGui::CollapsingHeader("Audio Component", ImGuiTreeNodeFlags_DefaultOpen))
+            return;
 
+        // 1. Global Volume Control
+        ImGui::DragFloat("Master Volume", &audio.volume, 0.01f, 0.0f, 1.0f);
+
+        ImGui::Separator();
+        ImGui::TextDisabled("Sound Actions");
+
+        // 2. Gather all available sound resource IDs for the Dropdown
+        std::vector<std::string> availableSounds;
+        availableSounds.push_back(""); // Allow empty/none
+        for (auto& [id, res] : Resource_Manager::resources_map) {
+            if (res.type == Resource_Manager::Sound) {
+                availableSounds.push_back(id);
+            }
+        }
+
+        // 3. Iterate over existing actions (footsteps, Slash1, etc.)
+        // Note: We use a copy of keys to avoid iterator invalidation if you modify the map structure,
+        // though here we are only modifying values.
+        for (auto& [action, info] : audio.sounds)
+        {
+            if (ImGui::TreeNode(action.c_str()))
+            {
+                // --- Sound ID Dropdown ---
+                int currentIdx = 0;
+                for (size_t i = 0; i < availableSounds.size(); ++i) {
+                    if (availableSounds[i] == info.id) {
+                        currentIdx = static_cast<int>(i);
+                        break;
+                    }
+                }
+
+                std::string comboLabel = "Sound Resource##" + action;
+                if (ImGui::Combo(comboLabel.c_str(), &currentIdx,
+                    [](void* data, int idx, const char** out_text) {
+                        auto* vec = static_cast<std::vector<std::string>*>(data);
+                        *out_text = (*vec)[idx].c_str();
+                        return true;
+                    },
+                    &availableSounds, static_cast<int>(availableSounds.size())))
+                {
+                    info.id = availableSounds[currentIdx];
+                }
+
+                // --- Loop Checkbox ---
+                std::string loopLabel = "Loop##" + action;
+                ImGui::Checkbox(loopLabel.c_str(), &info.loop);
+
+                ImGui::TreePop();
+            }
+        }
+    }
     void DrawHitBoxFields(HitBoxComponent& hb, const char* labelPrefix = "")
     {
         // Optional prefix so we can reuse this for nested hitboxes if needed.
@@ -379,6 +434,8 @@ namespace mygame
             DrawEnemyHealthSection(*eHp);
         if (auto* eType = object->GetComponentAs<EnemyTypeComponent>(ComponentTypeId::CT_EnemyTypeComponent))
             DrawEnemyTypeSection(*eType);
+        if (auto* audio = object->GetComponentAs<AudioComponent>(ComponentTypeId::CT_AudioComponent))
+            DrawAudioSection(*audio);
 
         ImGui::End();
     }

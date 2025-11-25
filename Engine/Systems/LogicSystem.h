@@ -29,6 +29,7 @@
 #include "Component/EnemyDecisionTreeComponent.h"
 #include "Component/EnemyHealthComponent.h"
 #include "Component/EnemyTypeComponent.h"
+#include "Component/ZoomTriggerComponent.h"
 #include "Physics/Dynamics/RigidBodyComponent.h"
 #include <Serialization/JsonSerialization.h>
 #include "Logic/GateController.h"

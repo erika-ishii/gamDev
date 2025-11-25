@@ -51,6 +51,7 @@ namespace Framework {
         SoundManager::getInstance().setMasterVolume(0.7f);
         std::cout << "[AudioSystem] Audio system initialized successfully.\n";
         // Initialize ImGui for audio panel
+        SoundManager::getInstance().playSound("SoundTrackloop", true);
         AudioImGui::Initialize(*window);
     }
     /*****************************************************************************************

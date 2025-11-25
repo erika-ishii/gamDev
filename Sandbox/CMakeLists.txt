@@ -22,6 +22,26 @@ target_sources(BloodyGoodCurry PRIVATE ${MYGAME_SRC} ${MYGAME_HDR})
 target_link_libraries(BloodyGoodCurry PRIVATE MyEngine)
 
 
+
+#  Console Window Management (MSVC specific)
+# Debug -> Show Console. Release -> Hide Console.
+if (MSVC)
+    target_link_options(BloodyGoodCurry PRIVATE
+        # Debug: Keep Console
+        $<$<CONFIG:Debug>:/SUBSYSTEM:CONSOLE>
+        
+        # Release: Hide Console (Windows Subsystem)
+        $<$<CONFIG:Release>:/SUBSYSTEM:WINDOWS>
+        $<$<CONFIG:RelWithDebInfo>:/SUBSYSTEM:WINDOWS>
+        $<$<CONFIG:MinSizeRel>:/SUBSYSTEM:WINDOWS>
+
+        # Fix entry point for Release so 'int main()' still works without WinMain
+        $<$<CONFIG:Release>:/ENTRY:mainCRTStartup>
+        $<$<CONFIG:RelWithDebInfo>:/ENTRY:mainCRTStartup>
+        $<$<CONFIG:MinSizeRel>:/ENTRY:mainCRTStartup>
+    )
+endif()
+
 # ------------------------------
 # FMOD setup
 # ------------------------------

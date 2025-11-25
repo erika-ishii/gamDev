@@ -200,6 +200,14 @@ namespace Framework {
         editorCamera.SetViewHeight(editorCameraViewHeight);
     }
 
+    void RenderSystem::SetCameraViewHeight(float viewHeight)
+    {
+        // Clamp to same range as editor slider
+        cameraViewHeight = std::clamp(viewHeight, 0.4f, 2.5f);
+
+        // Only affect the gameplay camera – editor camera keeps its own view height.
+        camera.SetViewHeight(cameraViewHeight);
+    }
     
     /*************************************************************************************
       \brief  Probe for a Roboto font file in common asset locations.
@@ -1214,23 +1222,21 @@ namespace Framework {
         ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize |
             ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav |
             ImGuiWindowFlags_NoDocking;
+        if (!showEditor)
+        {
+
+            return;
+        }
 
         if (ImGui::Begin("Viewport Controls", nullptr, flags))
         {
             ImGui::TextUnformatted("Viewport Controls");
             ImGui::Separator();
 
+          
             bool editorEnabled = showEditor;
             if (ImGui::Checkbox("Editor Enabled (F10)", &editorEnabled))
                 showEditor = editorEnabled;
-
-            if (!showEditor)
-            {
-                ImGui::TextDisabled("Editor panels hidden. Press F10 or re-enable above.");
-                // No more controls when editor is off
-                ImGui::End();
-                return;
-            }
 
             const ImGuiIO& io = ImGui::GetIO();
             bool didUndo = false;

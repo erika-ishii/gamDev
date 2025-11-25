@@ -74,6 +74,7 @@ namespace Framework
         CT_EnemyTypeComponent,
         //Audio Component
         CT_AudioComponent,
+        CT_ZoomTriggerComponent,
 
         /// Maximum enum value marker (not a real component, used for iteration/validation)
         CT_MaxComponent

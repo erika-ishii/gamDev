@@ -23,10 +23,12 @@
 *********************************************************************************************/
 #include "DecisionTreeDefault.h"
 #include "Component/SpriteAnimationComponent.h"
+#include "Component/EnemyTypeComponent.h"
 
 #include <algorithm>
 #include <cctype>
 #include <string_view>
+#include <cmath>
 
 namespace Framework
 {
@@ -34,7 +36,15 @@ namespace Framework
     {
         /*****************************************************************************************
          \brief  Find the index of a named animation on a SpriteAnimationComponent (case-insensitive).
-         *****************************************************************************************/
+
+         \param anim
+                Pointer to the SpriteAnimationComponent.
+         \param desired
+                Name of the animation we want to find.
+
+         \return
+                Index of the animation if found, otherwise -1.
+        *****************************************************************************************/
         int FindAnimationIndex(SpriteAnimationComponent* anim, std::string_view desired)
         {
             if (!anim)
@@ -83,7 +93,7 @@ namespace Framework
                 anim->SetActiveAnimation(idx);
             }
         }
-        
+
         float GetAnimationDuration(GOC* enemy, const std::string& name)
         {
             auto* anim = enemy->GetComponentType<SpriteAnimationComponent>(
@@ -275,6 +285,7 @@ namespace Framework
         // ---------------------------------------------------------------------
         // Attack leaf: chase the player and spawn a hitbox when in range.
         // Also drives enemy attack/idle animations.
+        // Extended to support ranged enemies (projectiles) based on EnemyTypeComponent.
         // ---------------------------------------------------------------------
         auto AttackLeaf = std::make_unique<DecisionNode>(
             nullptr,
@@ -290,6 +301,7 @@ namespace Framework
                 auto* rb = enemy->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);
                 auto* tr = enemy->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
                 auto* ai = enemy->GetComponentType<EnemyDecisionTreeComponent>(ComponentTypeId::CT_EnemyDecisionTreeComponent);
+                auto* typeComp = enemy->GetComponentType<EnemyTypeComponent>(ComponentTypeId::CT_EnemyTypeComponent);
 
                 if (!attack || !rb || !tr || !ai)
                     return;
@@ -327,10 +339,16 @@ namespace Framework
                 const float speed = 1.0f;
                 const float accel = 2.0f;
 
+                // Determine behavior based on Type (melee vs ranged)
+                bool isRanged = (typeComp && typeComp->Etype == EnemyTypeComponent::EnemyType::ranged);
+
+                // Movement Logic: Ranged stops further away
+                float stopDistance = isRanged ? 3.0f : 0.1f;
+
                 // Smoothly move towards the player
-                if (distance > 0.01f)
+                if (distance > stopDistance)
                 {
-                    float norm = std::sqrt(dx * dx + dy * dy);
+                    float norm = (distance > 0.001f) ? distance : 1.0f;
                     float targetVX = (dx / norm) * speed;
                     float targetVY = (dy / norm) * speed;
 
@@ -348,43 +366,84 @@ namespace Framework
                 // Update attack timer and spawn hitbox if ready
                 attack->attack_timer += dt;
 
-                if (attack->attack_timer >= attack->attack_speed && !attack->hitbox->active)
+                // Determine facing direction based on player position
+                ai->facing = (dx < 0.0f) ? Facing::LEFT : Facing::RIGHT;
+
+                if (attack->attack_timer >= attack->attack_speed)
                 {
-                    attack->attack_timer = 0.0f;
-                    attack->hitbox->active = true;
+                    // Check range before attacking
+                    bool canAttack = isRanged ? (distance < 6.0f) : (distance < 0.8f);
 
-                    // Determine facing direction based on player position
-                    ai->facing = (dx < 0.0f) ? Facing::LEFT : Facing::RIGHT;
-                    float direction = (ai->facing == Facing::LEFT) ? -1.0f : 1.0f;
+                    if (canAttack)
+                    {
+                        // Note: For melee, we check !attack->hitbox->active. For ranged, we just fire.
+                        bool meleeReady = !isRanged && !attack->hitbox->active;
+                        bool rangedReady = isRanged; // Ranged fires based on timer solely
 
-                    float hbWidth = rb->width * 1.2f;
-                    float hbHeight = rb->height * 0.8f;
+                        if (meleeReady || rangedReady)
+                        {
+                            attack->attack_timer = 0.0f;
 
-                    // Spawn X just outside enemy's hitbox
-                    float spawnX = tr->x + (direction * hbWidth * 0.25f);
-                    float spawnY = tr->y; // centered vertically
-                    
-                
-                    attack->hitbox->duration = GetAnimationDuration(enemy, "slashattack");
-                   
+                            if (isRanged)
+                            {
+                                // --- Ranged Attack: Spawn Projectile ---
+                                float norm = (distance > 0.001f) ? distance : 1.0f;
+                                float dirX = dx / norm;
+                                float dirY = dy / norm;
 
-                    logic->hitBoxSystem->SpawnHitBox(
-                        enemy,
-                        spawnX,
-                        spawnY,
-                        hbWidth,
-                        hbHeight,
-                        static_cast<float>(attack->damage),
-                        attack->hitbox->duration,
-                        HitBoxComponent::Team::Enemy
-                    );
+                                // Spawn offset
+                                float spawnX = tr->x + dirX * 0.5f;
+                                float spawnY = tr->y + dirY * 0.5f;
 
-                    // Play attack animation when slashing
-                    PlayAnimationIfAvailable(enemy, "slashattack",true);
+                                logic->hitBoxSystem->SpawnProjectile(
+                                    enemy,
+                                    spawnX, spawnY,
+                                    dirX, dirY,
+                                    4.0f,        // Projectile speed
+                                    0.3f, 0.15f, // Size
+                                    static_cast<float>(attack->damage),
+                                    2.0f,        // Duration
+                                    HitBoxComponent::Team::Enemy
+                                );
+
+                                PlayAnimationIfAvailable(enemy, "rangeattack", true);
+                            }
+                            else
+                            {
+                                // --- Melee Attack: Spawn Hitbox ---
+                                attack->hitbox->active = true;
+                                float direction = (ai->facing == Facing::LEFT) ? -1.0f : 1.0f;
+
+                                float hbWidth = rb->width * 1.2f;
+                                float hbHeight = rb->height * 0.8f;
+
+                                // Spawn X just outside enemy's hitbox
+                                float spawnX = tr->x + (direction * hbWidth * 0.25f);
+                                float spawnY = tr->y; // centered vertically
+
+                                attack->hitbox->duration = GetAnimationDuration(enemy, "slashattack");
+
+                                logic->hitBoxSystem->SpawnHitBox(
+                                    enemy,
+                                    spawnX,
+                                    spawnY,
+                                    hbWidth,
+                                    hbHeight,
+                                    static_cast<float>(attack->damage),
+                                    attack->hitbox->duration,
+                                    HitBoxComponent::Team::Enemy
+                                );
+
+                                // Play attack animation when slashing
+                                PlayAnimationIfAvailable(enemy, "slashattack", true);
+                            }
+                        }
+                    }
                 }
 
                 // Update hitbox lifetime and return to idle animation when not attacking
-                if (attack->hitbox->active)
+                // (Only relevant for melee hitboxes attached to the enemy)
+                if (!isRanged && attack->hitbox->active)
                 {
                     attack->hitboxElapsed += dt;
                     if (attack->hitboxElapsed >= attack->hitbox->duration)
@@ -392,12 +451,16 @@ namespace Framework
                         attack->hitbox->active = false;
                         attack->hitboxElapsed = 0.0f;
                         PlayAnimationIfAvailable(enemy, "idle");
-                        
                     }
                 }
- 
+                else if (isRanged && attack->attack_timer > 0.5f)
+                {
+                    // Simple fallback for ranged to go back to idle after shooting
+                    PlayAnimationIfAvailable(enemy, "idle");
+                }
+
                 // Update chase duration state
-                if (distance > 0.5f)
+                if (distance > (isRanged ? 4.0f : 0.5f))
                 {
                     ai->chaseTimer += dt;
                     if (ai->chaseTimer >= ai->maxChaseDuration)
@@ -430,7 +493,8 @@ namespace Framework
                     return false;
 
                 // Refresh "seen player" state based on proximity
-                if (IsPlayerNear(enemy, 0.2f))
+                // Increased detection radius slightly to allow ranged enemies to spot player sooner
+                if (IsPlayerNear(enemy, 3.5f))
                 {
                     ai->hasSeenPlayer = true;
                     ai->chaseTimer = 0.0f;
@@ -484,6 +548,7 @@ namespace Framework
                 return;
             }
         }
+
         // Lazy initialization of the decision tree
         if (!enemyDecisionTree->tree)
         {

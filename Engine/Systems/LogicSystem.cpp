@@ -32,6 +32,8 @@
 #include "Systems/RenderSystem.h"      // for ScreenToWorld / camera-based world mapping
 #include "Debug/Selection.h"
 #include "Systems/VfxHelpers.h"
+#include "Resource_Manager/Resource_Manager.h"
+
 #include <cctype>
 #include <string>
 #include <string_view>
@@ -98,7 +100,6 @@ namespace Framework {
         animState = newState;
         frame = 0;
         frameClock = 0.f;
-
 
         ApplyAnimationStateToComponent(newState);
     }
@@ -510,13 +511,11 @@ namespace Framework {
         RegisterComponent(EnemyDecisionTreeComponent);
         RegisterComponent(EnemyHealthComponent);
         RegisterComponent(EnemyTypeComponent);
-
         RegisterComponent(AudioComponent);
+        RegisterComponent(ZoomTriggerComponent);
         FACTORY = factory.get();
         gateController.SetFactory(factory.get());
         LoadPrefabs();
-
- 
 
         auto playerPrefab = resolveData("player.json");
         std::cout << "[Prefab] Player path = " << std::filesystem::absolute(playerPrefab)
@@ -571,6 +570,26 @@ namespace Framework {
         // Build HitBoxSystem after references are valid.
         hitBoxSystem = new HitBoxSystem(*this);
         hitBoxSystem->Initialize();
+
+        // ---------------------------------------------------------------------
+        // Preload Fire Enemy textures to avoid hitches when they first spawn.
+        // ---------------------------------------------------------------------
+        Resource_Manager::load(
+            "fire_idle",
+            Framework::ResolveAssetPath("Textures/Character/Fire Enemy_Sprite/Idle_Sprite.png").string()
+        );
+        Resource_Manager::load(
+            "fire_projectile",
+            Framework::ResolveAssetPath("Textures/Character/Fire Enemy_Sprite/Fire Projectile_Sprite.png").string()
+        );
+        Resource_Manager::load(
+            "fire_knockback",
+            Framework::ResolveAssetPath("Textures/Character/Fire Enemy_Sprite/Knockback_Sprite.png").string()
+        );
+        Resource_Manager::load(
+            "fire_death",
+            Framework::ResolveAssetPath("Textures/Character/Fire Enemy_Sprite/Death_Sprite.png").string()
+        );
 
         std::cout << "\n=== Controls ===\n"
             << "WASD: Move | Q/E: Rotate | Z/X: Scale | R: Reset\n"
@@ -684,6 +703,7 @@ namespace Framework {
                 if (factory)
                     factory->Destroy(vfx);
             }
+
             // --- Enemy loop: reacts to player's ACTIVE hitbox if both sides are valid ---
             for (auto* obj : levelObjects)
             {
@@ -718,7 +738,6 @@ namespace Framework {
                     }
                 }
             }
-
 
             if (hitBoxSystem)
                 hitBoxSystem->Update(dt);
@@ -1064,13 +1083,10 @@ namespace Framework {
             }, "LogicSystem::Update");
     }
 
- 
     void LogicSystem::LoadLevelAndResetState(const std::filesystem::path& levelPath)
     {
         if (!factory)
             return;
-
-
 
         for (auto const& [id, obj] : factory->Objects())
         {

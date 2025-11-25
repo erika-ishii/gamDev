@@ -13,7 +13,7 @@
 *********************************************************************************************/
 
 #pragma once
-#pragma once
+
 #include "Composition/Component.h"
 #include "Serialization/Serialization.h"
 

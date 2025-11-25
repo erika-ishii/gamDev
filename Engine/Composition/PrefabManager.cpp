@@ -56,8 +56,8 @@ namespace Framework {
         if (auto* e = FACTORY->CreateTemplate(resolveData("enemy.json")))
             master_copies["Enemy"].reset(e);
 
-        if (auto * re = FACTORY->CreateTemplate(resolveData("enemyranged.json")))
-            master_copies["Enemyranged"].reset(re);
+        if (auto* re = FACTORY->CreateTemplate(resolveData("enemyranged.json")))
+            master_copies["FireEnemy"].reset(re);
 
         if (auto* p = FACTORY->CreateTemplate(resolveData("player.json"))) {
             master_copies["Player"].reset(p);
@@ -138,6 +138,10 @@ namespace Framework {
         if (auto* artassetFrontOfPlayer = FACTORY->CreateTemplate(resolveData("artassetsFrontOfPlayer.json"))) {
             master_copies["Art_Asset_Front_Of_Player"].reset(artassetFrontOfPlayer);
         }
+        if (auto* zoomObject = FACTORY->CreateTemplate(resolveData("zoomObject.json"))) {
+            master_copies["zoom_Object"].reset(zoomObject);
+        }
+
     }
 
     /*************************************************************************************

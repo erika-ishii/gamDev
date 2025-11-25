@@ -431,6 +431,23 @@ namespace Framework {
                 {"duration",hit.duration}
             };
         }
+        case ComponentTypeId::CT_AudioComponent: {
+            auto const& audio = static_cast<AudioComponent const&>(component);
+            json soundMap = json::object();
+
+            // Iterate through the map of sounds and save them
+            for (auto const& [actionName, info] : audio.sounds) {
+                soundMap[actionName] = {
+                    {"id", info.id},
+                    {"loop", info.loop}
+                };
+            }
+
+            return json{
+                {"sounds", soundMap},
+                {"volume", audio.volume}
+            };
+        }
         default:
             break;
         }

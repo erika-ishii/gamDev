@@ -130,6 +130,9 @@ namespace Framework {
             float& worldX, float& worldY,
             bool& insideViewport) const;
 
+        // Set gameplay camera view height (bigger -> zoom out, smaller -> zoom in)
+        void SetCameraViewHeight(float viewHeight);
+
     private:
         // --- Filesystem / asset resolution ------------------------------------------------
         std::string           FindRoboto() const;
@@ -189,7 +192,7 @@ namespace Framework {
 
         // --- Frame/viewport state ---------------------------------------------------------
         int  screenW = 1280;             //!< Back-buffer width.
-        int  screenH = 720;             //!< Back-buffer height.
+        int  screenH = 720;              //!< Back-buffer height.
 
         // --- Text ------------------------------------------------------------------------
         gfx::TextRenderer textTitle;     //!< Title text (e.g., big header).
@@ -199,10 +202,11 @@ namespace Framework {
 
         // --- Demo textures (player / animation) ------------------------------------------
         unsigned playerTex = 0;               //!< Legacy fallback player texture.
-        unsigned idleTex = 0;               //!< Idle animation sheet.
-        unsigned runTex = 0;               //!< Run animation sheet.
+        unsigned idleTex = 0;                 //!< Idle animation sheet.
+        unsigned runTex = 0;                  //!< Run animation sheet.
         std::array<unsigned, 3> attackTex{};  //!< Combo attack sheets (1st / 2nd / 3rd).
-        unsigned knifeTex = 0;              //!< Animated knife projectile sheet.
+        unsigned knifeTex = 0;                //!< Animated knife projectile sheet.
+        unsigned fireProjectileTex = 0;       //!< Fire enemy projectile sheet.
 
         // --- Game viewport rectangle (pixels) --------------------------------------------
         struct ViewRect {
@@ -215,20 +219,20 @@ namespace Framework {
         ViewRect gameViewport{};              //!< Active game viewport in pixels.
 
         // --- Editor layout flags ---------------------------------------------------------
-        bool  showEditor = false;  //!< Toggle editor UI visibility.
-        bool  showAnimationEditor = false; //!< Toggle Animation Editor visibility.
-        bool  gameViewportFullWidth = false; //!< Maximize viewport width.
-        bool  gameViewportFullHeight = false; //!< Maximize viewport height.
-        float heightRatio = 0.8f;   //!< Viewport height vs window height.
-        float editorSplitRatio = 0.5f;   //!< Editor/game split ratio.
+        bool  showEditor = false;              //!< Toggle editor UI visibility.
+        bool  showAnimationEditor = false;     //!< Toggle Animation Editor visibility.
+        bool  gameViewportFullWidth = false;   //!< Maximize viewport width.
+        bool  gameViewportFullHeight = false;  //!< Maximize viewport height.
+        float heightRatio = 0.8f;              //!< Viewport height vs window height.
+        float editorSplitRatio = 0.5f;         //!< Editor/game split ratio.
 
-        bool  editorToggleHeld = false;  //!< Debounce toggle key (F10).
-        bool  fullscreenToggleHeld = false;  //!< Debounce fullscreen toggle (F11).
-        bool  deleteKeyHeld = false;  //!< Debounce Delete shortcut for removing objects.
-        bool  translateKeyHeld = false; //!< Debounce translate gizmo hotkey (T).
-        bool  rotateKeyHeld = false;    //!< Debounce rotate gizmo hotkey (R).
-        bool  scaleKeyHeld = false;     //!< Debounce scale gizmo hotkey (S).
-        bool  showPhysicsHitboxes = true;   //!< Debug: draw physics hitboxes.
+        bool  editorToggleHeld = false;        //!< Debounce toggle key (F10).
+        bool  fullscreenToggleHeld = false;    //!< Debounce fullscreen toggle (F11).
+        bool  deleteKeyHeld = false;           //!< Debounce Delete shortcut for removing objects.
+        bool  translateKeyHeld = false;        //!< Debounce translate gizmo hotkey (T).
+        bool  rotateKeyHeld = false;           //!< Debounce rotate gizmo hotkey (R).
+        bool  scaleKeyHeld = false;            //!< Debounce scale gizmo hotkey (S).
+        bool  showPhysicsHitboxes = true;      //!< Debug: draw physics hitboxes.
 
         // --- Mouse drag selection --------------------------------------------------------
         bool  leftMouseDownPrev = false;
@@ -239,7 +243,7 @@ namespace Framework {
         // --- Game camera -----------------------------------------------------------------
         gfx::Camera2D camera;                 //!< In-game camera.
         float         cameraViewHeight = 1.0f; //!< Ortho view height (world units).
-        bool          cameraEnabled = true; //!< Toggle in-game camera control.
+        bool          cameraEnabled = true;   //!< Toggle in-game camera control.
 
         // --- Editor camera ---------------------------------------------------------------
         gfx::Camera2D editorCamera;                //!< Editor camera.
