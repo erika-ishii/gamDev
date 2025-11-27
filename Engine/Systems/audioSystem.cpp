@@ -58,7 +58,7 @@ namespace Framework {
         // 3. Set global master volume
         SoundManager::getInstance().setMasterVolume(0.7f);
 
-        if (SoundManager::getInstance().isSoundLoaded("SoundTrackloop"))
+        if (SoundManager::getInstance().isSoundLoaded("SoundTrackloop")) 
             SoundManager::getInstance().playSound("SoundTrackloop", true);
 
         // 6. Debug UI

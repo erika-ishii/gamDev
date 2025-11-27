@@ -51,9 +51,9 @@ namespace {
             container.push_back(SystemTiming{ std::string(name), ms });
         }
     }
-
-    // Overlay state (F1 edge-toggle)
-    static bool  sPerfVisible = true;
+    // Overlay state (F1 edge-toggle). Hidden by default so players won't see it
+        // until they explicitly toggle it via the hotkey (F1).
+    static bool  sPerfVisible = false;
     static bool  sPrevToggleKey = false;
 
     // Our own engine timing (from Core), in seconds

@@ -2,7 +2,7 @@
 /*********************************************************************************************
  \file      PauseMenuPage.hpp
  \par       SofaSpuds
- \author    ChatGPT - Added pause overlay and navigation menu
+ \author     erika.ishii (erika.ishii@digipen.edu) - Primary Author, 100%
  \brief     Declaration of an in-game pause menu with overlay, buttons, and latch events.
  \details   The pause page draws a dimmed overlay on top of the active scene, displays a
              stylized note card, and surfaces actions for resuming, options/main menu,

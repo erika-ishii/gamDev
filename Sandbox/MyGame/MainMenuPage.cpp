@@ -68,6 +68,8 @@ namespace {
         TextureField background;
         TextureField header;
         TextureField close;
+        float headerOffsetX = 0.0f;
+        float headerOffsetY = 0.0f;
         std::vector<HowToRowJson> rows;
     };
     struct ExitPopupJson {
@@ -137,8 +139,9 @@ namespace {
         config.background = MakeTextureField("howto_note_bg", "Textures/UI/How To Play/Note.png");
         config.header = MakeTextureField("howto_header", "Textures/UI/How To Play/How To Play.png");
         config.close = MakeTextureField("menu_popup_close", "Textures/UI/How To Play/XButton.png");
-
-        // Add default rows here if needed, mirroring your original code
+        config.headerOffsetX = 0.0f;
+        config.headerOffsetY = 0.0f;
+       
         return config;
     }
     ExitPopupJson DefaultExitPopupConfig()
@@ -155,7 +158,6 @@ namespace {
     HowToPopupJson LoadHowToPopupConfig() {
         HowToPopupJson config = DefaultHowToPopupConfig();
 
-        // Try loading from JSON (multiple candidates)
         std::vector<std::filesystem::path> candidates;
         candidates.emplace_back(Framework::ResolveDataPath("howto_popup.json"));
         candidates.emplace_back(Framework::ResolveDataPath("HowToPopup.json"));
@@ -175,7 +177,11 @@ namespace {
                 if (root.contains("background")) PopulateTextureField(root["background"], config.background);
                 if (root.contains("header")) PopulateTextureField(root["header"], config.header);
                 if (root.contains("close")) PopulateTextureField(root["close"], config.close);
-
+                if (root.contains("header_offset")) {
+                    const auto& off = root["header_offset"];
+                    if (off.contains("x")) config.headerOffsetX = off["x"];
+                    if (off.contains("y")) config.headerOffsetY = off["y"];
+                }
                 if (root.contains("rows") && root["rows"].is_array()) {
                     std::vector<HowToRowJson> rows;
                     for (const auto& rowJson : root["rows"]) {
@@ -289,6 +295,9 @@ void MainMenuPage::Init(int screenW, int screenH)
     closePopupTex = ResolveTex(popupConfig.close);
     noteBackgroundTex = ResolveTex(popupConfig.background);
     howToHeaderTex = ResolveTex(popupConfig.header);
+    howToHeaderOffsetX = popupConfig.headerOffsetX;
+    howToHeaderOffsetY = popupConfig.headerOffsetY;
+
 
     exitPopupNoteTex = ResolveTex(exitPopupConfig.background);
     exitPopupTitleTex = ResolveTex(exitPopupConfig.title);
@@ -441,8 +450,8 @@ void MainMenuPage::Draw(Framework::RenderSystem* render)
         const float headerHeight = howToPopup.h * 0.16f;
         const float headerAspect = textureAspect(howToHeaderTex, 2.6f);
         const float headerWidth = headerHeight * headerAspect;
-        const float headerX = howToPopup.x + (howToPopup.w - headerWidth) * 0.5f;
-        const float headerY = howToPopup.y + howToPopup.h - headerHeight - headerPadY;
+        const float headerX = howToPopup.x + (howToPopup.w - headerWidth) * 0.5f + howToHeaderOffsetX;
+        const float headerY = howToPopup.y + howToPopup.h - headerHeight - headerPadY + howToHeaderOffsetY;
 
         if (howToHeaderTex) {
             gfx::Graphics::renderSpriteUI(howToHeaderTex, headerX, headerY, headerWidth, headerHeight, 1.f, 1.f, 1.f, 1.f, sw, sh);
@@ -666,6 +675,7 @@ void MainMenuPage::BuildGui(float x, float bottomY, float w, float h, float spac
                 BuildGui();
             });
 
+
         gui.AddButton(exitCloseBtn.x, exitCloseBtn.y, exitCloseBtn.w, exitCloseBtn.h, "",
             exitPopupCloseTex, exitPopupCloseTex,
             [this]()
@@ -691,53 +701,54 @@ void MainMenuPage::BuildGui(float x, float bottomY, float w, float h, float spac
                 SoundManager::getInstance().setMasterVolume(audioMuted ? 0.0f : masterVolumeDefault);
                 BuildGui();
             });
+        return;
     }
-    else {
-        size_t total = g_MenuConfig.buttons.size();
-        for (size_t i = 0; i < total; ++i) {
-            const auto& btnDef = g_MenuConfig.buttons[i];
-
-            float yPos = bottomY + (total - 1 - i) * (h + spacing);
-
-            // Find texture
-            unsigned tex = 0;
-            for (auto& p : g_ButtonTextures) if (p.first == btnDef.action) tex = p.second;
-
-            // Map Action String to Lambda
-            std::function<void()> callback = []() {};
-            if (btnDef.action == "start")        callback = [this]() { startLatched = true; };
-            else if (btnDef.action == "options") callback = [this]() {
-                optionsLatched = true;
-                showOptionsPopup = true;
-                showHowToPopup = false;
-                showExitPopup = false;
-                BuildGui();
-                };
-            else if (btnDef.action == "exit")    callback = [this]() {
-                showExitPopup = true;
-                showHowToPopup = false;
-                showOptionsPopup = false;
-                BuildGui();
-                };
-            else if (btnDef.action == "howto")   callback = [this]() {
-                howToLatched = true;
-                showHowToPopup = true;
-                showOptionsPopup = false;
-                iconAnimTime = 0.0f;
-                iconTimerInitialized = false;
-                // IMPORTANT: Rebuild GUI to include Close button
-                BuildGui();
-                };
-
-            gui.AddButton(x, yPos, w, h, btnDef.label, tex, tex, callback);
-        }
-
-        // Add Close Button if Popup is open
-        if (showHowToPopup && closePopupTex) {
+    if (showHowToPopup) {
+        if (closePopupTex) {
 
             gui.AddButton(closeBtn.x, closeBtn.y, closeBtn.w, closeBtn.h, "",
                 closePopupTex, closePopupTex,
                 [this]() { showHowToPopup = false; BuildGui(); });
         }
+        return;
+    }
+
+    size_t total = g_MenuConfig.buttons.size();
+    for (size_t i = 0; i < total; ++i) {
+        const auto& btnDef = g_MenuConfig.buttons[i];
+
+        float yPos = bottomY + (total - 1 - i) * (h + spacing);
+
+        // Find texture
+        unsigned tex = 0;
+        for (auto& p : g_ButtonTextures) if (p.first == btnDef.action) tex = p.second;
+
+        // Map Action String to Lambda
+        std::function<void()> callback = []() {};
+        if (btnDef.action == "start")        callback = [this]() { startLatched = true; };
+        else if (btnDef.action == "options") callback = [this]() {
+            optionsLatched = true;
+            showOptionsPopup = true;
+            showHowToPopup = false;
+            showExitPopup = false;
+            BuildGui();
+            };
+        else if (btnDef.action == "exit")    callback = [this]() {
+            showExitPopup = true;
+            showHowToPopup = false;
+            showOptionsPopup = false;
+            BuildGui();
+            };
+        else if (btnDef.action == "howto")   callback = [this]() {
+            howToLatched = true;
+            showHowToPopup = true;
+            showOptionsPopup = false;
+            iconAnimTime = 0.0f;
+            iconTimerInitialized = false;
+            // IMPORTANT: Rebuild GUI to include Close button
+            BuildGui();
+            };
+
+        gui.AddButton(x, yPos, w, h, btnDef.label, tex, tex, callback);
     }
 }

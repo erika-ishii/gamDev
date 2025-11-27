@@ -1,0 +1,221 @@
+{
+  "Level": {
+    "GameObjects": [
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 2.0,
+            "layer": -5,
+            "r": 1.0,
+            "texture_key": "Textures/Environment/lvl 2_ Living + Kitchen/00_Living+Kitchen_concept.png",
+            "visible": true,
+            "w": 2.0
+          },
+          "SpriteComponent": {
+            "texture_key": "Textures/Environment/lvl 2_ Living + Kitchen/00_Living+Kitchen_concept.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": 0.015104144811630249,
+            "y": -0.03333333134651184
+          }
+        },
+        "layer": "Default",
+        "name": "Art_Asset"
+      },
+      {
+        "Components": {
+          "AudioComponent": {
+            "entityType": "player",
+            "sounds": {
+              "GrappleShoot1": {
+                "id": "GrappleShoot1",
+                "loop": false
+              },
+              "PlayerDead": {
+                "id": "PlayerDead",
+                "loop": false
+              },
+              "PlayerHit": {
+                "id": "PlayerHit",
+                "loop": false
+              },
+              "Slash1": {
+                "id": "Slash1",
+                "loop": false
+              },
+              "footsteps": {
+                "id": "footsteps",
+                "loop": true
+              }
+            },
+            "volume": 1.0
+          },
+          "HitBoxComponent": {
+            "duration": 0.15000000596046448,
+            "height": 0.15000000596046448,
+            "width": 0.15000000596046448
+          },
+          "PlayerAttackComponent": {
+            "attack_speed": 1.2000000476837158,
+            "damage": 1
+          },
+          "PlayerComponent": {},
+          "PlayerHUDComponent": {},
+          "PlayerHealthComponent": {
+            "playerHealth": 5,
+            "playerMaxhealth": 5
+          },
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.25,
+            "layer": 1,
+            "r": 1.0,
+            "visible": true,
+            "w": -0.25
+          },
+          "RigidBodyComponent": {
+            "height": 0.20999999344348907,
+            "velocity_x": 0.0,
+            "velocity_y": 7.524367791978892e-19,
+            "width": 0.10000000149011612
+          },
+          "SpriteAnimationComponent": {
+            "activeAnimation": 0,
+            "animations": [
+              {
+                "config": {
+                  "columns": 5,
+                  "endFrame": 4,
+                  "fps": 6.0,
+                  "loop": true,
+                  "rows": 1,
+                  "startFrame": 0,
+                  "totalFrames": 5
+                },
+                "currentFrame": 1,
+                "name": "idle",
+                "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/Idle_Sprite.png",
+                "textureKey": "idle_sheet"
+              },
+              {
+                "config": {
+                  "columns": 10,
+                  "endFrame": 9,
+                  "fps": 12.0,
+                  "loop": true,
+                  "rows": 1,
+                  "startFrame": 0,
+                  "totalFrames": 10
+                },
+                "currentFrame": 2,
+                "name": "run",
+                "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/Running_Sprite.png",
+                "textureKey": "run_sheet"
+              },
+              {
+                "config": {
+                  "columns": 13,
+                  "endFrame": 12,
+                  "fps": 12.0,
+                  "loop": true,
+                  "rows": 1,
+                  "startFrame": 0,
+                  "totalFrames": 13
+                },
+                "currentFrame": 0,
+                "name": "attack1",
+                "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/1st_Attack Sprite.png",
+                "textureKey": "attack1_sheet"
+              },
+              {
+                "config": {
+                  "columns": 8,
+                  "endFrame": 7,
+                  "fps": 12.0,
+                  "loop": true,
+                  "rows": 1,
+                  "startFrame": 0,
+                  "totalFrames": 8
+                },
+                "currentFrame": 7,
+                "name": "attack2",
+                "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/2nd_Attack Sprite.png",
+                "textureKey": "attack2_sheet"
+              },
+              {
+                "config": {
+                  "columns": 9,
+                  "endFrame": 8,
+                  "fps": 12.0,
+                  "loop": true,
+                  "rows": 1,
+                  "startFrame": 0,
+                  "totalFrames": 9
+                },
+                "currentFrame": 0,
+                "name": "attack3",
+                "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/3rd_Attack Sprite.png",
+                "textureKey": "attack3_sheet"
+              },
+              {
+                "config": {
+                  "columns": 4,
+                  "endFrame": 3,
+                  "fps": 5.0,
+                  "loop": false,
+                  "rows": 1,
+                  "startFrame": 0,
+                  "totalFrames": 4
+                },
+                "currentFrame": 0,
+                "name": "knockback",
+                "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/Knockback_Sprite.png",
+                "textureKey": "knockback_sheet"
+              },
+              {
+                "config": {
+                  "columns": 8,
+                  "endFrame": 7,
+                  "fps": 8.0,
+                  "loop": false,
+                  "rows": 1,
+                  "startFrame": 0,
+                  "totalFrames": 8
+                },
+                "currentFrame": 0,
+                "name": "death",
+                "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/Death_Sprite.png",
+                "textureKey": "death_sheet"
+              }
+            ],
+            "fps": 6.0,
+            "frames": [],
+            "loop": true,
+            "play": true
+          },
+          "SpriteComponent": {
+            "texture_key": "idle_sheet"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -0.5,
+            "y": -0.41666659712791443
+          }
+        },
+        "layer": "Default",
+        "name": "Player"
+      }
+    ],
+    "name": "RealLevel1"
+  }
+}

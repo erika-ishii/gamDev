@@ -1,9 +1,9 @@
 /*********************************************************************************************
  \file      UndoStack.cpp
-  \par       SofaSpuds
- \author    erika.ishii
+ \par       SofaSpuds
+ \author    erika.ishii (erika.ishii@digipen.edu) - Primary Author, 100%
  \brief     Implementation of the editor undo system.
-   \copyright
+ \copyright
             All content © 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/

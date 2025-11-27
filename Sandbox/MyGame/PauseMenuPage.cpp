@@ -1,7 +1,7 @@
 /*********************************************************************************************
  \file      PauseMenuPage.cpp
  \par       SofaSpuds
- \author    
+ \author    erika.ishii (erika.ishii@digipen.edu) - Primary Author, 100%
  \brief     In-game pause menu: parchment overlay with stylized buttons.
  \details   Provides a themed pause UI that dims the active scene, displays a textured
             note card for legibility, and exposes Resume/Options/How To Play/Quit plus a

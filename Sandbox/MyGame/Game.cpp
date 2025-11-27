@@ -17,8 +17,9 @@
 #include "Systems/HealthSystem.h"
 #include "Audio/SoundManager.h"
 #include "Debug/CrashLogger.hpp"
+#include "Graphics/Graphics.hpp"
 #include "Debug/Perf.h"
-
+#include <algorithm>
 #include <GLFW/glfw3.h>
 #include <chrono>
 #include <MainMenuPage.hpp>
@@ -46,9 +47,10 @@ namespace mygame {
         Framework::AiSystem* gAiSystem = nullptr;
         Framework::HealthSystem* gHealthSystem = nullptr;
 
-        enum class GameState { MAIN_MENU, PLAYING, PAUSED, DEFEAT, EXIT };
+        enum class GameState { MAIN_MENU, TRANSITIONING, PLAYING, PAUSED, DEFEAT, EXIT };
         GameState currentState = GameState::MAIN_MENU;
         bool editorSimulationRunning = false;
+       
 
         MainMenuPage mainMenu;
         PauseMenuPage pauseMenu;
@@ -57,6 +59,10 @@ namespace mygame {
         constexpr int START_KEY = GLFW_KEY_ENTER; // Keyboard stand-in for a controller Start button.
         constexpr int PAUSE_KEY = GLFW_KEY_ESCAPE;
     }
+
+    // Transition timing helpers (file-local).
+    static float transitionTimer = 0.0f;
+    static constexpr float kStartTransitionDuration = 1.0f;
 
     void init(gfx::Window& win)
     {
@@ -107,8 +113,9 @@ namespace mygame {
                 handlePerfToggle();
                 if (mainMenu.ConsumeStart())
                 {
-                    currentState = GameState::PLAYING;
-                    editorSimulationRunning = true;
+                    currentState = GameState::TRANSITIONING;
+                    transitionTimer = kStartTransitionDuration;
+                    editorSimulationRunning = false;
                     pauseMenu.ResetLatches();
                     if (gHealthSystem)
                         gHealthSystem->ClearPlayerDeathFlag();
@@ -116,6 +123,15 @@ namespace mygame {
                 if (mainMenu.ConsumeExit())
                 {
                     currentState = GameState::EXIT;
+                }
+                break;
+
+            case GameState::TRANSITIONING:
+                transitionTimer -= dt;
+                if (transitionTimer <= 0.0f)
+                {
+                    currentState = GameState::PLAYING;
+                    editorSimulationRunning = true;
                 }
                 break;
 
@@ -243,6 +259,23 @@ namespace mygame {
 
             case GameState::PLAYING:
                 gSystems.DrawAll();
+                break;
+
+            case GameState::TRANSITIONING:
+                if (gRenderSystem)
+                {
+                    gRenderSystem->BeginMenuFrame();
+                    mainMenu.Draw(gRenderSystem);
+                    const float normalized = (kStartTransitionDuration > 0.0f)
+                        ? std::clamp(1.0f - (transitionTimer / kStartTransitionDuration), 0.0f, 1.0f)
+                        : 1.0f;
+                    gfx::Graphics::renderRectangleUI(0.0f, 0.0f,
+                        static_cast<float>(gRenderSystem->ScreenWidth()),
+                        static_cast<float>(gRenderSystem->ScreenHeight()),
+                        0.0f, 0.0f, 0.0f, normalized,
+                        gRenderSystem->ScreenWidth(), gRenderSystem->ScreenHeight());
+                    gRenderSystem->EndMenuFrame();
+                }
                 break;
 
             case GameState::PAUSED:

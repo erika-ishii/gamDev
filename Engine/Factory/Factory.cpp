@@ -443,7 +443,6 @@ namespace Framework {
             auto const& audio = static_cast<AudioComponent const&>(component);
             json soundMap = json::object();
 
-            // Iterate through the map of sounds and save them
             for (auto const& [actionName, info] : audio.sounds) {
                 soundMap[actionName] = {
                     {"id", info.id},
@@ -453,7 +452,8 @@ namespace Framework {
 
             return json{
                 {"sounds", soundMap},
-                {"volume", audio.volume}
+                {"volume", audio.volume},
+                {"entityType", audio.entityType} // <--- ADD THIS LINE
             };
         }
         default:
@@ -987,6 +987,13 @@ namespace Framework {
         case ComponentTypeId::CT_EnemyDecisionTreeComponent:
         case ComponentTypeId::CT_InputComponents:
         case ComponentTypeId::CT_AudioComponent:
+        {
+            auto& audio = static_cast<AudioComponent&>(component);
+            readString("entityType", audio.entityType); //
+            readFloat("volume", audio.volume);          // 
+            // You may also want to read "sounds" map here if needed for snapshots
+            break;
+        }
         default:
             break;
         }

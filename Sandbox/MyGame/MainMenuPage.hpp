@@ -103,7 +103,7 @@ namespace mygame {
         unsigned exitBtnIdleTex = 0;  //Exit button idle texture.
         unsigned exitBtnHoverTex = 0;  //Exit button hover texture.
         unsigned closePopupTex = 0;    //Popup close button texture.
-        unsigned optionsHeaderTex = 0; //Options header texture (reuse button art if available).
+        unsigned optionsHeaderTex = 0;
         unsigned exitPopupNoteTex = 0;     //Exit confirmation note texture.
         unsigned exitPopupTitleTex = 0;    //Exit popup title texture.
         unsigned exitPopupPromptTex = 0;   //Exit popup prompt texture.
@@ -113,6 +113,8 @@ namespace mygame {
         // --- How To Play textures ---------------------------------------------------------
         unsigned noteBackgroundTex = 0;    //Note-style popup background.
         unsigned howToHeaderTex = 0;       //"How To Play" title art.
+        float howToHeaderOffsetX = 0.0f;   //Configurable header offset X.
+        float howToHeaderOffsetY = 0.0f;   //Configurable header offset Y.
         struct HowToRowConfig {
             unsigned iconTex = 0;
             unsigned labelTex = 0;

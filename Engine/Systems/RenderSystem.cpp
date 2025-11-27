@@ -2117,9 +2117,10 @@ namespace Framework {
                 }
                 ImGui::End();
 
-                Framework::DrawPerformanceWindow();
             }
-
+            // Always allow the performance overlay to be toggled via hotkey (F1),
+            // even when the editor UI is hidden.
+            Framework::DrawPerformanceWindow();
             ProcessImportedAssets();
 
             const double imguiMs = std::chrono::duration<double, std::milli>(clock::now() - t0).count();

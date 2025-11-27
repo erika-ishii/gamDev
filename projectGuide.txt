@@ -39,12 +39,25 @@ CMake is required to generate Visual Studio solutions.
    start giraphics..sln
    ```
 
-Different project setting Debug and release mode
+3. PROJECT SETTINGS (DEBUG VS RELEASE)
+--------------------------------------
+Once the solution is open in Visual Studio, you can toggle between configurations using the dropdown menu in the top toolbar.
+
+* **Debug Mode:** - Use this for development.
+  - Features: Unoptimized code, full debug symbols, and enables console logging/assertions.
+  - Performance: Slower.
+  - able to use F9 for Crash logging
+
+* **Release Mode:**
+  - Use this for final deployment or performance testing.
+  - Features: Fully optimized code. Debug logs may be disabled.
+  - Performance: Runs at maximum speed.
+  
 
 Real-time (in-game) editor
 Toggle at runtime: Press F10 to show/hide the editor panels.
-UI switch: In the on-screen “Viewport Controls” helper, tick “Editor Enabled (F10)”.
-Current project ships real-time editor only (no separate offline editor app).
+Toggle F11 to minimize screen/fullscreen
+
 
 
 That's it — the project is ready to build and run in Visual Studio 2022.

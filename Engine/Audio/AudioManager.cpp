@@ -453,10 +453,10 @@ std::string AudioManager::getFullPath(const std::string& fileName) const
 
     // Try different possible paths
     std::vector<std::filesystem::path> possiblePaths = {
-    currentPath / "game-assests" / "audio" / "sfx" / fileName,
-    currentPath / ".." / "game-assests" / "audio" / "sfx" / fileName,
-    currentPath / ".." / ".." / "game-assests" / "audio" / "sfx" / fileName,
-    currentPath / ".." / ".." / ".." / "game-assests" / "audio" / "sfx" / fileName
+        currentPath / "assets" / "Audio" / fileName,
+        currentPath / ".." / "assets" / "Audio" / fileName,
+        currentPath / ".." / ".." / "assets" / "Audio" / fileName,
+        currentPath / ".." / ".." / ".." / "assets" / "Audio" / fileName
     };
 
     for (const auto& path: possiblePaths)

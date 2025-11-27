@@ -4,9 +4,9 @@
  \author    Ho Jun(h.jun@digipen.edu) - Primary Author, 50%
             jianwei.c (jianwei.c@digipen.edu) - Secondary Author, 50%
 
- \brief     Implementation of the SoundManager singleton class. This class provides a global 
-            access point for managing audio in the game by delegating operations to the 
-            AudioManager. It handles initialization, updates, cleanup, as well as loading, 
+ \brief     Implementation of the SoundManager singleton class. This class provides a global
+            access point for managing audio in the game by delegating operations to the
+            AudioManager. It handles initialization, updates, cleanup, as well as loading,
             playing, pausing, stopping, and unloading sounds.
 
  \copyright
@@ -19,8 +19,9 @@
 #include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 
 #ifdef _DEBUG
-#define new DBG_NEW       // <- redefine new AFTER all includes
+#define new DBG_NEW        // <- redefine new AFTER all includes
 #endif
+
 /*****************************************************************************************
  \brief Get the instance of the SoundManager.
  \return Reference to the single SoundManager instance.
@@ -37,21 +38,22 @@ SoundManager& SoundManager::getInstance()
 *****************************************************************************************/
 bool SoundManager::initialize()
 {
-    if (!m_audioManager)
-    {
-        m_audioManager = std::make_unique<AudioManager>();
-    }
-    
-    bool success = m_audioManager->initialize();
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    // Create and initialize AudioManager
+    auto audio = std::make_shared<AudioManager>();
+
+    bool success = audio->initialize();
     if (success)
     {
+        m_audioManager = std::move(audio);
         std::cout << "SoundManager initialized successfully" << std::endl;
     }
     else
     {
         std::cerr << "Failed to initialize SoundManager" << std::endl;
     }
-    
+
     return success;
 }
 
@@ -60,10 +62,17 @@ bool SoundManager::initialize()
 *****************************************************************************************/
 void SoundManager::shutdown()
 {
-    if (m_audioManager)
+    std::shared_ptr<AudioManager> local;
     {
-        m_audioManager->shutdown();
-        m_audioManager.reset();
+        std::lock_guard<std::mutex> lock(m_mutex);
+        local = std::move(m_audioManager);
+        // m_audioManager is now nullptr for other threads
+    }
+
+    if (local)
+    {
+        local->shutdown();
+        // local will go out of scope and be destroyed here if no other copies exist
         std::cout << "SoundManager shutdown complete" << std::endl;
     }
 }
@@ -73,9 +82,15 @@ void SoundManager::shutdown()
 *****************************************************************************************/
 void SoundManager::update()
 {
-    if (m_audioManager)
+    std::shared_ptr<AudioManager> local;
     {
-        m_audioManager->update();
+        std::lock_guard<std::mutex> lock(m_mutex);
+        local = m_audioManager;
+    }
+
+    if (local)
+    {
+        local->update();
     }
 }
 
@@ -88,13 +103,19 @@ void SoundManager::update()
 *****************************************************************************************/
 bool SoundManager::loadSound(const std::string& name, const std::string& filePath, bool loop)
 {
-    if (!m_audioManager)
+    std::shared_ptr<AudioManager> local;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        local = m_audioManager;
+    }
+
+    if (!local)
     {
         std::cerr << "SoundManager not initialized" << std::endl;
         return false;
     }
-    
-    return m_audioManager->loadSound(name, filePath, loop);
+
+    return local->loadSound(name, filePath, loop);
 }
 
 /*****************************************************************************************
@@ -103,9 +124,15 @@ bool SoundManager::loadSound(const std::string& name, const std::string& filePat
 *****************************************************************************************/
 void SoundManager::unloadSound(const std::string& name)
 {
-    if (m_audioManager)
+    std::shared_ptr<AudioManager> local;
     {
-        m_audioManager->unloadSound(name);
+        std::lock_guard<std::mutex> lock(m_mutex);
+        local = m_audioManager;
+    }
+
+    if (local)
+    {
+        local->unloadSound(name);
     }
 }
 
@@ -114,9 +141,15 @@ void SoundManager::unloadSound(const std::string& name)
 *****************************************************************************************/
 void SoundManager::unloadAllSounds()
 {
-    if (m_audioManager)
+    std::shared_ptr<AudioManager> local;
     {
-        m_audioManager->unloadAllSounds();
+        std::lock_guard<std::mutex> lock(m_mutex);
+        local = m_audioManager;
+    }
+
+    if (local)
+    {
+        local->unloadAllSounds();
     }
 }
 
@@ -129,13 +162,19 @@ void SoundManager::unloadAllSounds()
 *****************************************************************************************/
 bool SoundManager::playSound(const std::string& name, float volume, float pitch, bool loop)
 {
-    if (!m_audioManager)
+    std::shared_ptr<AudioManager> local;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        local = m_audioManager;
+    }
+
+    if (!local)
     {
         std::cerr << "SoundManager not initialized" << std::endl;
         return false;
     }
 
-    return m_audioManager->playSound(name, volume, pitch, loop);
+    return local->playSound(name, volume, pitch, loop);
 }
 
 /*****************************************************************************************
@@ -144,9 +183,15 @@ bool SoundManager::playSound(const std::string& name, float volume, float pitch,
 *****************************************************************************************/
 void SoundManager::stopSound(const std::string& name)
 {
-    if (m_audioManager)
+    std::shared_ptr<AudioManager> local;
     {
-        m_audioManager->stopSound(name);
+        std::lock_guard<std::mutex> lock(m_mutex);
+        local = m_audioManager;
+    }
+
+    if (local)
+    {
+        local->stopSound(name);
     }
 }
 
@@ -155,9 +200,15 @@ void SoundManager::stopSound(const std::string& name)
 *****************************************************************************************/
 void SoundManager::stopAllSounds()
 {
-    if (m_audioManager)
+    std::shared_ptr<AudioManager> local;
     {
-        m_audioManager->stopAllSounds();
+        std::lock_guard<std::mutex> lock(m_mutex);
+        local = m_audioManager;
+    }
+
+    if (local)
+    {
+        local->stopAllSounds();
     }
 }
 
@@ -168,9 +219,15 @@ void SoundManager::stopAllSounds()
 *****************************************************************************************/
 void SoundManager::pauseSound(const std::string& name, bool pause)
 {
-    if (m_audioManager)
+    std::shared_ptr<AudioManager> local;
     {
-        m_audioManager->pauseSound(name, pause);
+        std::lock_guard<std::mutex> lock(m_mutex);
+        local = m_audioManager;
+    }
+
+    if (local)
+    {
+        local->pauseSound(name, pause);
     }
 }
 
@@ -180,9 +237,15 @@ void SoundManager::pauseSound(const std::string& name, bool pause)
 *****************************************************************************************/
 void SoundManager::pauseAllSounds(bool pause)
 {
-    if (m_audioManager)
+    std::shared_ptr<AudioManager> local;
     {
-        m_audioManager->pauseAllSounds(pause);
+        std::lock_guard<std::mutex> lock(m_mutex);
+        local = m_audioManager;
+    }
+
+    if (local)
+    {
+        local->pauseAllSounds(pause);
     }
 }
 
@@ -192,9 +255,15 @@ void SoundManager::pauseAllSounds(bool pause)
 *****************************************************************************************/
 void SoundManager::setMasterVolume(float volume)
 {
-    if (m_audioManager)
+    std::shared_ptr<AudioManager> local;
     {
-        m_audioManager->setMasterVolume(volume);
+        std::lock_guard<std::mutex> lock(m_mutex);
+        local = m_audioManager;
+    }
+
+    if (local)
+    {
+        local->setMasterVolume(volume);
     }
 }
 
@@ -205,9 +274,15 @@ void SoundManager::setMasterVolume(float volume)
 *****************************************************************************************/
 void SoundManager::setSoundVolume(const std::string& name, float volume)
 {
-    if (m_audioManager)
+    std::shared_ptr<AudioManager> local;
     {
-        m_audioManager->setSoundVolume(name, volume);
+        std::lock_guard<std::mutex> lock(m_mutex);
+        local = m_audioManager;
+    }
+
+    if (local)
+    {
+        local->setSoundVolume(name, volume);
     }
 }
 
@@ -218,11 +293,18 @@ void SoundManager::setSoundVolume(const std::string& name, float volume)
 *****************************************************************************************/
 void SoundManager::setSoundPitch(const std::string& name, float pitch)
 {
-    if (m_audioManager)
+    std::shared_ptr<AudioManager> local;
     {
-        m_audioManager->setSoundPitch(name, pitch);
+        std::lock_guard<std::mutex> lock(m_mutex);
+        local = m_audioManager;
+    }
+
+    if (local)
+    {
+        local->setSoundPitch(name, pitch);
     }
 }
+
 /*****************************************************************************************
     \brief Sets the looping state of a loaded sound.
     \param name  The unique identifier of the sound.
@@ -231,9 +313,18 @@ void SoundManager::setSoundPitch(const std::string& name, float pitch)
 *****************************************************************************************/
 void SoundManager::setSoundLoop(const std::string& name, bool loop)
 {
-    if (m_audioManager)
-        m_audioManager->setSoundLoop(name, loop);
+    std::shared_ptr<AudioManager> local;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        local = m_audioManager;
+    }
+
+    if (local)
+    {
+        local->setSoundLoop(name, loop);
+    }
 }
+
 /*****************************************************************************************
  \brief Checks whether a sound is currently loaded.
  \param name The identifier for the sound.
@@ -241,12 +332,18 @@ void SoundManager::setSoundLoop(const std::string& name, bool loop)
 *****************************************************************************************/
 bool SoundManager::isSoundLoaded(const std::string& name) const
 {
-    if (!m_audioManager)
+    std::shared_ptr<AudioManager> local;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        local = m_audioManager;
+    }
+
+    if (!local)
     {
         return false;
     }
-    
-    return m_audioManager->isSoundLoaded(name);
+
+    return local->isSoundLoaded(name);
 }
 
 /*****************************************************************************************
@@ -256,12 +353,18 @@ bool SoundManager::isSoundLoaded(const std::string& name) const
 *****************************************************************************************/
 bool SoundManager::isSoundPlaying(const std::string& name) const
 {
-    if (!m_audioManager)
+    std::shared_ptr<AudioManager> local;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        local = m_audioManager;
+    }
+
+    if (!local)
     {
         return false;
     }
-    
-    return m_audioManager->isSoundPlaying(name);
+
+    return local->isSoundPlaying(name);
 }
 
 /*****************************************************************************************
@@ -270,10 +373,16 @@ bool SoundManager::isSoundPlaying(const std::string& name) const
 *****************************************************************************************/
 std::vector<std::string> SoundManager::getLoadedSounds() const
 {
-    if (!m_audioManager)
+    std::shared_ptr<AudioManager> local;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        local = m_audioManager;
+    }
+
+    if (!local)
     {
         return {};
     }
-    
-    return m_audioManager->getLoadedSounds();
+
+    return local->getLoadedSounds();
 }

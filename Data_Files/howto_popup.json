@@ -8,6 +8,10 @@
       "key": "howto_header",
       "path": "Textures/UI/How To Play/How To Play.png"
     },
+    "header_offset": {
+      "x": -80,
+      "y": 48
+    },
     "close": {
       "key": "menu_popup_close",
       "path": "Textures/UI/How To Play/XButton.png"

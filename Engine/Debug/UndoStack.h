@@ -1,9 +1,9 @@
 /*********************************************************************************************
  \file      UndoStack.h
  \par       SofaSpuds
- \author    erika.ishii
+ \author     erika.ishii (erika.ishii@digipen.edu) - Primary Author, 100%
  \brief     Interface for the editor undo/redo system.
-  \copyright
+ \copyright
             All content © 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/

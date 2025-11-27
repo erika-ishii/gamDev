@@ -3,10 +3,10 @@
  \par       SofaSpuds
  \author    Ho Jun(h.jun@digipen.edu) - Primary Author, 50%
             jianwei.c (jianwei.c@digipen.edu) - Secondary Author, 50%
-            
+
 
  \brief     Declaration of the SoundManager class, which acts as a wrapper around
-            the AudioManager to provide global sound control for the application. The 
+            the AudioManager to provide global sound control for the application. The
             SoundManager ensures only one instance of the AudioManager is used and simplifies
             access to sound loading, playback, pausing, stopping, and cleanup.
 
@@ -18,6 +18,9 @@
 #pragma once
 #include "AudioManager.h"
 #include <memory>
+#include <mutex>
+#include <vector>
+#include <string>
 
 /*********************************************************************************************
  \class SoundManager
@@ -25,10 +28,10 @@
 
  The SoundManager ensures only one instance of AudioManager exists. It provides an easy-to-
  access global interface for loading, playing, pausing, stopping, and unloading sounds, as
- well as controlling volume and pitch. It also forwards utility functions to check sound 
+ well as controlling volume and pitch. It also forwards utility functions to check sound
  states and retrieve loaded sounds.
 **********************************************************************************************/
-class SoundManager 
+class SoundManager
 {
 public:
     static SoundManager& getInstance();
@@ -63,5 +66,9 @@ private:
     SoundManager& operator=(const SoundManager&) = delete;
 
     /// Underlying AudioManager instance.
-    std::unique_ptr<AudioManager> m_audioManager;
+    /// Changed to shared_ptr to allow local thread-safe copying.
+    std::shared_ptr<AudioManager> m_audioManager;
+
+    /// Mutex to protect access to m_audioManager during init/shutdown.
+    mutable std::mutex m_mutex;
 };
