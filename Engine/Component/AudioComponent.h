@@ -1,7 +1,7 @@
 /*********************************************************************************************
  \file      AudioComponent.h
  \par       SofaSpuds
- \author    Choo Jian Wei – Primary Author
+ \author    Choo Jian Wei - Primary Author
 
  \brief     Declares the AudioComponent class, which manages sound playback for game entities
             such as players, enemies, or interactable objects.
@@ -21,7 +21,7 @@
             - Support deep-copy functionality for object instancing.
 
  \copyright
-            All content © 2025 DigiPen Institute of Technology Singapore.
+            All content  2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 #pragma once

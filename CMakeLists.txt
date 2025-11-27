@@ -22,10 +22,12 @@ endif()
 
 # Subprojects
 add_subdirectory(Engine)
+add_subdirectory(Sandbox)
+
+# Set startup project to BloodyGoodCurry
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT BloodyGoodCurry)
 
 # Optional test/setup module (only include if present)
 include(BuildTest OPTIONAL)   # or include(BuildTests OPTIONAL) if that's the filename
 
-
-add_subdirectory(Sandbox)
 

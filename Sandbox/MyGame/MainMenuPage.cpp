@@ -10,6 +10,7 @@
 #include "Graphics/Graphics.hpp"
 #include "Resource_Manager/Resource_Manager.h"
 #include <algorithm>
+#include "Audio/SoundManager.h"
 #include <glm/vec3.hpp>
 #include <filesystem>
 #include <fstream>
@@ -274,6 +275,9 @@ void MainMenuPage::Init(int screenW, int screenH)
     for (const auto& btn : g_MenuConfig.buttons) {
         unsigned tex = ResolveTex(btn.texture);
         g_ButtonTextures.emplace_back(btn.action, tex);
+        if (btn.action == "options") {
+            optionsHeaderTex = tex;
+        }
     }
 
     // 4. Load Popup Config & Textures
@@ -396,6 +400,27 @@ void MainMenuPage::Draw(Framework::RenderSystem* render)
         {
             gfx::Graphics::renderSpriteUI(exitPopupPromptTex, exitPrompt.x, exitPrompt.y, exitPrompt.w, exitPrompt.h, 1.f, 1.f, 1.f, 1.f, sw, sh);
         }
+    }
+    else if (showOptionsPopup && render)
+    {
+        const float overlayAlpha = 0.65f;
+        gfx::Graphics::renderRectangleUI(0.f, 0.f, static_cast<float>(sw), static_cast<float>(sh), 0.f, 0.f, 0.f, overlayAlpha, sw, sh);
+
+        if (noteBackgroundTex) {
+            gfx::Graphics::renderSpriteUI(noteBackgroundTex, optionsPopup.x, optionsPopup.y, optionsPopup.w, optionsPopup.h, 1.f, 1.f, 1.f, 1.f, sw, sh);
+        }
+        else {
+            gfx::Graphics::renderRectangleUI(optionsPopup.x, optionsPopup.y, optionsPopup.w, optionsPopup.h, 0.1f, 0.08f, 0.05f, 0.95f, sw, sh);
+        }
+
+        if (optionsHeaderTex) {
+            gfx::Graphics::renderSpriteUI(optionsHeaderTex, optionsHeader.x, optionsHeader.y, optionsHeader.w, optionsHeader.h, 1.f, 1.f, 1.f, 1.f, sw, sh);
+        }
+        else if (render && render->IsTextReadyTitle()) {
+            render->GetTextTitle().RenderText("Options", optionsHeader.x + optionsHeader.w * 0.15f, optionsHeader.y + optionsHeader.h * 0.24f, 1.0f, glm::vec3(0.80f, 0.62f, 0.28f));
+        }
+
+       
     }
     else if (showHowToPopup && render) {
         const float overlayAlpha = 0.65f;
@@ -545,6 +570,20 @@ void MainMenuPage::SyncLayout(int screenW, int screenH)
             return fallback;
         };
 
+    optionsPopup = howToPopup;
+    optionsCloseBtn = closeBtn;
+    const float optionsHeaderH = popupH * 0.18f;
+    const float optionsHeaderW = optionsHeaderH * textureAspect(optionsHeaderTex, 2.7f);
+    optionsHeader = { popupX + (popupW - optionsHeaderW) * 0.5f,
+        popupY + popupH - optionsHeaderH - popupH * 0.08f,
+        optionsHeaderW, optionsHeaderH };
+
+    const float toggleH = popupH * 0.14f;
+    const float toggleW = popupW * 0.5f;
+    muteToggleBtn = { popupX + (popupW - toggleW) * 0.5f,
+        popupY + popupH * 0.32f,
+        toggleW, toggleH };
+
     // --- Exit Popup Layout ---
     const float defaultExitAspect = 0.78f;
     int exitNoteW = 0, exitNoteH = 0;
@@ -638,42 +677,67 @@ void MainMenuPage::BuildGui(float x, float bottomY, float w, float h, float spac
         return;
     }
 
-    size_t total = g_MenuConfig.buttons.size();
-    for (size_t i = 0; i < total; ++i) {
-        const auto& btnDef = g_MenuConfig.buttons[i];
+    if (showOptionsPopup) {
+        if (closePopupTex) {
+            gui.AddButton(optionsCloseBtn.x, optionsCloseBtn.y, optionsCloseBtn.w, optionsCloseBtn.h, "",
+                closePopupTex, closePopupTex,
+                [this]() { showOptionsPopup = false; BuildGui(); });
+        }
 
-        float yPos = bottomY + (total - 1 - i) * (h + spacing);
-
-        // Find texture
-        unsigned tex = 0;
-        for (auto& p : g_ButtonTextures) if (p.first == btnDef.action) tex = p.second;
-
-        // Map Action String to Lambda
-        std::function<void()> callback = []() {};
-        if (btnDef.action == "start")        callback = [this]() { startLatched = true; };
-        else if (btnDef.action == "options") callback = [this]() { optionsLatched = true; };
-        else if (btnDef.action == "exit")    callback = [this]() {
-            showExitPopup = true;
-            showHowToPopup = false;
-            BuildGui();
-            };
-        else if (btnDef.action == "howto")   callback = [this]() {
-            howToLatched = true;
-            showHowToPopup = true;
-            iconAnimTime = 0.0f;
-            iconTimerInitialized = false;
-            // IMPORTANT: Rebuild GUI to include Close button
-            BuildGui();
-            };
-
-        gui.AddButton(x, yPos, w, h, btnDef.label, tex, tex, callback);
+        const std::string muteLabel = (audioMuted ? "[X] " : "[ ] ") + std::string("Mute Audio");
+        gui.AddButton(muteToggleBtn.x, muteToggleBtn.y, muteToggleBtn.w, muteToggleBtn.h, muteLabel,
+            [this]() {
+                audioMuted = !audioMuted;
+                SoundManager::getInstance().setMasterVolume(audioMuted ? 0.0f : masterVolumeDefault);
+                BuildGui();
+            });
     }
+    else {
+        size_t total = g_MenuConfig.buttons.size();
+        for (size_t i = 0; i < total; ++i) {
+            const auto& btnDef = g_MenuConfig.buttons[i];
 
-    // Add Close Button if Popup is open
-    if (showHowToPopup && closePopupTex) {
-   
-        gui.AddButton(closeBtn.x, closeBtn.y, closeBtn.w, closeBtn.h, "",
-            closePopupTex, closePopupTex,
-            [this]() { showHowToPopup = false; BuildGui(); });
+            float yPos = bottomY + (total - 1 - i) * (h + spacing);
+
+            // Find texture
+            unsigned tex = 0;
+            for (auto& p : g_ButtonTextures) if (p.first == btnDef.action) tex = p.second;
+
+            // Map Action String to Lambda
+            std::function<void()> callback = []() {};
+            if (btnDef.action == "start")        callback = [this]() { startLatched = true; };
+            else if (btnDef.action == "options") callback = [this]() {
+                optionsLatched = true;
+                showOptionsPopup = true;
+                showHowToPopup = false;
+                showExitPopup = false;
+                BuildGui();
+                };
+            else if (btnDef.action == "exit")    callback = [this]() {
+                showExitPopup = true;
+                showHowToPopup = false;
+                showOptionsPopup = false;
+                BuildGui();
+                };
+            else if (btnDef.action == "howto")   callback = [this]() {
+                howToLatched = true;
+                showHowToPopup = true;
+                showOptionsPopup = false;
+                iconAnimTime = 0.0f;
+                iconTimerInitialized = false;
+                // IMPORTANT: Rebuild GUI to include Close button
+                BuildGui();
+                };
+
+            gui.AddButton(x, yPos, w, h, btnDef.label, tex, tex, callback);
+        }
+
+        // Add Close Button if Popup is open
+        if (showHowToPopup && closePopupTex) {
+
+            gui.AddButton(closeBtn.x, closeBtn.y, closeBtn.w, closeBtn.h, "",
+                closePopupTex, closePopupTex,
+                [this]() { showHowToPopup = false; BuildGui(); });
+        }
     }
 }

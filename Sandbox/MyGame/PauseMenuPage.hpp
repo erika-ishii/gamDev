@@ -75,7 +75,7 @@ namespace mygame {
         unsigned howToNoteTex = 0;
         unsigned howToHeaderTex = 0;
         unsigned howToCloseTex = 0;
-
+        unsigned optionsHeaderTex = 0;
         unsigned exitPopupNoteTex = 0;
         unsigned exitPopupTitleTex = 0;
         unsigned exitPopupPromptTex = 0;
@@ -99,7 +99,11 @@ namespace mygame {
         std::chrono::steady_clock::time_point lastIconTick{};
         bool iconTimerInitialized = false;
         bool showHowToPopup = false;
+        bool showOptionsPopup = false;
         bool showExitPopup = false;
+        bool audioMuted = false;
+        float masterVolumeDefault = 0.7f;
+
 
 
         bool resumeLatched = false;
@@ -121,6 +125,10 @@ namespace mygame {
         Quad quitBtn{ 0.f, 0.f, 0.f, 0.f };
         Quad howToPopup{ 0.f, 0.f, 0.f, 0.f };
         Quad howToCloseBtn{ 0.f, 0.f, 0.f, 0.f };
+        Quad optionsPopup{ 0.f, 0.f, 0.f, 0.f };
+        Quad optionsHeader{ 0.f, 0.f, 0.f, 0.f };
+        Quad optionsCloseBtn{ 0.f, 0.f, 0.f, 0.f };
+        Quad muteToggleBtn{ 0.f, 0.f, 0.f, 0.f };
         Quad exitPopup{ 0.f, 0.f, 0.f, 0.f };
         Quad exitCloseBtn{ 0.f, 0.f, 0.f, 0.f };
         Quad exitYesBtn{ 0.f, 0.f, 0.f, 0.f };

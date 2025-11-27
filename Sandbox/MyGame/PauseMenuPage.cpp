@@ -13,6 +13,7 @@
 #include "PauseMenuPage.hpp"
 #include "Graphics/Graphics.hpp"
 #include "Resource_Manager/Resource_Manager.h"
+#include "Audio/SoundManager.h"
 #include "Core/PathUtils.h"
 #include <algorithm>
 #include <chrono>
@@ -254,6 +255,7 @@ void PauseMenuPage::Init(int screenW, int screenH)
         Framework::ResolveAssetPath("Textures/UI/Pause Menu/Resume.png").string());
     optionsTex = ResolveTexture({ "pause_options" },
         Framework::ResolveAssetPath("Textures/UI/Pause Menu/Options.png").string());
+    optionsHeaderTex = optionsTex;
     howToTex = ResolveTexture({ "pause_howto" },
         Framework::ResolveAssetPath("Textures/UI/Pause Menu/How To Play.png").string());
     quitTex = ResolveTexture({ "pause_quit" },
@@ -389,6 +391,52 @@ void PauseMenuPage::Draw(Framework::RenderSystem* render)
             gfx::Graphics::renderRectangleUI(exitPrompt.x, exitPrompt.y, exitPrompt.w, exitPrompt.h,
                 0.2f, 0.18f, 0.12f, 0.5f, sw, sh);
         }
+    }
+    else if (showOptionsPopup && render)
+    {
+        const float overlayAlpha = 0.65f;
+        gfx::Graphics::renderRectangleUI(0.f, 0.f,
+            static_cast<float>(sw), static_cast<float>(sh),
+            0.f, 0.f, 0.f, overlayAlpha,
+            sw, sh);
+
+        auto textureAspect = [](unsigned tex, float fallback) {
+            int texW = 0, texH = 0;
+            if (tex && gfx::Graphics::getTextureSize(tex, texW, texH) && texH > 0) {
+                return static_cast<float>(texW) / static_cast<float>(texH);
+            }
+            return fallback;
+            };
+
+        if (howToNoteTex) {
+            gfx::Graphics::renderSpriteUI(howToNoteTex, optionsPopup.x, optionsPopup.y,
+                optionsPopup.w, optionsPopup.h,
+                1.f, 1.f, 1.f, 1.f,
+                sw, sh);
+        }
+        else {
+            gfx::Graphics::renderRectangleUI(optionsPopup.x, optionsPopup.y,
+                optionsPopup.w, optionsPopup.h,
+                0.1f, 0.08f, 0.05f, 0.95f,
+                sw, sh);
+        }
+
+        const float headerAspect = textureAspect(optionsHeaderTex, 2.7f);
+        const float headerH = optionsPopup.h * 0.2f;
+        const float headerW = headerH * headerAspect;
+        const float headerX = optionsPopup.x + (optionsPopup.w - headerW) * 0.5f;
+        const float headerY = optionsPopup.y + optionsPopup.h - headerH - optionsPopup.h * 0.08f;
+        if (optionsHeaderTex) {
+            gfx::Graphics::renderSpriteUI(optionsHeaderTex, headerX, headerY, headerW, headerH,
+                1.f, 1.f, 1.f, 1.f,
+                sw, sh);
+        }
+        else if (render && render->IsTextReadyTitle()) {
+            render->GetTextTitle().RenderText("Options", headerX + headerW * 0.15f, headerY + headerH * 0.24f,
+                1.0f, glm::vec3(0.80f, 0.62f, 0.28f));
+        }
+
+        
     }
     else if (showHowToPopup && render) {
         const float overlayAlpha = 0.65f;
@@ -570,6 +618,7 @@ void PauseMenuPage::ShowExitPopup()
     exitConfirmedLatched = false;
     showExitPopup = true;
     showHowToPopup = false;
+    showOptionsPopup = false;
     BuildGui();
 }
 void PauseMenuPage::SyncLayout(int screenW, int screenH)
@@ -657,6 +706,20 @@ void PauseMenuPage::SyncLayout(int screenW, int screenH)
             return fallback;
         };
 
+    optionsPopup = { popupX, popupY, popupWf, popupHf };
+    optionsCloseBtn = howToCloseBtn;
+    const float optionsHeaderH = popupHf * 0.18f;
+    const float optionsHeaderW = optionsHeaderH * textureAspect(optionsHeaderTex, 2.7f);
+    optionsHeader = { popupX + (popupWf - optionsHeaderW) * 0.5f,
+        popupY + popupHf - optionsHeaderH - popupHf * 0.08f,
+        optionsHeaderW, optionsHeaderH };
+
+    const float toggleH = popupHf * 0.14f;
+    const float toggleW = popupWf * 0.5f;
+    muteToggleBtn = { popupX + (popupWf - toggleW) * 0.5f,
+        popupY + popupHf * 0.32f,
+        toggleW, toggleH };
+
     int exitNoteW = 0, exitNoteH = 0;
     const float defaultExitAspect = 0.72f;
     const float exitNoteAspect = (exitPopupNoteTex && gfx::Graphics::getTextureSize(exitPopupNoteTex, exitNoteW, exitNoteH) && exitNoteH > 0)
@@ -737,6 +800,28 @@ void PauseMenuPage::BuildGui()
                 BuildGui();
             }, true);
     }
+    else if (showOptionsPopup)
+    {
+        if (howToCloseTex)
+        {
+            gui.AddButton(optionsCloseBtn.x, optionsCloseBtn.y, optionsCloseBtn.w, optionsCloseBtn.h, "",
+                howToCloseTex, howToCloseTex,
+                [this]() {
+                    showOptionsPopup = false;
+                    layoutDirty = true;
+                    BuildGui();
+                }, true);
+        }
+
+        const std::string muteLabel = (audioMuted ? "[X] " : "[ ] ") + std::string("Mute Audio");
+        gui.AddButton(muteToggleBtn.x, muteToggleBtn.y, muteToggleBtn.w, muteToggleBtn.h,
+            muteLabel,
+            [this]() {
+                audioMuted = !audioMuted;
+                SoundManager::getInstance().setMasterVolume(audioMuted ? 0.0f : masterVolumeDefault);
+                BuildGui();
+            });
+    }
     else if (showHowToPopup) {
         if (howToCloseTex) {
             gui.AddButton(howToCloseBtn.x, howToCloseBtn.y, howToCloseBtn.w, howToCloseBtn.h, "",
@@ -754,7 +839,14 @@ void PauseMenuPage::BuildGui()
             [this]() { resumeLatched = true; });
         gui.AddButton(optionsBtn.x, optionsBtn.y, optionsBtn.w, optionsBtn.h, "Options",
             optionsTex, optionsTex,
-            [this]() { optionsLatched = true; mainMenuLatched = true; });
+            [this]() {
+                optionsLatched = true;
+                showOptionsPopup = true;
+                showHowToPopup = false;
+                showExitPopup = false;
+                layoutDirty = true;
+                BuildGui();
+            });
         gui.AddButton(howToBtn.x, howToBtn.y, howToBtn.w, howToBtn.h, "How To Play",
             howToTex, howToTex,
             [this]() {
