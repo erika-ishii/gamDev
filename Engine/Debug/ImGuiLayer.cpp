@@ -26,7 +26,11 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 
+#ifdef _DEBUG
+#define new DBG_NEW       // <- redefine new AFTER all includes
+#endif
 /// Internal state flag to track whether ImGui has been initialized.
 static bool s_imguiReady = false;
 

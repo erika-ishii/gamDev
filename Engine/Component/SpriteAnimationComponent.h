@@ -1,3 +1,35 @@
+﻿/*********************************************************************************************
+ \file      SpriteAnimationComponent.h
+ \par       SofaSpuds
+ \author    elvisshengjie.lim (elvisshengjie.lim@digipen.edu) - Primary Author, 100%
+
+ \brief     Declares the SpriteAnimationComponent responsible for 2D sprite-based animation.
+            Supports both legacy frame-array animations and modern sprite-sheet animations
+            (grid-based UV sampling), with per-animation FPS, looping, and active animation
+            selection. Integrates with the Resource_Manager to resolve and (re)bind textures.
+
+ \details   Features:
+            - Legacy frame-array animation:
+              * Each frame references a texture key and (optional) path for lazy loading.
+              * Global fps/loop/play flags to drive simple frame stepping.
+            - Sprite-sheet animation set:
+              * Named animations (idle, run, attack, etc.) backed by sprite sheets.
+              * Configurable rows/columns/totalFrames/startFrame/endFrame/fps/loop.
+              * Per-animation runtime state (currentFrame, accumulator, textureId).
+            - Serialization:
+              * Reads legacy "frames[]" array.
+              * Reads "animations[]" array with nested "config" object.
+              * Persists activeAnimation index to restore current clip.
+            - Runtime helpers:
+              * Advance() tick for both legacy and sheet-based animations.
+              * CurrentSheetSample() to compute UV rect for current frame.
+              * Texture rebind logic (RebindAllTextures / EnsureTexture / ReloadAnimationTexture).
+              * Path normalization for packaged assets (ResolveAnimationPath).
+
+ \copyright
+            All content © 2025 DigiPen Institute of Technology Singapore.
+            All rights reserved.
+*********************************************************************************************/
 #pragma once
 
 #include "Composition/Component.h"
@@ -14,53 +46,107 @@
 
 namespace Framework {
 
+    /*************************************************************************************
+      \struct SpriteAnimationFrame
+      \brief  Legacy frame representation: each frame points to a single texture.
+
+      Used by the older frame-array animation path, where each animation frame is an
+      independent texture (or can be lazily loaded from a path).
+    *************************************************************************************/
     struct SpriteAnimationFrame {
-        std::string texture_key;
-        std::string path;
+        std::string texture_key; ///< Resource_Manager key for the frame texture.
+        std::string path;        ///< Optional relative/absolute path to load the texture.
     };
 
+    /*****************************************************************************************
+      \class SpriteAnimationComponent
+      \brief Component that manages sprite animations for a GameObject.
+
+      Supports two animation styles:
+      - Legacy frame-array animation (frames[] + fps/loop/play flags).
+      - Modern sprite-sheet animations (animations[], each with a grid of frames).
+
+      The component is responsible for:
+      - Advancing animation time and updating current frame indices.
+      - Serializing/deserializing animation data from JSON.
+      - Resolving and binding textures via the Resource_Manager.
+      - Providing sampling information (texture + UV rect) for rendering.
+    *****************************************************************************************/
     class SpriteAnimationComponent : public GameComponent {
     public:
         // --- Sprite-sheet based animation config -----------------------------
+        /*************************************************************************************
+          \struct AnimConfig
+          \brief  Configuration describing how to interpret a sprite sheet as frames.
+
+          Defines grid layout and playback behavior (fps, looping, frame range).
+        *************************************************************************************/
         struct AnimConfig {
-            int   totalFrames{ 1 };
-            int   rows{ 1 };
-            int   columns{ 1 };
-            int   startFrame{ 0 };
-            int   endFrame{ -1 };   // -1 == use totalFrames - 1
-            float fps{ 6.0f };
-            bool  loop{ true };
+            int   totalFrames{ 1 };  ///< Total number of frames in the sheet.
+            int   rows{ 1 };         ///< Number of rows in the spritesheet grid.
+            int   columns{ 1 };      ///< Number of columns in the spritesheet grid.
+            int   startFrame{ 0 };   ///< First frame index to play (inclusive).
+            int   endFrame{ -1 };    ///< Last frame index (inclusive); -1 = totalFrames - 1.
+            float fps{ 6.0f };       ///< Playback speed in frames per second.
+            bool  loop{ true };      ///< Whether this animation loops when it reaches the end.
         };
 
-        struct SpriteSheetAnimation {
-            std::string name{ "idle" };
-            std::string spriteSheetPath{};
-            std::string textureKey{};
-            AnimConfig  config{};
+        /*************************************************************************************
+          \struct SpriteSheetAnimation
+          \brief  Represents a single named animation backed by a sprite sheet.
 
-            int   currentFrame{ 0 };
-            float accumulator{ 0.0f };
-            unsigned textureId{ 0 };
+          Contains:
+          - Metadata (name, spriteSheetPath, textureKey).
+          - Layout and playback configuration (AnimConfig).
+          - Runtime state (currentFrame, accumulator, textureId).
+        *************************************************************************************/
+        struct SpriteSheetAnimation {
+            std::string name{ "idle" };       ///< Logical name of the animation (e.g., "run").
+            std::string spriteSheetPath{};    ///< Original path to the sprite sheet asset.
+            std::string textureKey{};         ///< Resource_Manager key used to fetch the texture.
+            AnimConfig  config{};             ///< Grid and playback configuration.
+
+            int   currentFrame{ 0 };          ///< Current frame index within [startFrame, endFrame].
+            float accumulator{ 0.0f };        ///< Accumulated time since last frame switch.
+            unsigned textureId{ 0 };          ///< Cached GL texture ID (loaded lazily).
         };
 
         // --- Old frame-array style animation (still supported) --------------
-        float fps{ 6.0f };
-        bool  loop{ true };
-        bool  play{ true };
+        float fps{ 6.0f };   ///< Legacy animation fps for frames[].
+        bool  loop{ true };  ///< Whether frames[] animation loops.
+        bool  play{ true };  ///< Whether frames[] animation is currently playing.
 
-        std::vector<SpriteAnimationFrame> frames{};
+        std::vector<SpriteAnimationFrame> frames{}; ///< Legacy list of frame textures.
 
-        // --- New sprite-sheet animation set ----------------------------------
-        std::vector<SpriteSheetAnimation> animations{};
-        int activeAnimation{ 0 };
+        // --- sprite-sheet animation set ----------------------------------
+        std::vector<SpriteSheetAnimation> animations{}; ///< Set of named sprite-sheet animations.
+        int activeAnimation{ 0 };                       ///< Index into animations[] for active clip.
 
         // ---------------------------------------------------------------------
         // Engine lifecycle
         // ---------------------------------------------------------------------
+        /*************************************************************************************
+          \brief Called when the component is attached to its owner.
+
+          Preloads textures for legacy frame-array animations so that all frames are
+          ready when the game starts running.
+        *************************************************************************************/
         void initialize() override {
             PreloadFrames();
         }
 
+        /*************************************************************************************
+          \brief Deserialize animation data from the given serializer.
+
+          Expected JSON fields:
+          - "fps" / "loop" / "play" for legacy frame-array animation.
+          - "frames"[] with "texture_key" and optional "path".
+          - "animations"[] each with:
+            * "name", "textureKey", "spriteSheetPath"
+            * "config" object containing layout/fps/loop fields
+            * optional "currentFrame"
+          - "activeAnimation" index to restore current sheet animation selection.
+        *************************************************************************************/
         void Serialize(ISerializer& s) override {
             if (s.HasKey("fps")) StreamRead(s, "fps", fps);
 
@@ -76,6 +162,7 @@ namespace Framework {
                 play = playInt != 0;
             }
 
+            // Legacy frames[] array
             if (s.EnterArray("frames")) {
                 frames.clear();
                 frames.reserve(s.ArraySize());
@@ -91,6 +178,7 @@ namespace Framework {
                 }
                 s.ExitArray();
             }
+
             // --- NEW: sprite-sheet animations[] -----------------------------------
             if (s.EnterArray("animations")) {
                 animations.clear();
@@ -123,6 +211,7 @@ namespace Framework {
                     if (s.HasKey("currentFrame"))
                         StreamRead(s, "currentFrame", sheet.currentFrame);
 
+                    // runtime fields are reset on load
                     sheet.accumulator = 0.0f;
                     sheet.textureId = 0;  // lazily loaded later
 
@@ -140,6 +229,12 @@ namespace Framework {
             }
         }
 
+        /*************************************************************************************
+          \brief Create a polymorphic deep copy of this component.
+
+          Copies both legacy frame-array animation data and sprite-sheet animations, as
+          well as current playback state (currentFrame/accumulator/activeAnimation).
+        *************************************************************************************/
         std::unique_ptr<GameComponent> Clone() const override {
             auto copy = std::make_unique<SpriteAnimationComponent>();
             copy->fps = fps;
@@ -153,19 +248,51 @@ namespace Framework {
             return copy;
         }
 
+        /*************************************************************************************
+          \brief Handle incoming messages sent to this component.
+
+          \note Currently unused (no-op). Can be extended later for event-driven animation
+                changes (e.g., "OnAttackStart" → switch to attack animation).
+        *************************************************************************************/
         void SendMessage(Message&) override {}
 
         // ---------------------------------------------------------------------
         // Basic info helpers
         // ---------------------------------------------------------------------
+        /*************************************************************************************
+          \brief Check if the legacy frame-array animation has any frames.
+          \return True if frames[] is non-empty.
+        *************************************************************************************/
         bool HasFrames() const { return !frames.empty(); }
+
+        /*************************************************************************************
+          \brief Check if any sprite-sheet animations are defined.
+          \return True if animations[] is non-empty.
+        *************************************************************************************/
         bool HasSpriteSheets() const { return !animations.empty(); }
 
+        /*************************************************************************************
+          \brief Get the number of legacy frames available.
+          \return Size of frames[].
+        *************************************************************************************/
         size_t FrameCount() const { return frames.size(); }
+
+        /*************************************************************************************
+          \brief Get the number of sprite-sheet animations.
+          \return Size of animations[].
+        *************************************************************************************/
         std::size_t AnimationCount() const { return animations.size(); }
 
+        /*************************************************************************************
+          \brief Get the current legacy frame index.
+          \return Index into frames[].
+        *************************************************************************************/
         size_t CurrentFrameIndex() const { return currentFrame; }
 
+        /*************************************************************************************
+          \brief Get the currently active sprite-sheet animation index (clamped).
+          \return -1 if there are no animations, otherwise a valid index in [0, size-1].
+        *************************************************************************************/
         int ActiveAnimationIndex() const {
             if (animations.empty())
                 return -1;
@@ -177,6 +304,10 @@ namespace Framework {
             return clamped;
         }
 
+        /*************************************************************************************
+          \brief Get a pointer to the active sprite-sheet animation.
+          \return Pointer to the active SpriteSheetAnimation, or nullptr if none exist.
+        *************************************************************************************/
         SpriteSheetAnimation* ActiveAnimation() {
             const int idx = ActiveAnimationIndex();
             if (idx < 0)
@@ -184,6 +315,10 @@ namespace Framework {
             return &animations[static_cast<std::size_t>(idx)];
         }
 
+        /*************************************************************************************
+          \brief Get a const pointer to the active sprite-sheet animation.
+          \return Const pointer to active SpriteSheetAnimation, or nullptr if none exist.
+        *************************************************************************************/
         const SpriteSheetAnimation* ActiveAnimation() const {
             const int idx = ActiveAnimationIndex();
             if (idx < 0)
@@ -191,6 +326,12 @@ namespace Framework {
             return &animations[static_cast<std::size_t>(idx)];
         }
 
+        /*************************************************************************************
+          \brief Set the active sprite-sheet animation by index.
+
+          Clamps the index to a valid range and resets the animation's runtime state
+          (currentFrame = 0, accumulator = 0.0f) if successful.
+        *************************************************************************************/
         void SetActiveAnimation(int index) {
             if (index < 0 || animations.empty())
                 return;
@@ -203,9 +344,18 @@ namespace Framework {
                 anim->accumulator = 0.0f;
             }
         }
+
         // ---------------------------------------------------------------------
-       // Texture maintenance helpers (used after undo/redo)
-       // ---------------------------------------------------------------------
+        // Texture maintenance helpers (used after undo/redo)
+        // ---------------------------------------------------------------------
+        /*************************************************************************************
+          \brief Rebind textures for all sprite-sheet animations.
+
+          Useful after undo/redo or hot-reload when texture IDs may no longer be valid.
+          Attempts to:
+          - Reuse existing textureKey, or
+          - Reload from spriteSheetPath if needed.
+        *************************************************************************************/
         void RebindAllTextures() {
             for (auto& anim : animations) {
                 // Try existing key first
@@ -223,6 +373,11 @@ namespace Framework {
         // ---------------------------------------------------------------------
         // Old frame-array texture resolving
         // ---------------------------------------------------------------------
+        /*************************************************************************************
+          \brief Resolve and load (if necessary) the texture for the given legacy frame.
+          \param  index Index into frames[].
+          \return GL texture ID, or 0 if loading failed.
+        *************************************************************************************/
         unsigned ResolveFrameTexture(size_t index) {
             if (index >= frames.size())
                 return 0;
@@ -237,6 +392,10 @@ namespace Framework {
             return tex;
         }
 
+        /*************************************************************************************
+          \brief Set the current legacy frame index.
+          \param  index New index into frames[].
+        *************************************************************************************/
         void SetFrame(size_t index) {
             if (index < frames.size())
                 currentFrame = index;
@@ -245,12 +404,21 @@ namespace Framework {
         // ---------------------------------------------------------------------
         // Update
         // ---------------------------------------------------------------------
+        /*************************************************************************************
+          \brief Advance both legacy frame-array and sprite-sheet animations.
+          \param dt Delta time in seconds since last update.
+        *************************************************************************************/
         void Advance(float dt) {
             AdvanceFrameArray(dt);
             AdvanceSpriteSheets(dt);
         }
 
-        // Advance legacy frame array animation
+        /*************************************************************************************
+          \brief Advance the legacy frame-array animation.
+
+          Uses fps / loop / play flags and dt to step the frame index forward,
+          wrapping or stopping based on the loop state.
+        *************************************************************************************/
         void AdvanceFrameArray(float dt) {
             if (!play || frames.empty() || fps <= 0.f)
                 return;
@@ -272,7 +440,12 @@ namespace Framework {
             }
         }
 
-        // Advance sprite-sheet animations
+        /*************************************************************************************
+          \brief Advance the active sprite-sheet animation according to its AnimConfig.
+
+          Uses per-animation fps, startFrame, endFrame, and loop to move through frames
+          as time (dt) accumulates.
+        *************************************************************************************/
         void AdvanceSpriteSheets(float dt) {
             auto* anim = ActiveAnimation();
             if (!anim || anim->config.fps <= 0.f)
@@ -301,12 +474,29 @@ namespace Framework {
         // ---------------------------------------------------------------------
         // Sampling current sprite-sheet frame (for RenderSystem / Animation Editor)
         // ---------------------------------------------------------------------
+        /*************************************************************************************
+          \struct SheetSample
+          \brief  Return value for sampling a sprite-sheet frame.
+
+          Packs:
+          - texture: GL texture ID to use.
+          - uv:      UV rectangle (x, y, width, height) inside the sheet.
+          - textureKey: resource key (useful for editor UI/inspection).
+        *************************************************************************************/
         struct SheetSample {
-            unsigned    texture{ 0 };
-            glm::vec4   uv{ 0.f, 0.f, 1.f, 1.f };
-            std::string textureKey;
+            unsigned    texture{ 0 };          ///< GL texture ID of the spritesheet.
+            glm::vec4   uv{ 0.f, 0.f, 1.f, 1.f }; ///< UV rectangle of the current frame.
+            std::string textureKey;           ///< Resource_Manager key used for the texture.
         };
 
+        /*************************************************************************************
+          \brief Sample the current frame of the active sprite-sheet animation.
+
+          Computes the UV sub-rectangle based on rows/columns and the current frame index,
+          and ensures the spritesheet texture is loaded.
+
+          \return A SheetSample with texture ID and UV rect; texture == 0 if invalid.
+        *************************************************************************************/
         SheetSample CurrentSheetSample() {
             SheetSample sample{};
             auto* anim = ActiveAnimation();
@@ -340,7 +530,13 @@ namespace Framework {
             return sample;
         }
 
-        // Create default animation entries (idle/run/attack1/2/3)
+        /*************************************************************************************
+          \brief Ensure a default set of named animations exists.
+
+          If animations[] is empty, populates a basic set:
+          - "idle", "run", "attack1", "attack2", "attack3"
+          with corresponding default textureKey "<name>_sheet".
+        *************************************************************************************/
         void EnsureDefaultAnimations() {
             if (!animations.empty())
                 return;
@@ -359,7 +555,12 @@ namespace Framework {
             activeAnimation = 0;
         }
 
-        // Reload texture from spriteSheetPath into textureKey
+        /*************************************************************************************
+          \brief Reload the texture for a given sprite-sheet animation from spriteSheetPath.
+
+          If textureKey is empty, uses the animation's name as key. The resolved asset
+          path is computed via ResolveAnimationPath(), then passed to Resource_Manager.
+        *************************************************************************************/
         void ReloadAnimationTexture(SpriteSheetAnimation& anim) {
             if (anim.textureKey.empty())
                 anim.textureKey = anim.name;
@@ -373,7 +574,13 @@ namespace Framework {
                 anim.textureId = Resource_Manager::getTexture(anim.textureKey);
         }
 
-        // Make sure anim.textureId is valid (load if needed)
+        /*************************************************************************************
+          \brief Ensure that anim.textureId is valid, loading the texture if needed.
+
+          Tries, in order:
+          - Existing textureKey (or uses anim.name if key is empty).
+          - If that fails and spriteSheetPath is set, calls ReloadAnimationTexture().
+        *************************************************************************************/
         void EnsureTexture(SpriteSheetAnimation& anim) {
             if (anim.textureId)
                 return;
@@ -390,12 +597,28 @@ namespace Framework {
         }
 
     private:
+        /*************************************************************************************
+          \brief Preload all legacy frame textures.
+
+          Iterates over frames[] and resolves textures via ResolveFrameTexture(), so that
+          legacy animations do not incur first-use load hitches.
+        *************************************************************************************/
         void PreloadFrames() {
             for (size_t i = 0; i < frames.size(); ++i) {
                 ResolveFrameTexture(i);
             }
         }
-        // Normalize animation paths to the packaged assets directory.
+
+        /*************************************************************************************
+          \brief Normalize animation paths to the packaged assets directory.
+
+          Rules:
+          - If rawPath is empty, return as-is.
+          - Normalize backslashes to forward slashes.
+          - If the resulting path is absolute, return it directly.
+          - If it contains the "assets/" prefix, strip it and resolve relative to
+            the engine's asset root via Framework::ResolveAssetPath().
+        *************************************************************************************/
         static std::string ResolveAnimationPath(const std::string& rawPath) {
             if (rawPath.empty())
                 return rawPath;
@@ -415,8 +638,8 @@ namespace Framework {
             return Framework::ResolveAssetPath(asPath).string();
         }
 
-        size_t currentFrame{ 0 };
-        float  accumulator{ 0.0f };
+        size_t currentFrame{ 0 }; ///< Current index in the legacy frames[] animation.
+        float  accumulator{ 0.0f }; ///< Time accumulator for legacy frame stepping.
     };
 
 } // namespace Framework

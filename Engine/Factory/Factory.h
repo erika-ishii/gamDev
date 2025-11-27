@@ -179,6 +179,8 @@ namespace Framework {
         GOC* InstantiateFromSnapshotInternal(const json& data);
         bool SaveLevelInternal(const std::string& filename, const std::vector<GOC*>& objects,
             const std::string& levelName);
+        /// Remove any cached last-level pointers that no longer refer to live objects.
+        void PruneLastLevelCache();
 
     public:
         /// Read-only accessor for all objects managed by the factory (ownership retained by factory).

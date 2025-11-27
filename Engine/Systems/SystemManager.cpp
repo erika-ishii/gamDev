@@ -17,7 +17,11 @@
 #include "SystemManager.h"
 #include <chrono>
 #include "Debug/Perf.h"
+#include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 
+#ifdef _DEBUG
+#define new DBG_NEW       // <- redefine new AFTER all includes
+#endif
 namespace Framework
 {
 

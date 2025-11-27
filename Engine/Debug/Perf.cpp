@@ -14,7 +14,11 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 
+#ifdef _DEBUG
+#define new DBG_NEW       // <- redefine new AFTER all includes
+#endif
 /// \internal Anonymous namespace for private state
 namespace {
     /// Aggregated timings for one frame (CPU-side, milliseconds).

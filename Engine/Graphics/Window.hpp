@@ -1,5 +1,5 @@
 /*********************************************************************************************
- \file      Window.h
+ \file      Window.hpp
  \par       SofaSpuds
  \author    elvisshengjie.lim ( elvisshengjie.lim@digipen.edu) - Primary Author, 100%
 

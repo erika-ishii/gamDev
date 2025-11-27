@@ -19,6 +19,7 @@
             All content ©2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
+
 #include "Graphics.hpp"
 #include "Core/PathUtils.h"
 #include <vector>
@@ -34,7 +35,11 @@
 #include "stb_image.h"
 
 #include <stdexcept>
+#include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 
+#ifdef _DEBUG
+#define new DBG_NEW       // <- redefine new AFTER all includes
+#endif
 namespace gfx {
 
     /// \brief PI constant used for circle tessellation.

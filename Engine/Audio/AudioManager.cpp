@@ -13,11 +13,16 @@
             All rights reserved.
 **********************************************************************************************/
 #include "AudioManager.h"
+#include <algorithm>
 #include <iostream>
 #include <filesystem>
 #include "fmod.h"
 #include "fmod_errors.h"
+#include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 
+#ifdef _DEBUG
+#define new DBG_NEW       // <- redefine new AFTER all includes
+#endif
 /*****************************************************************************************
  \brief Constructor for the AudioManager.
 *****************************************************************************************/
@@ -62,6 +67,7 @@ void AudioManager::shutdown()
 {
     if (m_system) 
     {
+        pruneStoppedChannels();
         stopAllSounds();       // stop active channels
         unloadAllSounds();     // release FMOD sounds
         // Close and release FMOD system
@@ -81,6 +87,7 @@ void AudioManager::update()
 {
     if (m_system) 
     {
+        pruneStoppedChannels();
         FMOD_System_Update(m_system);
     }
 }
@@ -173,6 +180,7 @@ bool AudioManager::playSound(const std::string& name, float volume, float pitch,
 {
     if (!m_system)
     {return false;}
+    pruneStoppedChannels();
         
     auto it = m_sounds.find(name);
     if (it == m_sounds.end()) 
@@ -208,6 +216,7 @@ bool AudioManager::playSound(const std::string& name, float volume, float pitch,
 *****************************************************************************************/
 void AudioManager::stopSound(const std::string& name)
 {
+    pruneStoppedChannels();
     auto it = m_channels.find(name);
     if (it == m_channels.end()) 
         return;
@@ -226,6 +235,7 @@ void AudioManager::stopSound(const std::string& name)
 *****************************************************************************************/
 void AudioManager::stopAllSounds()
 {
+    pruneStoppedChannels();
     for (auto& [name, channels] : m_channels) 
     {
         for (auto* ch : channels) 
@@ -244,6 +254,7 @@ void AudioManager::stopAllSounds()
 *****************************************************************************************/
 void AudioManager::pauseSound(const std::string& name, bool pause)
 {
+    pruneStoppedChannels();
     auto it = m_channels.find(name);
     if (it == m_channels.end()) 
     {
@@ -265,6 +276,7 @@ void AudioManager::pauseSound(const std::string& name, bool pause)
 *****************************************************************************************/
 void AudioManager::pauseAllSounds(bool pause)
 {
+    pruneStoppedChannels();
     for (auto& [name, channels] : m_channels) 
     {
         for (FMOD_CHANNEL* channel : channels) 
@@ -303,6 +315,7 @@ void AudioManager::setMasterVolume(float volume)
 *****************************************************************************************/
 void AudioManager::setSoundVolume(const std::string& name, float volume)
 {
+    pruneStoppedChannels();
     auto it = m_channels.find(name);
     if (it == m_channels.end()) 
     {
@@ -325,6 +338,7 @@ void AudioManager::setSoundVolume(const std::string& name, float volume)
 *****************************************************************************************/
 void AudioManager::setSoundPitch(const std::string& name, float pitch)
 {
+    pruneStoppedChannels();
     auto it = m_channels.find(name);
     if (it == m_channels.end()) 
     {
@@ -388,7 +402,31 @@ bool AudioManager::isSoundPlaying(const std::string& name) const
 
     return false;
 }
+/*****************************************************************************************
+ \brief Remove any channels that have stopped playing or became invalid.
+*****************************************************************************************/
+void AudioManager::pruneStoppedChannels()
+{
+    for (auto it = m_channels.begin(); it != m_channels.end(); )
+    {
+        auto& channels = it->second;
 
+        channels.erase(std::remove_if(channels.begin(), channels.end(), [](FMOD_CHANNEL* ch)
+            {
+                if (!ch)
+                    return true;
+
+                FMOD_BOOL isPlaying = 0;
+                const FMOD_RESULT res = FMOD_Channel_IsPlaying(ch, &isPlaying);
+                return res != FMOD_OK || isPlaying == 0;
+            }), channels.end());
+
+        if (channels.empty())
+            it = m_channels.erase(it);
+        else
+            ++it;
+    }
+}
 /*****************************************************************************************
  \brief Retrieves a list of all the loaded sounds.
  \return Vector containing identifiers of the loaded sounds.

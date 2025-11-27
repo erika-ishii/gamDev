@@ -26,7 +26,7 @@
               manipulates components (Transform/Render/RigidBody) but does not own them.
 ©2025 DigiPen Institute of Technology Singapore. All rights reserved.
 *********************************************************************************************/
-
+#include "Common/CRTDebug.h"
 #include "Systems/LogicSystem.h"
 #include "Core/PathUtils.h"
 #include "Systems/RenderSystem.h"      // for ScreenToWorld / camera-based world mapping
@@ -43,6 +43,12 @@
 #include <filesystem>
 #include <iostream>
 #include <Debug/UndoStack.h>
+
+#include "Common/CRTDebug.h"   // <- bring in DBG_NEW
+
+#ifdef _DEBUG
+#define new DBG_NEW       // <- redefine new AFTER all includes
+#endif
 
 namespace Framework {
 
@@ -489,7 +495,9 @@ namespace Framework {
             std::string("ENGINE/CRASH"));
         g_crashLogger = crashLogger.get();
         std::cout << "[CrashLog] " << g_crashLogger->LogPath() << "\n";
+#ifndef NDEBUG
         std::cout << "[CrashLog] Press F9 to force a crash-test (logs to file + logcat).\n";
+#endif
         std::cout << "[CrashLog] Android builds mirror to ENGINE/CRASH in logcat.\n";
 
         InstallTerminateHandler();
@@ -602,7 +610,9 @@ namespace Framework {
             << "Left Mouse: Melee combo (3-hit)\n"
             << "Right Mouse: Throw projectile\n"
             << "F1: Toggle Performance Overlay (FPS & timings)\n"
+#ifndef NDEBUG
             << "F9: Trigger crash logging test (SIGABRT)\n"
+#endif
             << "=======================================\n";
     }
 
@@ -614,6 +624,7 @@ namespace Framework {
     void LogicSystem::Update(float dt)
     {
         TryGuard::Run([&] {
+#ifndef NDEBUG
             bool triggerCrash = input.IsKeyPressed(GLFW_KEY_F9);
             if (triggerCrash && !crashTestLatched) {
                 crashTestLatched = true;
@@ -627,7 +638,7 @@ namespace Framework {
             else if (!triggerCrash) {
                 crashTestLatched = false;
             }
-
+#endif
             if (factory)
                 factory->Update(dt);
 
@@ -794,145 +805,146 @@ namespace Framework {
             }
 
             // Rotation controls (Q/E), clamped to [-pi, +pi], R to reset.
-
-            if (targetTr && targetId != 0)
+            if (RenderSystem::IsEditorVisible())
             {
-                // Static state to track dragging/holding
-                static bool isRotating = false;
-                static mygame::editor::TransformSnapshot rotationSnapshot;
-
-                // Check Start of Rotation (Capture State)
-                bool qPressed = input.IsKeyPressed(GLFW_KEY_Q);
-                bool ePressed = input.IsKeyPressed(GLFW_KEY_E);
-
-                if (!isRotating && (qPressed || ePressed))
+                if (targetTr && targetId != 0)
                 {
-                    if (auto* obj = factory->GetObjectWithId(targetId))
+                    // Static state to track dragging/holding
+                    static bool isRotating = false;
+                    static mygame::editor::TransformSnapshot rotationSnapshot;
+
+                    // Check Start of Rotation (Capture State)
+                    bool qPressed = input.IsKeyPressed(GLFW_KEY_Q);
+                    bool ePressed = input.IsKeyPressed(GLFW_KEY_E);
+
+                    if (!isRotating && (qPressed || ePressed))
                     {
-                        rotationSnapshot = mygame::editor::CaptureTransformSnapshot(*obj);
-                        isRotating = true;
+                        if (auto* obj = factory->GetObjectWithId(targetId))
+                        {
+                            rotationSnapshot = mygame::editor::CaptureTransformSnapshot(*obj);
+                            isRotating = true;
+                        }
+                    }
+
+                    // Apply Rotation Smoothly using IsKeyHeld (fixes lag)
+                    bool qHeld = input.IsKeyHeld(GLFW_KEY_Q);
+                    bool eHeld = input.IsKeyHeld(GLFW_KEY_E);
+
+                    if (qHeld) targetTr->rot += rotSpeed * dt * accel;
+                    if (eHeld) targetTr->rot -= rotSpeed * dt * accel;
+
+                    // Clamp rotation to keep values sane
+                    if (targetTr->rot > 3.14159265f)  targetTr->rot -= 6.28318530f;
+                    if (targetTr->rot < -3.14159265f) targetTr->rot += 6.28318530f;
+                    // Check End of Rotation (Record Undo)
+                    if (isRotating && !qHeld && !eHeld)
+                    {
+                        if (auto* obj = factory->GetObjectWithId(targetId))
+                        {
+                            mygame::editor::RecordTransformChange(*obj, rotationSnapshot);
+                        }
+                        isRotating = false;
+                    }
+
+                    // Reset Rotation (R Key) - Now supports Undo!
+                    if (input.IsKeyPressed(GLFW_KEY_R))
+                    {
+                        if (auto* obj = factory->GetObjectWithId(targetId))
+                        {
+                            auto before = mygame::editor::CaptureTransformSnapshot(*obj);
+                            targetTr->rot = 0.f;
+                            mygame::editor::RecordTransformChange(*obj, before);
+                        }
                     }
                 }
 
-                // Apply Rotation Smoothly using IsKeyHeld (fixes lag)
-                bool qHeld = input.IsKeyHeld(GLFW_KEY_Q);
-                bool eHeld = input.IsKeyHeld(GLFW_KEY_E);
-
-                if (qHeld) targetTr->rot += rotSpeed * dt * accel;
-                if (eHeld) targetTr->rot -= rotSpeed * dt * accel;
-
-                // Clamp rotation to keep values sane
-                if (targetTr->rot > 3.14159265f)  targetTr->rot -= 6.28318530f;
-                if (targetTr->rot < -3.14159265f) targetTr->rot += 6.28318530f;
-                // Check End of Rotation (Record Undo)
-                if (isRotating && !qHeld && !eHeld)
+                // Scaling controls (Z/X), clamped; R resets scale and size. Works for selected object or player.
+                if ((targetRc || targetRb) && targetId != 0)
                 {
-                    if (auto* obj = factory->GetObjectWithId(targetId))
+                    auto& scaleState = scaleStates[targetId];
+                    if (!scaleState.initialized)
                     {
-                        mygame::editor::RecordTransformChange(*obj, rotationSnapshot);
-                    }
-                    isRotating = false;
-                }
+                        const bool isPlayerTarget = (player && targetId == player->GetId());
 
-                // Reset Rotation (R Key) - Now supports Undo!
-                if (input.IsKeyPressed(GLFW_KEY_R))
-                {
-                    if (auto* obj = factory->GetObjectWithId(targetId))
-                    {
-                        auto before = mygame::editor::CaptureTransformSnapshot(*obj);
-                        targetTr->rot = 0.f;
-                        mygame::editor::RecordTransformChange(*obj, before);
-                    }
-                }
-            }
+                        if (isPlayerTarget)
+                        {
+                            scaleState.baseRenderW = std::abs(rectBaseW);
+                            scaleState.baseRenderH = std::abs(rectBaseH);
+                            scaleState.scale = rectScale;
+                        }
+                        else if (targetRc)
+                        {
+                            scaleState.baseRenderW = std::abs(targetRc->w);
+                            scaleState.baseRenderH = std::abs(targetRc->h);
+                            scaleState.scale = 1.f;
+                        }
 
-            // Scaling controls (Z/X), clamped; R resets scale and size. Works for selected object or player.
-            if ((targetRc || targetRb) && targetId != 0)
-            {
-                auto& scaleState = scaleStates[targetId];
-                if (!scaleState.initialized)
-                {
-                    const bool isPlayerTarget = (player && targetId == player->GetId());
+                        if (targetRb)
+                        {
+                            scaleState.baseColliderW = targetRb->width;
+                            scaleState.baseColliderH = targetRb->height;
+                        }
+                        else
+                        {
+                            scaleState.baseColliderW = scaleState.baseRenderW;
+                            scaleState.baseColliderH = scaleState.baseRenderH;
+                        }
 
-                    if (isPlayerTarget)
-                    {
-                        scaleState.baseRenderW = std::abs(rectBaseW);
-                        scaleState.baseRenderH = std::abs(rectBaseH);
-                        scaleState.scale = rectScale;
+                        if (!targetRc && !isPlayerTarget)
+                        {
+                            // No render component: fall back to collider dims to visualize scale
+                            scaleState.baseRenderW = scaleState.baseColliderW;
+                            scaleState.baseRenderH = scaleState.baseColliderH;
+                        }
+
+                        scaleState.initialized = true;
                     }
-                    else if (targetRc)
+
+                    bool scaleChanged = false;
+                    if (input.IsKeyPressed(GLFW_KEY_X))
                     {
-                        scaleState.baseRenderW = std::abs(targetRc->w);
-                        scaleState.baseRenderH = std::abs(targetRc->h);
+                        scaleState.scale *= (1.f + scaleRate * dt * accel);
+                        scaleChanged = true;
+                    }
+                    if (input.IsKeyPressed(GLFW_KEY_Z))
+                    {
+                        scaleState.scale *= (1.f - scaleRate * dt * accel);
+                        scaleChanged = true;
+                    }
+                    if (input.IsKeyPressed(GLFW_KEY_R))
+                    {
                         scaleState.scale = 1.f;
+                        scaleChanged = true;
                     }
 
-                    if (targetRb)
+                    scaleState.scale = std::clamp(scaleState.scale, 0.25f, 4.0f);
+
+                    if (scaleChanged)
                     {
-                        scaleState.baseColliderW = targetRb->width;
-                        scaleState.baseColliderH = targetRb->height;
-                    }
-                    else
-                    {
-                        scaleState.baseColliderW = scaleState.baseRenderW;
-                        scaleState.baseColliderH = scaleState.baseRenderH;
-                    }
+                        if (targetRc)
+                        {
+                            const float widthSign = (targetRc->w >= 0.f) ? 1.f : -1.f;
+                            const float baseW = scaleState.baseRenderW;
+                            const float baseH = scaleState.baseRenderH;
+                            targetRc->w = widthSign * baseW * scaleState.scale;
+                            targetRc->h = baseH * scaleState.scale;
+                        }
 
-                    if (!targetRc && !isPlayerTarget)
-                    {
-                        // No render component: fall back to collider dims to visualize scale
-                        scaleState.baseRenderW = scaleState.baseColliderW;
-                        scaleState.baseRenderH = scaleState.baseColliderH;
-                    }
+                        if (targetRb)
+                        {
+                            targetRb->width = scaleState.baseColliderW * scaleState.scale;
+                            targetRb->height = scaleState.baseColliderH * scaleState.scale;
+                        }
 
-                    scaleState.initialized = true;
-                }
-
-                bool scaleChanged = false;
-                if (input.IsKeyPressed(GLFW_KEY_X))
-                {
-                    scaleState.scale *= (1.f + scaleRate * dt * accel);
-                    scaleChanged = true;
-                }
-                if (input.IsKeyPressed(GLFW_KEY_Z))
-                {
-                    scaleState.scale *= (1.f - scaleRate * dt * accel);
-                    scaleChanged = true;
-                }
-                if (input.IsKeyPressed(GLFW_KEY_R))
-                {
-                    scaleState.scale = 1.f;
-                    scaleChanged = true;
-                }
-
-                scaleState.scale = std::clamp(scaleState.scale, 0.25f, 4.0f);
-
-                if (scaleChanged)
-                {
-                    if (targetRc)
-                    {
-                        const float widthSign = (targetRc->w >= 0.f) ? 1.f : -1.f;
-                        const float baseW = scaleState.baseRenderW;
-                        const float baseH = scaleState.baseRenderH;
-                        targetRc->w = widthSign * baseW * scaleState.scale;
-                        targetRc->h = baseH * scaleState.scale;
-                    }
-
-                    if (targetRb)
-                    {
-                        targetRb->width = scaleState.baseColliderW * scaleState.scale;
-                        targetRb->height = scaleState.baseColliderH * scaleState.scale;
-                    }
-
-                    if (player && targetId == player->GetId())
-                    {
-                        rectScale = scaleState.scale;
-                        rectBaseW = scaleState.baseRenderW;
-                        rectBaseH = scaleState.baseRenderH;
+                        if (player && targetId == player->GetId())
+                        {
+                            rectScale = scaleState.scale;
+                            rectBaseW = scaleState.baseRenderW;
+                            rectBaseH = scaleState.baseRenderH;
+                        }
                     }
                 }
             }
-
             // --- Mouse to world: use RenderSystem camera for consistent world-space aiming ---
             float mouseWorldX = 0.0f;
             float mouseWorldY = 0.0f;
@@ -976,7 +988,7 @@ namespace Framework {
                 player->GetComponentType<PlayerHealthComponent>(ComponentTypeId::CT_PlayerHealthComponent);
 
             // Velocity intent set on RigidBody; an external system integrates it.
-            if (rb && tr && !playerHealth->isDead)
+            if (rb && tr && playerHealth &&!playerHealth->isDead)
             {
                 if (input.IsKeyHeld(GLFW_KEY_D)) rb->velX = std::max(rb->velX, 1.f);
                 if (input.IsKeyHeld(GLFW_KEY_A)) rb->velX = std::min(rb->velX, -1.f);
@@ -1004,7 +1016,7 @@ namespace Framework {
             }
 
             // Handle attack input: spawn through PlayerAttackComponent only (single source of truth).
-            if (!playerHealth->isDead && input.IsMousePressed(GLFW_MOUSE_BUTTON_LEFT) && attack && tr && rc)
+            if (playerHealth && !playerHealth->isDead && input.IsMousePressed(GLFW_MOUSE_BUTTON_LEFT) && attack && tr && rc)
             {
                 // Only spawn if we have a valid direction (mouse in viewport & not exactly on player).
                 if (aimDirX != 0.0f || aimDirY != 0.0f)
@@ -1031,7 +1043,7 @@ namespace Framework {
                 }
 
             }
-            else if (!playerHealth->isDead && input.IsMousePressed(GLFW_MOUSE_BUTTON_RIGHT) && attack && tr && rc)
+            else if (playerHealth && !playerHealth->isDead && input.IsMousePressed(GLFW_MOUSE_BUTTON_RIGHT) && attack && tr && rc)
             {
                 // Only spawn if we have a valid direction (mouse in viewport & not exactly on player).
                 if (aimDirX != 0.0f || aimDirY != 0.0f)

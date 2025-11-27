@@ -31,12 +31,13 @@
             All content © 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
-
+#include "Common/CRTDebug.h"
 #include "Factory.h"
 #include <stdexcept>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <algorithm>
 
 #include "Component/TransformComponent.h"
 #include "Component/RenderComponent.h"
@@ -695,6 +696,7 @@ namespace Framework {
             }
         }
         ObjectsToBeDeleted.clear();
+        PruneLastLevelCache();
     }
 
     /*************************************************************************************
@@ -712,6 +714,7 @@ namespace Framework {
             }
         }
         ObjectsToBeDeleted.clear();
+        PruneLastLevelCache();
         // Destroy any remaining tracked game objects and release their components
         for (auto const& [id, _] : GameObjectIdMap) {
             (void)_;
@@ -733,6 +736,28 @@ namespace Framework {
 
         if (FACTORY == this)
             FACTORY = nullptr;
+    }
+
+    void GameObjectFactory::PruneLastLevelCache()
+    {
+        // Remove any cached pointers that no longer exist in the ownership map.
+        auto isDead = [this](GOC* ptr)
+            {
+                if (!ptr)
+                    return true;
+
+                for (auto const& [id, owned] : GameObjectIdMap)
+                {
+                    (void)id;
+                    if (owned.get() == ptr)
+                        return false;
+                }
+                return true;
+            };
+
+        LastLevelCache.erase(
+            std::remove_if(LastLevelCache.begin(), LastLevelCache.end(), isDead),
+            LastLevelCache.end());
     }
 
     /*************************************************************************************

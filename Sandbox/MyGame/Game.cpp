@@ -4,6 +4,7 @@
  \author    All TEAM MEMBERS
  \brief     Game lifecycle management + Main Menu transition (GUISystem-backed)
 *********************************************************************************************/
+
 #include "Graphics/Window.hpp"
 #include "Systems/SystemManager.h"
 #include "Systems/InputSystem.h"
@@ -22,6 +23,13 @@
 #include <chrono>
 #include <MainMenuPage.hpp>
 #include <PauseMenuPage.hpp>
+#include <DefeatScreenPage.hpp>
+
+#include "Common/CRTDebug.h"   
+
+#ifdef _DEBUG
+#define new DBG_NEW       
+#endif
 
 namespace mygame {
 
@@ -38,12 +46,13 @@ namespace mygame {
         Framework::AiSystem* gAiSystem = nullptr;
         Framework::HealthSystem* gHealthSystem = nullptr;
 
-        enum class GameState { MAIN_MENU, PLAYING, PAUSED, EXIT };
+        enum class GameState { MAIN_MENU, PLAYING, PAUSED, DEFEAT, EXIT };
         GameState currentState = GameState::MAIN_MENU;
         bool editorSimulationRunning = false;
 
         MainMenuPage mainMenu;
         PauseMenuPage pauseMenu;
+        DefeatScreenPage defeatScreen;
 
         constexpr int START_KEY = GLFW_KEY_ENTER; // Keyboard stand-in for a controller Start button.
         constexpr int PAUSE_KEY = GLFW_KEY_ESCAPE;
@@ -54,21 +63,22 @@ namespace mygame {
         gInputSystem = gSystems.RegisterSystem<Framework::InputSystem>(win);
         gLogicSystem = gSystems.RegisterSystem<Framework::LogicSystem>(win, *gInputSystem);
         gPhysicsSystem = gSystems.RegisterSystem<Framework::PhysicSystem>(*gLogicSystem);
-        gAiSystem = gSystems.RegisterSystem<Framework::AiSystem>(win,*gLogicSystem);
+        gAiSystem = gSystems.RegisterSystem<Framework::AiSystem>(win, *gLogicSystem);
         gAudioSystem = gSystems.RegisterSystem<Framework::AudioSystem>(win);
         gRenderSystem = gSystems.RegisterSystem<Framework::RenderSystem>(win, *gLogicSystem);
         gHealthSystem = gSystems.RegisterSystem<Framework::HealthSystem>(win);
-     
-      
+
+
         //(void)gPhysicsSystem;
         //(void)gAudioSystem;
         //(void)gRenderSystem;
 
         gSystems.IntializeAll();
-        
+
 
         mainMenu.Init(gRenderSystem->ScreenWidth(), gRenderSystem->ScreenHeight());
         pauseMenu.Init(gRenderSystem->ScreenWidth(), gRenderSystem->ScreenHeight());
+        defeatScreen.Init(gRenderSystem->ScreenWidth(), gRenderSystem->ScreenHeight());
         currentState = GameState::MAIN_MENU;
 
         editorSimulationRunning = false;
@@ -77,6 +87,7 @@ namespace mygame {
     void update(float dt)
     {
         TryGuard::Run([&] {
+            const bool editorMode = Framework::RenderSystem::IsEditorVisible();
             const bool systemsUpdating = (currentState == GameState::PLAYING && editorSimulationRunning);
             if (!systemsUpdating && gInputSystem) {
                 gInputSystem->Update(dt);
@@ -99,6 +110,8 @@ namespace mygame {
                     currentState = GameState::PLAYING;
                     editorSimulationRunning = true;
                     pauseMenu.ResetLatches();
+                    if (gHealthSystem)
+                        gHealthSystem->ClearPlayerDeathFlag();
                 }
                 if (mainMenu.ConsumeExit())
                 {
@@ -113,7 +126,16 @@ namespace mygame {
                 }
                 // When simulation is not running we already refreshed input above.
                 handlePerfToggle();
-                if (gInputSystem &&
+                if (!editorMode && gHealthSystem && gHealthSystem->HasPlayerDied())
+                {
+                    defeatScreen.ResetLatches();
+                    if (gRenderSystem)
+                        defeatScreen.SyncLayout(gRenderSystem->ScreenWidth(), gRenderSystem->ScreenHeight());
+                    editorSimulationRunning = false;
+                    currentState = GameState::DEFEAT;
+                    break;
+                }
+                if (gInputSystem && !editorMode &&
                     (gInputSystem->IsKeyPressed(PAUSE_KEY) || gInputSystem->IsKeyPressed(START_KEY)))
                 {
                     pauseMenu.ResetLatches();
@@ -122,11 +144,20 @@ namespace mygame {
                 break;
 
             case GameState::PAUSED:
+                if (editorMode)
+                {
+                    currentState = GameState::PLAYING;
+                    break;
+                }
                 pauseMenu.Update(gInputSystem);
                 handlePerfToggle();
                 if (pauseMenu.ConsumeResume() ||
                     (gInputSystem && (gInputSystem->IsKeyPressed(PAUSE_KEY) || gInputSystem->IsKeyPressed(START_KEY))))
                 {
+                    // [UPDATED LOGIC] Resume based on previous state if possible, 
+                    // or default to PLAYING. If we came from DEFEAT, going back to PLAYING
+                    // might be weird if the player is still dead, but typically "Resume" means "Back to Game".
+                    // If the player is dead, the next frame's check in PLAYING will send them back to DEFEAT screen.
                     currentState = GameState::PLAYING;
                     break;
                 }
@@ -137,16 +168,53 @@ namespace mygame {
                     {
                         gLogicSystem->ReloadLevel();
                     }
+                    if (gHealthSystem)
+                        gHealthSystem->ClearPlayerDeathFlag();
+
                     editorSimulationRunning = false;
                     currentState = GameState::MAIN_MENU;
                     break;
                 }
 
-                if (pauseMenu.ConsumeQuit())
+                if (pauseMenu.ConsumeExitConfirmed())
                 {
                     currentState = GameState::EXIT;
+                    break;
+                }
+
+                if (pauseMenu.ConsumeQuitRequest())
+                {
+                    pauseMenu.ShowExitPopup();
                 }
                 break;
+
+            case GameState::DEFEAT:
+                defeatScreen.Update(gInputSystem);
+                handlePerfToggle();
+
+                // [ADDED] Check for Pause input to go to Pause Menu
+                if (gInputSystem && !editorMode &&
+                    (gInputSystem->IsKeyPressed(PAUSE_KEY) || gInputSystem->IsKeyPressed(START_KEY)))
+                {
+                    pauseMenu.ResetLatches();
+                    currentState = GameState::PAUSED;
+                    break;
+                }
+
+                if (defeatScreen.ConsumeTryAgain())
+                {
+                    if (gLogicSystem)
+                    {
+                        gLogicSystem->ReloadLevel();
+                    }
+                    if (gHealthSystem)
+                        gHealthSystem->ClearPlayerDeathFlag();
+
+                    editorSimulationRunning = true;
+                    currentState = GameState::PLAYING;
+                }
+                break;
+
 
             case GameState::EXIT:
                 if (gInputSystem) {
@@ -185,6 +253,17 @@ namespace mygame {
                     gRenderSystem->EndMenuFrame();
                 }
                 break;
+
+            case GameState::DEFEAT:
+                gSystems.DrawAll();
+                if (gRenderSystem)
+                {
+                    gRenderSystem->BeginMenuFrame();
+                    defeatScreen.Draw(gRenderSystem);
+                    gRenderSystem->EndMenuFrame();
+                }
+                break;
+
 
             case GameState::EXIT:
                 break;

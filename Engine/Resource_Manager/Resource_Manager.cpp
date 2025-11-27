@@ -11,8 +11,13 @@
             All content © 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
-#include "Resource_Manager.h"
 
+#include "Resource_Manager.h"
+#include "Common/CRTDebug.h"   // <- bring in DBG_NEW
+
+#ifdef _DEBUG
+#define new DBG_NEW       // <- redefine new AFTER all includes
+#endif
 /*****************************************************************************************
      \brief Get the file extension from a path string.
     \param path  Path to the file.
@@ -154,6 +159,12 @@ void Resource_Manager::unloadAll(Resource_Type type)
         Resources res = it->second;
         bool matchType = (type == Resource_Type::All || res.type == type);
         if (matchType) {
+            // Release GL textures before erasing graphics resources from the map to
+        // prevent leak reports when running with CRT leak detection on Windows.
+            if (res.type == Resource_Type::Graphics && res.handle != 0)
+            {
+                gfx::Graphics::destroyTexture(res.handle);
+            }
             std::cout << "[Resource_Manager] Removing resource: " << it->first << std::endl;
             it = resources_map.erase(it); // erase and move forward
         }

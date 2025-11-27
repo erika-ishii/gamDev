@@ -29,6 +29,7 @@
 #include "Component/EnemyDecisionTreeComponent.h"
 #include "Component/EnemyHealthComponent.h"
 #include "Component/EnemyAttackComponent.h"
+#include "Component/AudioComponent.h"
 #include "Component/TransformComponent.h"
 #include "Component/PlayerComponent.h"
 #include "Physics/Dynamics/RigidBodyComponent.h"

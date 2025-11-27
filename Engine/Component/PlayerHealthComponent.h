@@ -48,6 +48,7 @@ namespace Framework
         bool isInvulnerable = false;
         float invulnTime = 0.0f;
         bool isDead = false;
+        bool deathSoundPlayed = false;
 
         /*************************************************************************************
           \brief Initializes the component.

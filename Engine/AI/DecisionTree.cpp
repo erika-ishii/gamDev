@@ -16,7 +16,13 @@
             All content 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
+
 #include "DecisionTree.h"
+#include "Common/CRTDebug.h"   // <- bring in DBG_NEW
+
+#ifdef _DEBUG
+#define new DBG_NEW       // <- redefine new AFTER all includes
+#endif
 /*********************************************************************************************
  \brief
     Constructs a DecisionTree with the specified root DecisionNode.

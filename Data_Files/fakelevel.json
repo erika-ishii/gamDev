@@ -81,35 +81,6 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": -0.7791667580604553,
-            "y": -1.7013888359069824
-          }
-        },
-        "layer": "Default",
-        "name": "Rect"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.09000000357627869,
-            "layer": 0,
-            "r": 1.0,
-            "visible": false,
-            "w": 6.710000038146973
-          },
-          "RigidBodyComponent": {
-            "height": 0.09000000357627869,
-            "velocity_x": 0.0,
-            "velocity_y": 0.0,
-            "width": 6.710000038146973
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
             "x": -0.7800065279006958,
             "y": 0.8999999761581421
           }
@@ -336,8 +307,8 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": 0.3850759267807007,
-            "y": -1.1023402214050293
+            "x": 0.502540111541748,
+            "y": -1.2344876527786255
           }
         },
         "layer": "Default",
@@ -415,7 +386,7 @@
             "scale_x": 1.0,
             "scale_y": 1.0,
             "x": 0.3850001096725464,
-            "y": 0.4041403532028198
+            "y": 0.40173956751823425
           }
         },
         "layer": "Default",
@@ -584,7 +555,7 @@
                   "startFrame": 0,
                   "totalFrames": 6
                 },
-                "currentFrame": 3,
+                "currentFrame": 5,
                 "name": "idle",
                 "spriteSheetPath": "../../assets/Textures/Environment/lvl 1_Hawker/Stores_Left_Sprite.png",
                 "textureKey": "store_left_sheet"
@@ -654,7 +625,7 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": -0.610243022441864,
+            "x": -0.6082589030265808,
             "y": -1.7076386213302612
           }
         },
@@ -944,8 +915,8 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": -0.71180659532547,
-            "y": -1.085937261581421
+            "x": -0.8439540266990662,
+            "y": -0.8950576782226563
           }
         },
         "layer": "Default",
@@ -1848,10 +1819,30 @@
       {
         "Components": {
           "AudioComponent": {
-              "entityType": "player",
-              "volume": 1.0
-          }
-          ,
+            "sounds": {
+              "GrappleShoot1": {
+                "id": "GrappleShoot1",
+                "loop": false
+              },
+              "PlayerDead": {
+                "id": "PlayerDead",
+                "loop": false
+              },
+              "PlayerHit": {
+                "id": "PlayerHit",
+                "loop": false
+              },
+              "Slash1": {
+                "id": "Slash1",
+                "loop": false
+              },
+              "footsteps": {
+                "id": "footsteps",
+                "loop": true
+              }
+            },
+            "volume": 1.0
+          },
           "HitBoxComponent": {
             "duration": 0.15000000596046448,
             "height": 0.15000000596046448,
@@ -1862,6 +1853,7 @@
             "damage": 1
           },
           "PlayerComponent": {},
+          "PlayerHUDComponent": {},
           "PlayerHealthComponent": {
             "playerHealth": 5,
             "playerMaxhealth": 5
@@ -1878,7 +1870,7 @@
           },
           "RigidBodyComponent": {
             "height": 0.20999999344348907,
-            "velocity_x": 3.839833848047471e-39,
+            "velocity_x": 1.401298464324817e-45,
             "velocity_y": -1.401298464324817e-45,
             "width": 0.10000000149011612
           },
@@ -1895,7 +1887,7 @@
                   "startFrame": 0,
                   "totalFrames": 5
                 },
-                "currentFrame": 4,
+                "currentFrame": 2,
                 "name": "idle",
                 "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/Idle_Sprite.png",
                 "textureKey": "idle_sheet"
@@ -1999,14 +1991,12 @@
           "SpriteComponent": {
             "texture_key": "idle_sheet"
           },
-          "PlayerHUDComponent": {
-    },
           "TransformComponent": {
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": -0.720091700553894,
-            "y": -1.5012027025222778
+            "x": -0.42643094062805176,
+            "y": -0.7964167594909668
           }
         },
         "layer": "Default",
@@ -3370,6 +3360,15 @@
       },
       {
         "Components": {
+          "AudioComponent": {
+            "sounds": {
+              "GhostSounds": {
+                "id": "GhostSounds",
+                "loop": false
+              }
+            },
+            "volume": 0.20000000298023224
+          },
           "EnemyAttackComponent": {
             "attack_speed": 1.2000000476837158,
             "damage": 1
@@ -3395,7 +3394,7 @@
           },
           "RigidBodyComponent": {
             "height": 0.10000000149011612,
-            "velocity_x": 10.0,
+            "velocity_x": -0.20000000298023224,
             "velocity_y": 0.0,
             "width": 0.10000000149011612
           },
@@ -3412,7 +3411,7 @@
                   "startFrame": 0,
                   "totalFrames": 9
                 },
-                "currentFrame": 0,
+                "currentFrame": 2,
                 "name": "idle",
                 "spriteSheetPath": "../../assets/Textures/Character/Water Enemy_Sprite/Idle_Sprite.png",
                 "textureKey": "water_idle"
@@ -3475,20 +3474,24 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": -3.586810350418091,
+            "x": -0.1799994856119156,
             "y": -1.1532058715820313
-          },
-          "AudioComponent": 
-          {
-          "entityType": "enemy",
-          "volume": 0.2
           }
-          },
+        },
         "layer": "Default",
         "name": "Enemy"
       },
       {
         "Components": {
+          "AudioComponent": {
+            "sounds": {
+              "GhostSounds": {
+                "id": "GhostSounds",
+                "loop": false
+              }
+            },
+            "volume": 1.0
+          },
           "EnemyAttackComponent": {
             "attack_speed": 1.2000000476837158,
             "damage": 1
@@ -3514,7 +3517,7 @@
           },
           "RigidBodyComponent": {
             "height": 0.10000000149011612,
-            "velocity_x": 10.0,
+            "velocity_x": 0.20000000298023224,
             "velocity_y": 0.0,
             "width": 0.10000000149011612
           },
@@ -3531,7 +3534,7 @@
                   "startFrame": 0,
                   "totalFrames": 9
                 },
-                "currentFrame": 0,
+                "currentFrame": 2,
                 "name": "idle",
                 "spriteSheetPath": "../../assets/Textures/Character/Water Enemy_Sprite/Idle_Sprite.png",
                 "textureKey": "water_idle"
@@ -3594,13 +3597,8 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": 1.3736717700958252,
+            "x": 0.1733328253030777,
             "y": 0.025438368320465088
-          },
-          "AudioComponent": 
-          {
-            "entityType": "enemy",
-            "volume": 1.0
           }
         },
         "layer": "Default",
@@ -3608,6 +3606,15 @@
       },
       {
         "Components": {
+          "AudioComponent": {
+            "sounds": {
+              "GhostSounds": {
+                "id": "GhostSounds",
+                "loop": false
+              }
+            },
+            "volume": 0.20000000298023224
+          },
           "EnemyAttackComponent": {
             "attack_speed": 0.6000000238418579,
             "damage": 1
@@ -3628,12 +3635,13 @@
             "h": 0.30000001192092896,
             "layer": 0,
             "r": 1.0,
+            "texture_key": "fire_idle",
             "visible": true,
             "w": 0.30000001192092896
           },
           "RigidBodyComponent": {
             "height": 0.10000000149011612,
-            "velocity_x": 10.0,
+            "velocity_x": 0.0,
             "velocity_y": 0.0,
             "width": 0.10000000149011612
           },
@@ -3650,7 +3658,7 @@
                   "startFrame": 0,
                   "totalFrames": 6
                 },
-                "currentFrame": 0,
+                "currentFrame": 5,
                 "name": "idle",
                 "spriteSheetPath": "../../assets/Textures/Character/Fire Enemy_Sprite/Idle_Sprite.png",
                 "textureKey": "fire_idle"
@@ -3713,13 +3721,8 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": -3.6631250381469727,
-            "y": 0.025438368320465088
-          },
-          "AudioComponent": 
-          {
-            "entityType": "enemy",
-            "volume": 0.2
+            "x": -0.1799994856119156,
+            "y": 0.027839165180921555
           }
         },
         "layer": "Default",
@@ -3727,6 +3730,15 @@
       },
       {
         "Components": {
+          "AudioComponent": {
+            "sounds": {
+              "GhostSounds": {
+                "id": "GhostSounds",
+                "loop": false
+              }
+            },
+            "volume": 0.20000000298023224
+          },
           "EnemyAttackComponent": {
             "attack_speed": 0.6000000238418579,
             "damage": 1
@@ -3752,7 +3764,7 @@
           },
           "RigidBodyComponent": {
             "height": 0.10000000149011612,
-            "velocity_x": 10.0,
+            "velocity_x": 0.20000000298023224,
             "velocity_y": 0.0,
             "width": 0.10000000149011612
           },
@@ -3769,7 +3781,7 @@
                   "startFrame": 0,
                   "totalFrames": 6
                 },
-                "currentFrame": 0,
+                "currentFrame": 5,
                 "name": "idle",
                 "spriteSheetPath": "../../assets/Textures/Character/Fire Enemy_Sprite/Idle_Sprite.png",
                 "textureKey": "fire_idle"
@@ -3832,21 +3844,24 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": 2.2046585083007813,
+            "x": 0.1733328253030777,
             "y": -1.1108088493347168
-          },
-          "AudioComponent": 
-          {
-            "entityType": "enemy",
-            "volume": 0.2
           }
         },
-
         "layer": "Default",
         "name": "FireEnemy"
       },
       {
         "Components": {
+          "AudioComponent": {
+            "sounds": {
+              "GhostSounds": {
+                "id": "GhostSounds",
+                "loop": false
+              }
+            },
+            "volume": 0.20000000298023224
+          },
           "EnemyAttackComponent": {
             "attack_speed": 0.6000000238418579,
             "damage": 1
@@ -3872,7 +3887,7 @@
           },
           "RigidBodyComponent": {
             "height": 0.10000000149011612,
-            "velocity_x": 10.0,
+            "velocity_x": 0.20000000298023224,
             "velocity_y": 0.0,
             "width": 0.10000000149011612
           },
@@ -3889,7 +3904,7 @@
                   "startFrame": 0,
                   "totalFrames": 6
                 },
-                "currentFrame": 0,
+                "currentFrame": 5,
                 "name": "idle",
                 "spriteSheetPath": "../../assets/Textures/Character/Fire Enemy_Sprite/Idle_Sprite.png",
                 "textureKey": "fire_idle"
@@ -3952,20 +3967,73 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": 1.9757132530212402,
+            "x": 0.1733328253030777,
             "y": 0.0
-          },
-          "AudioComponent": 
-          {
-          "entityType": "enemy",
-          "volume": 0.2
           }
         },
-
         "layer": "Default",
         "name": "FireEnemy"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.09000000357627869,
+            "layer": 0,
+            "r": 1.0,
+            "visible": true,
+            "w": 6.710000038146973
+          },
+          "RigidBodyComponent": {
+            "height": 1.0,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 1.0
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -0.7791667580604553,
+            "y": -1.7013888359069824
+          }
+        },
+        "layer": "Default",
+        "name": "Rect"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.5,
+            "layer": 0,
+            "r": 1.0,
+            "texture_key": "Textures/attack_b.png",
+            "visible": true,
+            "w": 0.5
+          },
+          "RigidBodyComponent": {
+            "height": 0.5,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 0.5
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": 0.20000000298023224,
+            "y": 0.0
+          }
+        },
+        "layer": "Default",
+        "name": "Rect"
       }
     ],
-    "name": "level_RealTutorial"
+    "name": "fakelevel"
   }
 }

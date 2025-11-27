@@ -21,6 +21,7 @@
             All content © 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
+
 #include "DecisionTreeDefault.h"
 #include "Component/SpriteAnimationComponent.h"
 #include "Component/EnemyTypeComponent.h"
@@ -29,7 +30,11 @@
 #include <cctype>
 #include <string_view>
 #include <cmath>
+#include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 
+#ifdef _DEBUG
+#define new DBG_NEW       // <- redefine new AFTER all includes
+#endif
 namespace Framework
 {
     namespace
@@ -179,7 +184,6 @@ namespace Framework
             return nullptr;
 
         const GOCId enemyID = enemy->GetId();
-
         // ---------------------------------------------------------------------
         // Patrol leaf: simple left-right patrol with pause when turning around.
         // ---------------------------------------------------------------------
@@ -196,6 +200,7 @@ namespace Framework
                 auto* rb = enemy->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);
                 auto* tr = enemy->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
                 auto* ai = enemy->GetComponentType<EnemyDecisionTreeComponent>(ComponentTypeId::CT_EnemyDecisionTreeComponent);
+                auto* audio = enemy->GetComponentType<AudioComponent>(ComponentTypeId::CT_AudioComponent);
 
                 if (rb && tr && ai)
                 {
@@ -208,6 +213,8 @@ namespace Framework
                     {
                         ai->pauseTimer -= dt;
                         rb->velX = 0.0f;
+                        if (audio && audio->playing["GhostSounds"])
+                            audio->Stop("GhostSounds");
                         return;
                     }
 
@@ -275,6 +282,17 @@ namespace Framework
                         ai->dir = -1.0f;
                         ai->pauseTimer = pauseDuration;
                     }
+                    if (audio)
+                    {
+                        float speed = std::sqrt(rb->velX * rb->velX + rb->velY * rb->velY);
+                        const float moveThreshold = 0.01f; // tiny sliding is ignored
+
+                        if (speed > moveThreshold && !audio->playing["GhostSounds"])
+                            audio->Play("GhostSounds"); // true = loop
+                        else if (speed <= moveThreshold && audio->playing["GhostSounds"])
+                            audio->Stop("GhostSounds");
+                    }
+
 
                     // Optional: ensure a patrol/idle animation when not attacking
                     PlayAnimationIfAvailable(enemy, "idle");
@@ -307,7 +325,7 @@ namespace Framework
                     return;
 
                 GOC* player = nullptr;
-                ai->chaseSpeed = 0.1f;
+                ai->chaseSpeed = 0.05f;
 
                 auto& objects = FACTORY->Objects();
                 for (auto& kv : objects)
@@ -342,8 +360,8 @@ namespace Framework
                 // Determine behavior based on Type (melee vs ranged)
                 bool isRanged = (typeComp && typeComp->Etype == EnemyTypeComponent::EnemyType::ranged);
 
-                // Movement Logic: Ranged stops further away
-                float stopDistance = isRanged ? 3.0f : 0.1f;
+                // Keep ranged enemies a bit closer so they don't aggro from too far away
+                float stopDistance = isRanged ? 1.0f : 0.1f;
 
                 // Smoothly move towards the player
                 if (distance > stopDistance)
@@ -371,8 +389,8 @@ namespace Framework
 
                 if (attack->attack_timer >= attack->attack_speed)
                 {
-                    // Check range before attacking
-                    bool canAttack = isRanged ? (distance < 6.0f) : (distance < 0.8f);
+                    // Check range before attacking. Ranged enemies should only fire when much closer.
+                    bool canAttack = isRanged ? (distance < 3.5f) : (distance < 0.8f);
 
                     if (canAttack)
                     {
@@ -392,17 +410,17 @@ namespace Framework
                                 float dirY = dy / norm;
 
                                 // Spawn offset
-                                float spawnX = tr->x + dirX * 0.5f;
-                                float spawnY = tr->y + dirY * 0.5f;
+                                float spawnX = tr->x;
+                                float spawnY = tr->y;
 
                                 logic->hitBoxSystem->SpawnProjectile(
                                     enemy,
                                     spawnX, spawnY,
                                     dirX, dirY,
-                                    4.0f,        // Projectile speed
+                                    0.1f,       // Projectile speed 
                                     0.3f, 0.15f, // Size
                                     static_cast<float>(attack->damage),
-                                    2.0f,        // Duration
+                                    5.0f,        // Duration
                                     HitBoxComponent::Team::Enemy
                                 );
 
@@ -493,8 +511,8 @@ namespace Framework
                     return false;
 
                 // Refresh "seen player" state based on proximity
-                // Increased detection radius slightly to allow ranged enemies to spot player sooner
-                if (IsPlayerNear(enemy, 3.5f))
+                // Reduced detection radius so enemies don't aggro from across the arena
+                if (IsPlayerNear(enemy, 0.2f))
                 {
                     ai->hasSeenPlayer = true;
                     ai->chaseTimer = 0.0f;

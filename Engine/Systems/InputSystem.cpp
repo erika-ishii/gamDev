@@ -10,6 +10,7 @@
 			Debug printing is available but commented out by default.
  ©2025 DigiPen Institute of Technology Singapore. All rights reserved.
 *********************************************************************************************/
+
 #include "InputSystem.h"
 #if defined(APIENTRY)
 #  undef APIENTRY
@@ -17,7 +18,11 @@
 #include <Windows.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 
+#ifdef _DEBUG
+#define new DBG_NEW       // <- redefine new AFTER all includes
+#endif
 namespace Framework 
 {
 	/*************************************************************************************

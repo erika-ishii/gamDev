@@ -44,8 +44,12 @@ namespace mygame {
         bool ConsumeMainMenu();
         bool ConsumeOptions();
         bool ConsumeHowToPlay();
-        bool ConsumeQuit();
+        bool ConsumeQuitRequest();
+        bool ConsumeExitConfirmed();
 
+        // Exit confirmation helpers.
+        bool IsExitPopupVisible() const { return showExitPopup; }
+        void ShowExitPopup();
         // Reset internal one-shot latches (used when reopening the pause menu).
         void ResetLatches();
 
@@ -102,7 +106,8 @@ namespace mygame {
         bool mainMenuLatched = false;
         bool optionsLatched = false;
         bool howToLatched = false;
-        bool quitLatched = false;
+        bool quitRequestedLatched = false;
+        bool exitConfirmedLatched = false;
 
         GUISystem gui;
 

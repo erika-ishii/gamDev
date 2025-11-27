@@ -27,6 +27,7 @@
             All content ©2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
+
 #include "Debug/Spawn.h"
 #include "Core/PathUtils.h"
 #include "Selection.h"
@@ -86,6 +87,11 @@
 #include <string_view>
 #include <cstdio>
 #include "Serialization/JsonSerialization.h"
+#include "Common/CRTDebug.h"   // <- bring in DBG_NEW
+
+#ifdef _DEBUG
+#define new DBG_NEW       // <- redefine new AFTER all includes
+#endif
 
 namespace mygame {
 

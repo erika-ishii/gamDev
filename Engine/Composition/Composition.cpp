@@ -16,6 +16,11 @@
 #include "Composition.h"
 #include "Factory/Factory.h"
 #include <utility>
+#include "Common/CRTDebug.h"   // <- bring in DBG_NEW
+
+#ifdef _DEBUG
+#define new DBG_NEW       // <- redefine new AFTER all includes
+#endif
 namespace Framework {
     //Default destructor: vector<unique_ptr<...>> automatically release own component
     /*************************************************************************************

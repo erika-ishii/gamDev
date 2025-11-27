@@ -1,3 +1,22 @@
+/*********************************************************************************************
+ \file      GateController.cpp
+ \par       SofaSpuds
+ \author    elvisshengjie.lim (elvisshengjie.lim@digipen.edu) - Primary Author, 100%
+ \brief     Implements the GateController, which manages gate unlocking logic, enemy-clearing
+            checks, player–gate interactions, and safe reference tracking across level loads.
+ \details   Responsibilities:
+            - Tracks the player and gate GameObjectComposition pointers safely.
+            - Scans level objects to find and cache the gate object ("hawker_gate").
+            - Unlocks the gate once all enemies with EnemyHealthComponent are defeated.
+            - Performs collision testing between player and gate using AABB + physics data.
+            - Determines when a level transition should occur (player touches unlocked gate).
+            - Validates object liveness through the factory to avoid dangling pointers.
+            - Automatically resets state when levels reload.
+ \copyright
+            All content © 2025 DigiPen Institute of Technology Singapore.
+            All rights reserved.
+*********************************************************************************************/
+
 #include "GateController.h"
 
 #include "Factory/Factory.h"
@@ -9,7 +28,11 @@
 #include "Physics/Dynamics/RigidBodyComponent.h"
 #include <cctype>
 #include <string>
+#include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 
+#ifdef _DEBUG
+#define new DBG_NEW       // <- redefine new AFTER all includes
+#endif
 namespace Framework
 {
     /*****************************************************************************************

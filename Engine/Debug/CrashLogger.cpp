@@ -33,7 +33,11 @@
 #include <android/log.h>
 #include <jni.h>
 #endif
+#include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 
+#ifdef _DEBUG
+#define new DBG_NEW       // <- redefine new AFTER all includes
+#endif
 CrashLogger* g_crashLogger;
 
 /*************************************************************************************

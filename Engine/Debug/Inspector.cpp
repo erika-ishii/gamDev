@@ -14,6 +14,7 @@
             All content �2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
+
 #include "Inspector.h"
 
 #include "Debug/Selection.h"
@@ -29,7 +30,11 @@
 #include <algorithm>
 #include <array>
 #include <cstring>
+#include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 
+#ifdef _DEBUG
+#define new DBG_NEW       // <- redefine new AFTER all includes
+#endif
 namespace {
     std::array<char, 128> gNameBuffer{};
     Framework::GOCId      gNameBufferObject = 0;

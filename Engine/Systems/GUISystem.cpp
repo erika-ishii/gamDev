@@ -21,7 +21,11 @@
 
 #include <GLFW/glfw3.h>
 #include <algorithm>
+#include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 
+#ifdef _DEBUG
+#define new DBG_NEW       // <- redefine new AFTER all includes
+#endif
 /*************************************************************************************
   \brief  Remove all buttons and reset mouse state so no click carries over.
 *************************************************************************************/
@@ -128,8 +132,7 @@ void GUISystem::Update(Framework::InputSystem* /*input*/) {
     const double my = (static_cast<double>(winH) - myTopLogical) * scaleY;
     // Hover test for all buttons.
     for (auto& b : buttons_) {
-        b.hovered = Contains(b, mx, my);
-    }
+        b.hovered = Contains(b, mx, my);    }
 
     // Rising-edge click dispatch.
     const bool mouseNow = (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);

@@ -24,7 +24,11 @@
 #include <initializer_list>
 #include <string>
 #include <vector>
+#include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 
+#ifdef _DEBUG
+#define new DBG_NEW       // <- redefine new AFTER all includes
+#endif
 using namespace mygame;
 
 namespace{
@@ -532,10 +536,17 @@ bool PauseMenuPage::ConsumeHowToPlay()
     return true;
 }
 
-bool PauseMenuPage::ConsumeQuit()
+bool PauseMenuPage::ConsumeQuitRequest()
 {
-    if (!quitLatched) return false;
-    quitLatched = false;
+    if (!quitRequestedLatched) return false;
+    quitRequestedLatched = false;
+    return true;
+}
+
+bool PauseMenuPage::ConsumeExitConfirmed()
+{
+    if (!exitConfirmedLatched) return false;
+    exitConfirmedLatched = false;
     return true;
 }
 
@@ -545,11 +556,21 @@ void PauseMenuPage::ResetLatches()
     mainMenuLatched = false;
     optionsLatched = false;
     howToLatched = false;
-    quitLatched = false;
+    quitRequestedLatched = false;
+    exitConfirmedLatched = false;
     showHowToPopup = false;
+    showExitPopup = false;
     iconAnimTime = 0.0f;
     iconTimerInitialized = false;
     layoutDirty = true;
+}
+void PauseMenuPage::ShowExitPopup()
+{
+    quitRequestedLatched = false;
+    exitConfirmedLatched = false;
+    showExitPopup = true;
+    showHowToPopup = false;
+    BuildGui();
 }
 void PauseMenuPage::SyncLayout(int screenW, int screenH)
 {
@@ -698,9 +719,8 @@ void PauseMenuPage::BuildGui()
         gui.AddButton(exitYesBtn.x, exitYesBtn.y, exitYesBtn.w, exitYesBtn.h, "YES",
             exitPopupYesTex, exitPopupYesTex,
             [this]() {
-                quitLatched = true;
-                showExitPopup = false;
-                BuildGui();
+                exitConfirmedLatched = true;
+                
             });
 
         gui.AddButton(exitNoBtn.x, exitNoBtn.y, exitNoBtn.w, exitNoBtn.h, "NO",
@@ -748,9 +768,7 @@ void PauseMenuPage::BuildGui()
         gui.AddButton(quitBtn.x, quitBtn.y, quitBtn.w, quitBtn.h, "Quit",
             quitTex, quitTex,
             [this]() {
-                showExitPopup = true;
-                showHowToPopup = false;
-                BuildGui();
+                quitRequestedLatched = true;
             });
         gui.AddButton(closeBtn.x, closeBtn.y, closeBtn.w, closeBtn.h, "",
             closeTex, closeTex,

@@ -10,12 +10,17 @@
             All content ©2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
+
 #include "MathUtils.hpp"
 
 #include <cmath>
 #include <iostream>
 #include <string>
+#include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 
+#ifdef _DEBUG
+#define new DBG_NEW       // <- redefine new AFTER all includes
+#endif
 // =============================== Mat4 constructors ========================================
 
 Mat4 Identity() {

@@ -1,7 +1,13 @@
+﻿
 #include "audioSystem.h"
 #include "Core/PathUtils.h"
 #include "RenderSystem.h"
 #include <iostream>
+#include "Common/CRTDebug.h"   // <- bring in DBG_NEW
+
+#ifdef _DEBUG
+#define new DBG_NEW       // <- redefine new AFTER all includes
+#endif
 /*********************************************************************************************
  \file      AudioSystem.cpp
  \par       SofaSpuds
@@ -38,22 +44,29 @@ namespace Framework {
     *****************************************************************************************/
     void AudioSystem::Initialize()
     {
-        // Initialize audio engine
+        // 1. Start audio engine
         if (!SoundManager::getInstance().initialize())
         {
-            std::cerr << "[AudioSystem] Failed to initialize SoundManager!" << std::endl; return;
+            std::cerr << "[AudioSystem] Failed to initialize SoundManager!\n";
+            return;
         }
-        
-        // Load all sounds (previously in AudioImGui)
-        Resource_Manager::loadAll(Framework::ResolveAssetPath("Audio").string());
 
-        // Set default master volume
+        // 2. Load all audio files under /Assets/Audio
+        const std::string audioPath = Framework::ResolveAssetPath("Audio").string();
+        Resource_Manager::loadAll(audioPath);
+
+        // 3. Set global master volume
         SoundManager::getInstance().setMasterVolume(0.7f);
-        std::cout << "[AudioSystem] Audio system initialized successfully.\n";
-        // Initialize ImGui for audio panel
-        SoundManager::getInstance().playSound("SoundTrackloop", true);
+
+        if (SoundManager::getInstance().isSoundLoaded("SoundTrackloop"))
+            SoundManager::getInstance().playSound("SoundTrackloop", true);
+
+        // 6. Debug UI
         AudioImGui::Initialize(*window);
+
+        std::cout << "[AudioSystem] Initialized successfully.\n";
     }
+
     /*****************************************************************************************
      \brief
         Updates the audio system per frame.
@@ -64,7 +77,13 @@ namespace Framework {
     void AudioSystem::Update(float dt)
     {
         (void)dt;
-
+    // In editor-only builds or during shutdown the LogicSystem may not have
+    // initialized the global factory yet. Guard against that scenario so we
+    // do not dereference a null FACTORY pointer (was causing access
+    // violations when the audio system continued updating after the factory
+    // was torn down).
+        if (!FACTORY)
+            return;
         // Iterate all game objects in the factory
         for (auto& [id, gocPtr] : FACTORY->Objects())
         {

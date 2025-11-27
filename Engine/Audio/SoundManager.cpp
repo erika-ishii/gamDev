@@ -16,7 +16,11 @@
 
 #include "SoundManager.h"
 #include <iostream>
+#include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 
+#ifdef _DEBUG
+#define new DBG_NEW       // <- redefine new AFTER all includes
+#endif
 /*****************************************************************************************
  \brief Get the instance of the SoundManager.
  \return Reference to the single SoundManager instance.

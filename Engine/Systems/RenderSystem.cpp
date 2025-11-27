@@ -57,6 +57,7 @@
 #include <limits>
 #include <unordered_set>
 #include <unordered_map>
+#include <iostream>
 #include "Debug/AudioImGui.h"
 #include "Debug/UndoStack.h"
 #include "Debug/Inspector.h"
@@ -67,7 +68,11 @@
 #include "Physics/Dynamics/RigidBodyComponent.h"
 #include "../../Sandbox/MyGame/Game.hpp"
 #include "Component/HitBoxComponent.h"
+#include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 
+#ifdef _DEBUG
+#define new DBG_NEW       // <- redefine new AFTER all includes
+#endif
 namespace Framework {
 
     RenderSystem* RenderSystem::sInstance = nullptr;
@@ -411,8 +416,8 @@ namespace Framework {
             return attackTex[1] ? attackTex[1] : idleTex;
         case Mode::Attack3:
             return attackTex[2] ? attackTex[2] : idleTex;
-        //case Mode::Knockback:
-        //case Mode::Death:
+        case Mode::Knockback:
+        case Mode::Death:
             return idleTex ? idleTex : playerTex;
         case Mode::Idle:
         default:
@@ -1193,7 +1198,8 @@ namespace Framework {
         ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
             ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
             ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus |
-            ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBackground;
+            ImGuiWindowFlags_NoBackground;
+
 
         ImGui::Begin("EditorDockHost", nullptr, flags);
         ImGuiID dockspaceId = ImGui::GetID("EditorDockspace");
@@ -1554,6 +1560,13 @@ namespace Framework {
         TryGuard::Run([&] {
             HandleShortcuts();
             UpdateGameViewport();
+
+            if (!FACTORY)
+            {
+                std::cerr << "[RenderSystem] FACTORY is null; skipping draw to avoid crash.\n";
+                return;
+            }
+
 
             // === Update camera BEFORE picking and rendering ===
             gfx::Graphics::resetViewProjection();
@@ -2119,7 +2132,13 @@ namespace Framework {
     *************************************************************************************/
     void RenderSystem::Shutdown()
     {
-        ImGui::SaveIniSettingsToDisk(imguiLayoutPath.c_str());
+        // Skip ImGui teardown if the context was never created (early failures)
+      // to avoid dereferencing a null ImGui state pointer on shutdown.
+        if (ImGui::GetCurrentContext())
+        {
+            ImGui::SaveIniSettingsToDisk(imguiLayoutPath.c_str());
+        }
+
         if (window && window->raw())
             glfwSetDropCallback(window->raw(), nullptr);
 

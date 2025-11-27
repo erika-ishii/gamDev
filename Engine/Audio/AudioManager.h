@@ -19,11 +19,6 @@
 #include <vector>
 #include "fmod.h"
 
-// Forward declarations for FMOD
-struct FMOD_SYSTEM;
-struct FMOD_SOUND;
-struct FMOD_CHANNEL;
-
 /*********************************************************************************************
   \class AudioManager
   \brief Manages the initialization, loading, playback, and cleanup of audio using FMOD.
@@ -61,4 +56,5 @@ class AudioManager
     std::unordered_map<std::string, std::vector<FMOD_CHANNEL*>> m_channels;///Map of channels for each sound.
     std::string getFullPath(const std::string& fileName) const;
     void checkFMODError(FMOD_RESULT result, const std::string& operation) const;
+    void pruneStoppedChannels();
 };

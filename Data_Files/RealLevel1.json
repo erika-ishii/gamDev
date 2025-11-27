@@ -4,15 +4,22 @@
       {
         "Components": {
           "AudioComponent": {
-            "sounds": 
-            {
-              "footsteps": { "id": "footsteps", "loop": true },
-              "Slash1": { "id": "Slash1", "loop": false },
-              "GrappleShoot1": { "id": "GrappleShoot1", "loop": false }
+            "sounds": {
+              "GrappleShoot1": {
+                "id": "GrappleShoot1",
+                "loop": false
+              },
+              "Slash1": {
+                "id": "Slash1",
+                "loop": false
+              },
+              "footsteps": {
+                "id": "footsteps",
+                "loop": false
+              }
             },
-            "volume": 1.0,
-            "playing": 0
-            },
+            "volume": 1.0
+          },
           "HitBoxComponent": {
             "duration": 0.15000000596046448,
             "height": 0.15000000596046448,
@@ -44,7 +51,7 @@
             "width": 0.10000000149011612
           },
           "SpriteAnimationComponent": {
-            "activeAnimation": 3,
+            "activeAnimation": 0,
             "animations": [
               {
                 "config": {
@@ -71,7 +78,7 @@
                   "startFrame": 0,
                   "totalFrames": 10
                 },
-                "currentFrame": 0,
+                "currentFrame": 1,
                 "name": "run",
                 "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/Running_Sprite.png",
                 "textureKey": "run_sheet"
@@ -101,7 +108,7 @@
                   "startFrame": 0,
                   "totalFrames": 8
                 },
-                "currentFrame": 0,
+                "currentFrame": 7,
                 "name": "attack2",
                 "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/2nd_Attack Sprite.png",
                 "textureKey": "attack2_sheet"
@@ -116,11 +123,11 @@
                   "startFrame": 0,
                   "totalFrames": 9
                 },
-                "currentFrame": 0,
+                "currentFrame": 1,
                 "name": "attack3",
                 "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/3rd_Attack Sprite.png",
                 "textureKey": "attack3_sheet"
-                },
+              },
               {
                 "config": {
                   "columns": 4,
@@ -158,18 +165,47 @@
             "play": true
           },
           "SpriteComponent": {
-            "texture_key": "attack2_sheet"
+            "texture_key": "idle_sheet"
           },
+          "PlayerHUDComponent": {
+    },
           "TransformComponent": {
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": -0.22310160100460052,
+            "x": -0.39532390236854553,
             "y": -0.4827491044998169
           }
         },
         "layer": "Default",
         "name": "Player"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 2.0,
+            "layer": -5,
+            "r": 1.0,
+            "texture_key": "Textures/Environment/lvl 2_ Living + Kitchen/00_Living+Kitchen_concept.png",
+            "visible": true,
+            "w": 2.0
+          },
+          "SpriteComponent": {
+            "texture_key": "Textures/Environment/lvl 2_ Living + Kitchen/00_Living+Kitchen_concept.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": 0.015104144811630249,
+            "y": -0.03333333134651184
+          }
+        },
+        "layer": "Default",
+        "name": "Art_Asset"
       }
     ],
     "name": "RealLevel1"

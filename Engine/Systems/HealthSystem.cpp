@@ -1,3 +1,25 @@
+/*********************************************************************************************
+ \file      HealthSystem.cpp
+ \par       SofaSpuds
+ \author    jianwei.c (jianwei.c@digipen.edu) - Secondary Author, 80%
+            elvisshengjie.lim (elvisshengjie.lim@digipen.edu) - co Author, 20% (Draw)
+ \brief     Implements the HealthSystem responsible for managing player and enemy health,
+            handling death timers, triggering death animations, and destroying objects at
+            the correct time.
+ \details   Responsibilities:
+            - Tracks all GameObjectComposition instances that contain health components.
+            - Handles enemy death: triggers death animation (if available), waits for both
+              animation completion and a minimum timer before destruction.
+            - Handles player death: plays death animation, enforces invulnerability timers,
+              and destroys the player only after animation + timer finish.
+            - Uses stable IDs instead of raw pointers to avoid dangling references.
+            - Provides draw() support for player HUD through PlayerHUDComponent.
+            - Fully integrates with SpriteAnimationComponent for frame-based animation logic.
+ \copyright
+            All content © 2025 DigiPen Institute of Technology Singapore.
+            All rights reserved.
+*********************************************************************************************/
+
 #include "HealthSystem.h"
 #include "Factory/Factory.h"
 #include "Component/SpriteAnimationComponent.h"
@@ -6,7 +28,11 @@
 #include <cctype>
 #include <iostream>
 #include <string_view>
+#include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 
+#ifdef _DEBUG
+#define new DBG_NEW       // <- redefine new AFTER all includes
+#endif
 namespace Framework
 {
     namespace
@@ -188,6 +214,7 @@ namespace Framework
         // Track by ID instead of raw pointers to avoid dangling references.
         gameObjectIds.clear();
         deathTimers.clear();
+        playerDied = false;
 
         RefreshTrackedObjects();
     }
@@ -274,6 +301,9 @@ namespace Framework
                         goc->GetComponentType<PlayerHealthComponent>(
                             ComponentTypeId::CT_PlayerHealthComponent))
                     {
+                        auto* audio = goc->GetComponentType<AudioComponent>(
+                            ComponentTypeId::CT_AudioComponent);
+
                         constexpr std::string_view deathAnimName = "death";
                         auto* anim = goc->GetComponentType<SpriteAnimationComponent>(
                             ComponentTypeId::CT_SpriteAnimationComponent);
@@ -285,6 +315,7 @@ namespace Framework
                                 playerHealth->invulnTime -= dt;
                                 if (playerHealth->invulnTime <= 0.0f)
                                 {
+                                    audio->TriggerSound("PlayerHit");
                                     playerHealth->invulnTime = 0.0f;
                                     playerHealth->isInvulnerable = false;
                                     std::cout << "[PlayerHealthComponent] Invulnerability ended.\n";
@@ -296,10 +327,18 @@ namespace Framework
                         {
                             float& timer = deathTimers[id];
 
+                            playerDied = true;
+                            
+                            if (!playerHealth->deathSoundPlayed && audio)
+                            {
+                                audio->TriggerSound("PlayerDead");
+                                playerHealth->deathSoundPlayed = true;
+                                std::cout << "[DEBUG] PlayerDead triggered\n";
+                            }
                             if (!playerHealth->isDead)
                             {
+                                audio->TriggerSound("PlayerDead");
                                 playerHealth->isDead = true;
-
                                 PlayAnimationIfAvailable(goc, deathAnimName);
                                 timer = std::max(AnimationDuration(anim, deathAnimName), 0.2f);
                             }
@@ -371,6 +410,7 @@ namespace Framework
     {
         gameObjectIds.clear();
         deathTimers.clear();
+        playerDied = false;
     }
 
 } // namespace Framework

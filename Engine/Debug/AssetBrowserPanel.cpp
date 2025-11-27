@@ -31,7 +31,11 @@
 #include <sstream>
 
 #include "Graphics/Graphics.hpp"
+#include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 
+#ifdef _DEBUG
+#define new DBG_NEW       // <- redefine new AFTER all includes
+#endif
 /*************************************************************************************
   \brief  Canonicalize a path to a stable, human-readable string (generic form).
   \param  p Filesystem path.

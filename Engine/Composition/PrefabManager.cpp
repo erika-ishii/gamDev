@@ -23,7 +23,11 @@
 #include "Factory/Factory.h"
 #include "Core/PathUtils.h"
 #include <filesystem>
+#include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 
+#ifdef _DEBUG
+#define new DBG_NEW       // <- redefine new AFTER all includes
+#endif
 namespace Framework {
 
     /// Stores the master prefab copies (name → GOC pointer).

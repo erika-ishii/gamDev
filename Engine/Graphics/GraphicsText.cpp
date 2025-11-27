@@ -11,6 +11,7 @@
             All content ©2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
+
 #include "GraphicsText.hpp"
 
 #include <ft2build.h>
@@ -19,7 +20,11 @@
 #include <stdexcept>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 
+#ifdef _DEBUG
+#define new DBG_NEW       // <- redefine new AFTER all includes
+#endif
 namespace gfx {
 
     /*************************************************************************************
