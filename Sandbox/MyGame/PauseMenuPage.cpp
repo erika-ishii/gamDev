@@ -78,16 +78,16 @@ namespace{
         config.rows = {
             { MakeTextureField("howto_wasd_icon", "Textures/UI/How To Play/WASD_Sprite.png"),
                 MakeTextureField("howto_wasd_label", "Textures/UI/How To Play/WASD to move.png"),
-                0, 8.0f, 1.05f, 3.4f },
+                 0, 8.0f, 0.9f, 2.6f },
             { MakeTextureField("howto_esc_icon", "Textures/UI/How To Play/ESC_Sprite.png"),
                 MakeTextureField("howto_esc_label", "Textures/UI/How To Play/Esc to pause.png"),
-                0, 8.0f, 1.8f, 2.8f },
+                 0, 8.0f, 1.05f, 3.1f },
             { MakeTextureField("howto_melee_icon", "Textures/UI/How To Play/Left_Mouse_Sprite.png"),
                 MakeTextureField("howto_melee_label", "Textures/UI/How To Play/For melee attack.png"),
                 0, 8.0f, 0.72f, 3.1f },
             { MakeTextureField("howto_range_icon", "Textures/UI/How To Play/Right_Mouse_Sprite.png"),
                 MakeTextureField("howto_range_label", "Textures/UI/How To Play/For Range attack.png"),
-                0, 8.0f, 0.72f, 3.6f },
+                0, 8.0f, 0.72f, 3.1f },
         };
 
         return config;

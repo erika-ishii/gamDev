@@ -52,7 +52,7 @@ namespace {
         std::vector<MenuButtonJson> buttons;
     };
 
-    // --- How To Popup Structs (Existing) ---
+   
     struct HowToRowJson {
         TextureField icon;
         TextureField label;
@@ -139,6 +139,20 @@ namespace {
         config.background = MakeTextureField("howto_note_bg", "Textures/UI/How To Play/Note.png");
         config.header = MakeTextureField("howto_header", "Textures/UI/How To Play/How To Play.png");
         config.close = MakeTextureField("menu_popup_close", "Textures/UI/How To Play/XButton.png");
+        config.rows = {
+            { MakeTextureField("howto_wasd_icon", "Textures/UI/How To Play/WASD_Sprite.png"),
+                MakeTextureField("howto_wasd_label", "Textures/UI/How To Play/WASD to move.png"),
+                  0, 8.0f, 0.9f, 2.6f },
+            { MakeTextureField("howto_esc_icon", "Textures/UI/How To Play/ESC_Sprite.png"),
+                MakeTextureField("howto_esc_label", "Textures/UI/How To Play/Esc to pause.png"),
+                0, 8.0f, 1.8f, 3.1f },
+            { MakeTextureField("howto_melee_icon", "Textures/UI/How To Play/Left_Mouse_Sprite.png"),
+                MakeTextureField("howto_melee_label", "Textures/UI/How To Play/For melee attack.png"),
+                0, 8.0f, 0.72f, 3.1f },
+            { MakeTextureField("howto_range_icon", "Textures/UI/How To Play/Right_Mouse_Sprite.png"),
+                MakeTextureField("howto_range_label", "Textures/UI/How To Play/For Range attack.png"),
+                0, 8.0f, 0.72f, 3.1f },
+        };
         config.headerOffsetX = 0.0f;
         config.headerOffsetY = 0.0f;
        
