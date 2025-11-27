@@ -242,7 +242,6 @@ namespace Framework {
 
         const int index = AnimationIndexForState(anim, state);
         if (index >= 0 && index != anim->ActiveAnimationIndex())
-            //2222
             anim->SetActiveAnimation(index);
     }
 
@@ -285,27 +284,6 @@ namespace Framework {
     }
 
     /*****************************************************************************************
-      \brief Cache the player's base rectangle width/height once for scale operations.
-      \note  Called after player is discovered; resets rectScale to 1.f and marks captured=true.
-    *****************************************************************************************/
-    void LogicSystem::CachePlayerSize()
-    {
-        if (!IsAlive(player))
-            return;
-
-        if (auto* rc = player->GetComponentType<Framework::RenderComponent>(
-            Framework::ComponentTypeId::CT_RenderComponent))
-        {
-            rectBaseW = rc->w;
-            rectBaseH = rc->h;
-            rectScale = 1.f;
-            captured = true;
-            if (player)
-                scaleStates.erase(player->GetId()); // reset per-object scaling cache for player
-        }
-    }
-
-    /*****************************************************************************************
       \brief Refresh references after level load or object churn.
              - Updates levelObjects with LastLevelObjects()
              - Finds/validates player
@@ -345,11 +323,8 @@ namespace Framework {
             {
                 std::cout << "[LogicSystem] Player re-assigned to another alive instance: "
                     << player->GetObjectName() << "\n";
-                captured = false; // force CachePlayerSize() again
             }
         }
-        if (player && !captured)
-            CachePlayerSize();
 
         if (!IsAlive(collisionTarget))
             collisionTarget = nullptr;
@@ -383,11 +358,6 @@ namespace Framework {
         }
 
         gateController.RefreshGateReference(levelObjects);
-
-        if (player && !captured)
-        {
-            CachePlayerSize();
-        }
     }
 
     /*****************************************************************************************
@@ -777,174 +747,6 @@ namespace Framework {
             auto* audio = player->GetComponentType<Framework::AudioComponent>
                 (Framework::ComponentTypeId::CT_AudioComponent);
 
-            const float rotSpeed = DegToRad(90.f);
-            const float scaleRate = 1.5f;
-            const bool shift = input.IsKeyPressed(GLFW_KEY_LEFT_SHIFT) ||
-                input.IsKeyPressed(GLFW_KEY_RIGHT_SHIFT);
-            const float accel = shift ? 3.f : 1.f;
-
-            // Determine which object we are editing/transforming: selected object or player
-            Framework::TransformComponent* targetTr = tr;
-            Framework::RenderComponent* targetRc = rc;
-            Framework::RigidBodyComponent* targetRb = rb;
-            Framework::GOCId targetId = player ? player->GetId() : 0;
-
-            if (factory && mygame::HasSelectedObject())
-            {
-                Framework::GOCId selectedId = mygame::GetSelectedObjectId();
-                if (auto* selected = factory->GetObjectWithId(selectedId))
-                {
-                    targetId = selectedId;
-                    targetTr = selected->GetComponentType<Framework::TransformComponent>(
-                        Framework::ComponentTypeId::CT_TransformComponent);
-                    targetRc = selected->GetComponentType<Framework::RenderComponent>(
-                        Framework::ComponentTypeId::CT_RenderComponent);
-                    targetRb = selected->GetComponentType<Framework::RigidBodyComponent>(
-                        Framework::ComponentTypeId::CT_RigidBodyComponent);
-                }
-            }
-
-            // Rotation controls (Q/E), clamped to [-pi, +pi], R to reset.
-            if (RenderSystem::IsEditorVisible())
-            {
-                if (targetTr && targetId != 0)
-                {
-                    // Static state to track dragging/holding
-                    static bool isRotating = false;
-                    static mygame::editor::TransformSnapshot rotationSnapshot;
-
-                    // Check Start of Rotation (Capture State)
-                    bool qPressed = input.IsKeyPressed(GLFW_KEY_Q);
-                    bool ePressed = input.IsKeyPressed(GLFW_KEY_E);
-
-                    if (!isRotating && (qPressed || ePressed))
-                    {
-                        if (auto* obj = factory->GetObjectWithId(targetId))
-                        {
-                            rotationSnapshot = mygame::editor::CaptureTransformSnapshot(*obj);
-                            isRotating = true;
-                        }
-                    }
-
-                    // Apply Rotation Smoothly using IsKeyHeld (fixes lag)
-                    bool qHeld = input.IsKeyHeld(GLFW_KEY_Q);
-                    bool eHeld = input.IsKeyHeld(GLFW_KEY_E);
-
-                    if (qHeld) targetTr->rot += rotSpeed * dt * accel;
-                    if (eHeld) targetTr->rot -= rotSpeed * dt * accel;
-
-                    // Clamp rotation to keep values sane
-                    if (targetTr->rot > 3.14159265f)  targetTr->rot -= 6.28318530f;
-                    if (targetTr->rot < -3.14159265f) targetTr->rot += 6.28318530f;
-                    // Check End of Rotation (Record Undo)
-                    if (isRotating && !qHeld && !eHeld)
-                    {
-                        if (auto* obj = factory->GetObjectWithId(targetId))
-                        {
-                            mygame::editor::RecordTransformChange(*obj, rotationSnapshot);
-                        }
-                        isRotating = false;
-                    }
-
-                    // Reset Rotation (R Key) - Now supports Undo!
-                    if (input.IsKeyPressed(GLFW_KEY_R))
-                    {
-                        if (auto* obj = factory->GetObjectWithId(targetId))
-                        {
-                            auto before = mygame::editor::CaptureTransformSnapshot(*obj);
-                            targetTr->rot = 0.f;
-                            mygame::editor::RecordTransformChange(*obj, before);
-                        }
-                    }
-                }
-
-                // Scaling controls (Z/X), clamped; R resets scale and size. Works for selected object or player.
-                if ((targetRc || targetRb) && targetId != 0)
-                {
-                    auto& scaleState = scaleStates[targetId];
-                    if (!scaleState.initialized)
-                    {
-                        const bool isPlayerTarget = (player && targetId == player->GetId());
-
-                        if (isPlayerTarget)
-                        {
-                            scaleState.baseRenderW = std::abs(rectBaseW);
-                            scaleState.baseRenderH = std::abs(rectBaseH);
-                            scaleState.scale = rectScale;
-                        }
-                        else if (targetRc)
-                        {
-                            scaleState.baseRenderW = std::abs(targetRc->w);
-                            scaleState.baseRenderH = std::abs(targetRc->h);
-                            scaleState.scale = 1.f;
-                        }
-
-                        if (targetRb)
-                        {
-                            scaleState.baseColliderW = targetRb->width;
-                            scaleState.baseColliderH = targetRb->height;
-                        }
-                        else
-                        {
-                            scaleState.baseColliderW = scaleState.baseRenderW;
-                            scaleState.baseColliderH = scaleState.baseRenderH;
-                        }
-
-                        if (!targetRc && !isPlayerTarget)
-                        {
-                            // No render component: fall back to collider dims to visualize scale
-                            scaleState.baseRenderW = scaleState.baseColliderW;
-                            scaleState.baseRenderH = scaleState.baseColliderH;
-                        }
-
-                        scaleState.initialized = true;
-                    }
-
-                    bool scaleChanged = false;
-                    if (input.IsKeyPressed(GLFW_KEY_X))
-                    {
-                        scaleState.scale *= (1.f + scaleRate * dt * accel);
-                        scaleChanged = true;
-                    }
-                    if (input.IsKeyPressed(GLFW_KEY_Z))
-                    {
-                        scaleState.scale *= (1.f - scaleRate * dt * accel);
-                        scaleChanged = true;
-                    }
-                    if (input.IsKeyPressed(GLFW_KEY_R))
-                    {
-                        scaleState.scale = 1.f;
-                        scaleChanged = true;
-                    }
-
-                    scaleState.scale = std::clamp(scaleState.scale, 0.25f, 4.0f);
-
-                    if (scaleChanged)
-                    {
-                        if (targetRc)
-                        {
-                            const float widthSign = (targetRc->w >= 0.f) ? 1.f : -1.f;
-                            const float baseW = scaleState.baseRenderW;
-                            const float baseH = scaleState.baseRenderH;
-                            targetRc->w = widthSign * baseW * scaleState.scale;
-                            targetRc->h = baseH * scaleState.scale;
-                        }
-
-                        if (targetRb)
-                        {
-                            targetRb->width = scaleState.baseColliderW * scaleState.scale;
-                            targetRb->height = scaleState.baseColliderH * scaleState.scale;
-                        }
-
-                        if (player && targetId == player->GetId())
-                        {
-                            rectScale = scaleState.scale;
-                            rectBaseW = scaleState.baseRenderW;
-                            rectBaseH = scaleState.baseRenderH;
-                        }
-                    }
-                }
-            }
             // --- Mouse to world: use RenderSystem camera for consistent world-space aiming ---
             float mouseWorldX = 0.0f;
             float mouseWorldY = 0.0f;
@@ -983,12 +785,12 @@ namespace Framework {
                     }
                 }
             }
-        
+
             auto* playerHealth =
                 player->GetComponentType<PlayerHealthComponent>(ComponentTypeId::CT_PlayerHealthComponent);
 
             // Velocity intent set on RigidBody; an external system integrates it.
-            if (rb && tr && playerHealth &&!playerHealth->isDead)
+            if (rb && tr && playerHealth && !playerHealth->isDead)
             {
                 if (input.IsKeyHeld(GLFW_KEY_D)) rb->velX = std::max(rb->velX, 1.f);
                 if (input.IsKeyHeld(GLFW_KEY_A)) rb->velX = std::min(rb->velX, -1.f);
@@ -1007,7 +809,6 @@ namespace Framework {
                 input.IsKeyHeld(GLFW_KEY_RIGHT) ||
                 input.IsKeyHeld(GLFW_KEY_UP) ||
                 input.IsKeyHeld(GLFW_KEY_DOWN);
-
 
             // Update PlayerAttackComponent (handles hitbox lifetime)
             if (attack && tr && !playerHealth->isDead)
@@ -1120,12 +921,7 @@ namespace Framework {
 
         player = nullptr;
         collisionTarget = nullptr;
-        scaleStates.clear();
         pendingLevelTransition = false;
-        captured = false;
-        rectScale = 1.f;
-        rectBaseW = 0.5f;
-        rectBaseH = 0.5f;
         animState = AnimState::Idle;
         frame = 0;
         frameClock = 0.f;
@@ -1137,14 +933,13 @@ namespace Framework {
         gateController.SetPlayer(nullptr);
 
         RefreshLevelReferences();
-        CachePlayerSize();
     }
 
     /*****************************************************************************************
-   \brief Reload the current level (or a default one) and reset cached state.
-          - Destroys all live objects, recreates the level, clears cached pointers/state,
-            then refreshes references and caches player size again.
- *****************************************************************************************/
+       \brief Reload the current level (or a default one) and reset cached state.
+             - Destroys all live objects, recreates the level, clears cached pointers/state,
+               then refreshes references.
+    *****************************************************************************************/
     void LogicSystem::ReloadLevel()
     {
         if (!factory)
@@ -1175,8 +970,6 @@ namespace Framework {
             factory.reset();
         }
         UnloadPrefabs();
-
-        scaleStates.clear();
 
         if (crashLogger)
         {

@@ -16,12 +16,11 @@
             - Tracks drag state across frames with a persistent GizmoState.
             - Integrates with the UndoStack by capturing a TransformSnapshot when a drag
               begins and recording the delta when the mouse is released.
-            - Only compiled in debug/editor builds (guarded by _DEBUG/EDITOR macros).
- *********************************************************************************************/
+            - Compiled in both debug and release builds so editor gizmo behavior is available
+              regardless of configuration.
+*********************************************************************************************/
 
 #include "EditorGizmo.h"
-
-#if defined(_DEBUG) || defined(EDITOR)
 
 #include "Component/TransformComponent.h"
 #include "Debug/Selection.h"
@@ -40,6 +39,7 @@
 #ifdef _DEBUG
 #define new DBG_NEW       // <- redefine new AFTER all includes
 #endif
+
 namespace Framework {
     namespace editor {
 
@@ -312,7 +312,7 @@ namespace Framework {
             ImGuiIO& io = ImGui::GetIO();
             const ImVec2 mouse = io.MousePos;
             const bool mouseInViewport = MouseInRect(viewportRect, mouse);
-           // const bool wantCapture = io.WantCaptureMouse; // (reserved; currently not used)
+            // const bool wantCapture = io.WantCaptureMouse; // (reserved; currently not used)
 
             const bool mouseClicked = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
             const bool mouseDown = ImGui::IsMouseDown(ImGuiMouseButton_Left);
@@ -503,7 +503,7 @@ namespace Framework {
             }
 
             // On mouse release: if we started an undo, finalize it.
-            if (!mouseDown && gHasPendingUndo)
+            if (mouseReleased && gHasPendingUndo)
             {
                 if (FACTORY && gUndoObjectId != 0)
                 {
@@ -512,6 +512,13 @@ namespace Framework {
                         mygame::editor::RecordTransformChange(*target, gUndoStart);
                     }
                 }
+                gHasPendingUndo = false;
+                gUndoObjectId = 0;
+            }
+            else if (!mouseDown && gHasPendingUndo)
+            {
+                // Mouse was released outside of ImGui's knowledge; drop the pending undo
+                // so we don't accidentally record a stale transform later.
                 gHasPendingUndo = false;
                 gUndoObjectId = 0;
             }
@@ -616,5 +623,3 @@ namespace Framework {
 
     } // namespace editor
 } // namespace Framework
-
-#endif // defined(_DEBUG) || defined(EDITOR)

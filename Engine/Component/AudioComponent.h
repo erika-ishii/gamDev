@@ -65,11 +65,37 @@ namespace Framework
         float volume{ 1.0f }; 
         std::string entityType;
         
-        void ensureInitialized()
-        {
-            if (initialized || entityType.empty())
-                return;
+        /*************************************************************************************
+          \brief Ensures that the AudioComponent is initialized.
 
+          \details
+              This function checks whether the AudioComponent has been initialized and
+              whether the entityType has been set. If the component is not yet initialized
+              and the entityType is valid, it calls initialize() to register the correct
+              sounds for this entity. This guarantees that all sound mappings are ready
+              for playback.
+
+              In the context of prefabs, this can be called after cloning to ensure that
+              the AudioComponent correctly registers sounds even if the prefab was partially
+              initialized or serialized previously.
+
+          \param force Optional boolean flag (default = false). If true, forces re-initialization
+                       even if the component was already initialized. Useful for prefab cloning
+                       scenarios.
+
+          \note If entityType is empty, initialization is skipped and a warning is logged.
+        *************************************************************************************/
+        void ensureInitialized(bool force = false)
+        {
+            if (!force && initialized && !entityType.empty())
+                return;
+            if (entityType.empty()) {
+                std::cerr << "[AudioComponent] Warning: entityType not set, cannot initialize.\n";
+                return;
+            }
+            initialized = false; // reset just in case
+            sounds.clear();
+            playing.clear();
             initialize();
             initialized = true;
         }
@@ -101,12 +127,13 @@ namespace Framework
             }
             else if (entityType == "enemy")
             {
-                sounds["GhostSounds"] = { "GhostSounds", false };
+               // sounds["GhostSounds"] = { "GhostSounds", false };
             }
 
             // Build playing map
             for (auto& [action, info] : sounds)
                 playing[action] = false;
+            std::cout << "[AudioComponent] initialize called, entityType='" << entityType << "'\n";
         }
         /*************************************************************************************
           \brief Plays a sound associated with the given action key.
@@ -177,9 +204,14 @@ namespace Framework
                 }
                 s.ExitObject();
             }
-
             if (s.HasKey("volume"))
                 StreamRead(s, "volume", volume);
+            if (!entityType.empty() && !initialized)
+            {
+                std::cout << "[AudioComponent] Auto-initializing after Serialize with entityType: "
+                    << entityType << "\n";
+                ensureInitialized(true);
+            }
         }
         /*************************************************************************************
           \brief Clones this AudioComponent and its internal data.
@@ -189,9 +221,14 @@ namespace Framework
         std::unique_ptr<GameComponent> Clone() const override
         {
             auto copy = std::make_unique<AudioComponent>();
+            copy->entityType = entityType;
             copy->sounds = sounds;
             copy->volume = volume;
             copy->playing = playing;
+            if (!copy->entityType.empty())
+            {
+                copy->ensureInitialized(true);  // Force init
+            }
             return copy;
         }
         /*************************************************************************************

@@ -49,7 +49,6 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include <unordered_map>
 
 namespace gfx { class Window; }
 class CrashLogger;
@@ -105,16 +104,13 @@ namespace Framework {
 
         /*! \name Accessors */
         ///@{
-        GameObjectFactory* Factory() const { return factory.get(); }
-        const std::vector<GOC*>& LevelObjects() const { return levelObjects; }
-        const AnimationInfo& Animation() const { return animInfo; }
-        const CollisionInfo& Collision() const { return collisionInfo; }
-        float                           PlayerBaseWidth()  const { return rectBaseW; }
-        float                           PlayerBaseHeight() const { return rectBaseH; }
-        float                           PlayerScale()      const { return rectScale; }
-        bool                            GetPlayerWorldPosition(float& outX, float& outY) const;
-        int                             ScreenWidth()  const { return screenW; }
-        int                             ScreenHeight() const { return screenH; }
+        GameObjectFactory* Factory()       const { return factory.get(); }
+        const std::vector<GOC*>& LevelObjects()  const { return levelObjects; }
+        const AnimationInfo& Animation()     const { return animInfo; }
+        const CollisionInfo& Collision()     const { return collisionInfo; }
+        bool                       GetPlayerWorldPosition(float& outX, float& outY) const;
+        int                        ScreenWidth()   const { return screenW; }
+        int                        ScreenHeight()  const { return screenH; }
         GOC* FindAnyAlivePlayer();
         HitBoxSystem* hitBoxSystem = nullptr;
         ///@}
@@ -125,6 +121,7 @@ namespace Framework {
     private:
 
         std::filesystem::path resolveData(std::string_view name) const;
+
         // Extended to support combo attacks.
         enum class AnimState { Idle, Run, Attack1, Attack2, Attack3, Knockback, Death };
 
@@ -135,73 +132,55 @@ namespace Framework {
             float fps;
         };
 
-        struct ScaleState {
-            float baseRenderW{ 1.f };
-            float baseRenderH{ 1.f };
-            float baseColliderW{ 1.f };
-            float baseColliderH{ 1.f };
-            float scale{ 1.f };
-            bool  initialized{ false };
-        };
-
         const AnimConfig& CurrentConfig() const;
         const AnimConfig& ConfigForState(AnimState state) const;
-        bool              IsAttackState(AnimState state) const;
-        void              SetAnimState(AnimState newState);
-        void              BeginComboAttack();
-        void              ForceAttackState(int comboIndex);
-        AnimState         AttackStateForIndex(int comboIndex) const;
-        float             AttackDurationForState(AnimState state) const;
-        AnimationInfo::Mode ModeForState(AnimState state) const;
-        std::string_view  AnimNameForState(AnimState state) const;
-        int               AnimationIndexForState(const SpriteAnimationComponent* comp, AnimState state) const;
-        AnimConfig        ConfigFromSpriteSheet(const SpriteAnimationComponent* comp, AnimState state) const;
-        void              ApplyAnimationStateToComponent(AnimState state);
+        bool                 IsAttackState(AnimState state) const;
+        void                 SetAnimState(AnimState newState);
+        void                 BeginComboAttack();
+        void                 ForceAttackState(int comboIndex);
+        AnimState            AttackStateForIndex(int comboIndex) const;
+        float                AttackDurationForState(AnimState state) const;
+        AnimationInfo::Mode  ModeForState(AnimState state) const;
+        std::string_view     AnimNameForState(AnimState state) const;
+        int                  AnimationIndexForState(const SpriteAnimationComponent* comp, AnimState state) const;
+        AnimConfig           ConfigFromSpriteSheet(const SpriteAnimationComponent* comp, AnimState state) const;
+        void                 ApplyAnimationStateToComponent(AnimState state);
 
-        bool  IsAlive(GOC* obj) const;
-        void  CachePlayerSize();
-        void  RefreshLevelReferences();
-        void  LoadLevelAndResetState(const std::filesystem::path& levelPath);
-        void  UpdateAnimation(float dt, bool wantRun);
+        bool                 IsAlive(GOC* obj) const;
+        void                 RefreshLevelReferences();
+        void                 LoadLevelAndResetState(const std::filesystem::path& levelPath);
+        void                 UpdateAnimation(float dt, bool wantRun);
 
         gfx::Window* window;
         InputSystem& input;
 
-        std::unique_ptr<GameObjectFactory> factory;
-        std::vector<GOC*>                  levelObjects;
+        std::unique_ptr<GameObjectFactory>   factory;
+        std::vector<GOC*>                    levelObjects;
 
         GOC* player{ nullptr };
         GOC* collisionTarget{ nullptr };
-        GateController gateController;
+        GateController                       gateController;
 
-        float rectScale{ 1.f };
-        float rectBaseW{ 0.5f };
-        float rectBaseH{ 0.5f };
+        AnimState                            animState{ AnimState::Idle };
+        AnimConfig                           idleConfig{ 5,1,5,6.f };
+        AnimConfig                           runConfig{ 8,1,8,10.f };
+        AnimConfig                           attackConfigs[3]{ {13,1,13,12.f}, {8,1,8,12.f}, {9,1,9,12.f} };
+        AnimConfig                           knockbackConfig{ 4,1,4,5.f };
+        AnimConfig                           deathConfig{ 8,1,8,8.f };
+        int                                  frame{ 0 };
+        float                                frameClock{ 0.f };
+        float                                attackTimer{ 0.f };
+        int                                  comboStep{ 0 };
 
-        AnimState  animState{ AnimState::Idle };
-        AnimConfig idleConfig{ 5,1,5,6.f };
-        AnimConfig runConfig{ 8,1,8,10.f };
-        AnimConfig attackConfigs[3]{ {13,1,13,12.f}, {8,1,8,12.f}, {9,1,9,12.f} };
-        AnimConfig knockbackConfig{ 4,1,4,5.f };
-        AnimConfig deathConfig{ 8,1,8,8.f };
-        int    frame{ 0 };
-        float  frameClock{ 0.f };
-        float  attackTimer{ 0.f };
-        int    comboStep{ 0 };
+        AnimationInfo                        animInfo{};
+        CollisionInfo                        collisionInfo{};
 
-        AnimationInfo animInfo{};
+        int                                  screenW{ 800 };
+        int                                  screenH{ 600 };
 
-        CollisionInfo collisionInfo{};
-
-        int  screenW{ 800 };
-        int  screenH{ 600 };
-
-        bool                         captured{ false };
-        bool                         crashTestLatched{ false };
-        bool                         pendingLevelTransition{ false };
-        std::unique_ptr<CrashLogger> crashLogger;
-
-        std::unordered_map<GOCId, ScaleState> scaleStates;
+        bool                                 crashTestLatched{ false };
+        bool                                 pendingLevelTransition{ false };
+        std::unique_ptr<CrashLogger>         crashLogger;
     };
 
 } // namespace Framework

@@ -155,22 +155,8 @@
         "duration": 0.15
       },
       "AudioComponent": {
-        "sounds": {
-          "footsteps": {
-            "id": "footsteps",
-            "loop": false
-          },
-          "Slash1": {
-            "id": "Slash1",
-            "loop": false
-          },
-          "GrappleShoot1": {
-            "id": "GrappleShoot1",
-            "loop": false
-          }
-        },
-        "volume": 1.0,
-        "playing": 0
+        "entityType": "player",
+        "volume": 1.0
       }
     }
   }

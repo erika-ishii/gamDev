@@ -53,29 +53,21 @@ void DefeatScreenPage::SyncLayout(int screenW, int screenH)
     sh = screenH;
     layoutDirty = true;
 
-    const float aspect = 16.f / 9.f;
-    float panelW = static_cast<float>(sw) ;
-    float panelH = panelW / aspect;
+    // Make the defeat panel fill the whole screen
+    panel.w = static_cast<float>(sw);
+    panel.h = static_cast<float>(sh);
+    panel.x = 0.0f;
+    panel.y = 0.0f;
 
-    const float maxH = static_cast<float>(sh);
-    if (panelH > maxH)
-    {
-        panelH = maxH;
-        panelW = panelH * aspect;
-    }
-
-    panel.w = panelW;
-    panel.h = panelH;
-    panel.x = (static_cast<float>(sw) - panelW) * 0.5f;
-    panel.y = (static_cast<float>(sh) - panelH) * 0.5f;
-
-    tryAgainBtn.w = panelW * 0.22f;
+    // Button layout can still be relative to screen size
+    tryAgainBtn.w = panel.w * 0.22f;
     tryAgainBtn.h = tryAgainBtn.w * 0.36f;
     tryAgainBtn.x = (sw - tryAgainBtn.w) * 0.5f;
     tryAgainBtn.y = sh * 0.08f;
 
     BuildGui();
 }
+
 
 void DefeatScreenPage::BuildGui()
 {

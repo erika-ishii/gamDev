@@ -9,12 +9,11 @@
                 * Describe the viewport rectangle in screen-space where the gizmo is rendered.
                 * Select and query the current transform mode (Translate, Rotate, Scale).
                 * Render and update the transform gizmo for the currently selected GOC.
-            - In non-editor builds, all gizmo functions are compiled down to no-ops so the
-              game runtime remains lightweight and free of editor-only dependencies.
-            - The implementation lives in EditorGizmo.cpp and is guarded by _DEBUG/EDITOR
-              so that production builds do not include ImGui or editor behavior.
+            - Gizmo functions are now available in both debug and release builds so editor
+              features work consistently regardless of configuration.
+            - The implementation lives in EditorGizmo.cpp.
  \copyright
-            All content © 2025 DigiPen Institute of Technology Singapore.
+            All content ? 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 #pragma once
@@ -56,8 +55,6 @@ namespace Framework {
             Scale      ///< Scale the object (axis & uniform scale handles).
         };
 
-#if defined(_DEBUG) || defined(EDITOR)
-
         /*************************************************************************************
          \brief Get the current active transform mode (Translate / Rotate / Scale).
         *************************************************************************************/
@@ -88,42 +85,6 @@ namespace Framework {
         void RenderTransformGizmoForSelection(const glm::mat4& view,
             const glm::mat4& projection,
             const ViewportRect& viewportRect);
-
-#else  // !(_DEBUG || EDITOR) — runtime builds get no-op versions
-
-        /*************************************************************************************
-         \brief In non-editor builds, always returns Translate as a safe default.
-        *************************************************************************************/
-        inline EditorTransformMode GetCurrentTransformMode() { return EditorTransformMode::Translate; }
-
-        /*************************************************************************************
-         \brief In non-editor builds, this is a no-op setter for the transform mode.
-        *************************************************************************************/
-        inline void SetCurrentTransformMode(EditorTransformMode) {}
-
-        /*************************************************************************************
-         \brief In non-editor builds, still returns a human-readable label (for logging/UI).
-         \param mode Transform mode to describe.
-         \return "Translate", "Rotate", or "Scale".
-        *************************************************************************************/
-        inline const char* TransformModeLabel(EditorTransformMode mode)
-        {
-            switch (mode) {
-            case EditorTransformMode::Rotate:    return "Rotate";
-            case EditorTransformMode::Scale:     return "Scale";
-            case EditorTransformMode::Translate:
-            default:                             return "Translate";
-            }
-        }
-
-        /*************************************************************************************
-         \brief In non-editor builds, the gizmo render function is a no-op.
-         \details
-            - Keeps the runtime free of ImGui/editor dependencies while preserving calls.
-        *************************************************************************************/
-        inline void RenderTransformGizmoForSelection(const glm::mat4&, const glm::mat4&, const ViewportRect&) {}
-
-#endif // defined(_DEBUG) || defined(EDITOR)
 
     } // namespace editor
 } // namespace Framework

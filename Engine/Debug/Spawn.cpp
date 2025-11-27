@@ -480,9 +480,12 @@ namespace mygame {
                 attack->attack_speed = s.attack_speedp;
             }
         }
-
-  
-
+        //Any audio component
+        if (auto* audio = obj.GetComponentType<Framework::AudioComponent>(ComponentTypeId::CT_AudioComponent)) {
+            if (!s.entityType.empty())
+                audio->entityType = s.entityType;
+            audio->ensureInitialized(true);
+        }
         // NOTE: layer is *not* changed here. For new spawns we still set layer in SpawnOnePrefab().
     }
  
@@ -499,8 +502,8 @@ namespace mygame {
 
         // For new objects: full application (including transform offsets)
         ApplySpawnSettingsToObject(*obj, s, index, /*applyTransformAndLayer*/ true);
-
-        // Assign layer on creation
+                
+       // Assign layer on creation
         obj->SetLayerName(gActiveLayer);
 
 

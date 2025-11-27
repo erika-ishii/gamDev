@@ -594,7 +594,7 @@ namespace Framework {
             draggingSelection = false;
             return;
         }
-#if defined(_DEBUG) || defined(EDITOR)
+
         
         if (Framework::editor::IsGizmoActive())
         {
@@ -602,7 +602,7 @@ namespace Framework {
             draggingSelection = false;
             return;
         }
-#endif
+
 
         GLFWwindow* native = window->raw();
         if (!native)

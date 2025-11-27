@@ -82,6 +82,9 @@ namespace mygame {
         int playerHealth{};
         int playerMaxhealth{};
 
+        // To tell AudioComponent which type of entity this is
+        std::string entityType = "";  // "player" or "enemy"
+
         // override toggles (default: inherit from prefab JSON)
         bool overridePrefabTransform{ false };
         bool overridePrefabCircle{ false };
