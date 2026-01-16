@@ -15,7 +15,7 @@
             All content © 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
-
+#define _CRT_SECURE_NO_WARNINGS
 #include "PathUtils.h"
 
 #if defined(_WIN32)
@@ -34,6 +34,7 @@
 #endif
 
 #include <array>
+#include <cstdlib>
 #include <iostream>
 #include <unordered_set>
 #include <vector>
@@ -113,6 +114,26 @@ namespace Framework
             }
 
             return found;
+        }
+
+        /*************************************************************************************
+           \brief Attempt to create and canonicalize a directory.
+
+           Returns an empty path if creation fails, otherwise the canonicalized directory.
+         *************************************************************************************/
+        std::filesystem::path EnsureCanonicalDir(const std::filesystem::path& candidate)
+        {
+            if (candidate.empty())
+                return {};
+
+            std::error_code ec;
+            if (!std::filesystem::exists(candidate, ec))
+                std::filesystem::create_directories(candidate, ec);
+
+            if (ec)
+                return {};
+
+            return CanonicalIfPossible(candidate);
         }
 
         /*************************************************************************************
@@ -432,5 +453,39 @@ namespace Framework
     std::filesystem::path ResolveDataPath(const std::filesystem::path& relative)
     {
         return ResolveAgainstRoot(FindDataFilesRoot(), relative, "Data_Files");
+    }
+
+      /*************************************************************************************
+      \brief Return a user-writable Documents directory (or best-effort fallback).
+
+      Prioritizes the current user's Documents directory to avoid admin-only locations.
+      If unavailable, attempts the Windows Public Documents folder, then the user's home
+      directory, and finally the current working directory.
+
+      The function ensures the returned directory exists so callers can immediately write
+      subdirectories/files without additional checks.
+    *************************************************************************************/
+    std::filesystem::path GetUserDocumentsDir()
+    {
+        namespace fs = std::filesystem;
+
+#ifdef _WIN32
+        if (auto path = EnsureCanonicalDir(fs::path(std::getenv("USERPROFILE") ? std::getenv("USERPROFILE") : "") / "Documents"); !path.empty())
+            return path;
+
+        if (auto path = EnsureCanonicalDir(fs::path(std::getenv("PUBLIC") ? std::getenv("PUBLIC") : "") / "Documents"); !path.empty())
+            return path;
+#else
+        if (const char* home = std::getenv("HOME"))
+        {
+            if (auto docs = EnsureCanonicalDir(fs::path(home) / "Documents"); !docs.empty())
+                return docs;
+
+            if (auto homeDir = EnsureCanonicalDir(fs::path(home)); !homeDir.empty())
+                return homeDir;
+        }
+#endif
+
+        return CanonicalIfPossible(fs::current_path());
     }
 }

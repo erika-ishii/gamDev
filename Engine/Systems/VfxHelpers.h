@@ -1,7 +1,7 @@
 /*********************************************************************************************
  \file      VfxHelpers.h
  \par       SofaSpuds
- \author      yimo.kong (yimo.kong@digipen.edu) - Primary Author, 100%
+ \author    yimo.kong (yimo.kong@digipen.edu) - Primary Author, 100%
  \brief     Utility helpers for spawning common gameplay VFX as GameObjectCompositions.
  \details   This module centralizes logic for creating one-off visual effects such as hit
             impact flashes. Responsibilities:
@@ -16,7 +16,10 @@
                animation at a given world position.
             Designed to keep gameplay/attack code clean by hiding the boilerplate
             VFX setup behind simple functions.
- © 2025 DigiPen Institute of Technology Singapore. All rights reserved.
+ 
+ \copyright
+            All content ? 2025 DigiPen Institute of Technology Singapore.
+            All rights reserved.
 *********************************************************************************************/
 #pragma once
 

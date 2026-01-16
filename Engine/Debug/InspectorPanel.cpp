@@ -8,6 +8,8 @@
 
 #include "InspectorPanel.h"
 
+#if SOFASPUDS_ENABLE_EDITOR
+
 #include "Composition/Composition.h"
 #include "Component/TransformComponent.h"
 #include "Component/RenderComponent.h"
@@ -593,3 +595,5 @@ namespace mygame
         ImGui::End();
     }
 }
+
+#endif // SOFASPUDS_ENABLE_EDITOR

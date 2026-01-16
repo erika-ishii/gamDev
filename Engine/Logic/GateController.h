@@ -20,8 +20,9 @@
 
 #pragma once
 
+#include <string>
 #include <vector>
-#include <string_view>
+
 
 namespace Framework
 {
@@ -39,7 +40,7 @@ namespace Framework
       easier to maintain.
 
       Responsibilities:
-      - Cache and maintain a reference to the gate GOC within the current level.
+      - Cache and maintain references to gate GOCs within the current level.
       - Track player reference for collision evaluation.
       - Detect whether all enemies have been defeated.
       - Update gate's unlocked state (e.g., triggering color changes).
@@ -64,9 +65,9 @@ namespace Framework
         void SetPlayer(GameObjectComposition* player);
 
         /*************************************************************************************
-          \brief Attempts to locate the gate object within the provided level object list.
+          \brief Attempts to locate gate objects within the provided level object list.
           \param levelObjects Vector of raw GOC pointers representing the current level.
-          \note  Safe to call every frame; caches reference internally.
+          \note  Safe to call every frame; caches references internally.
         *************************************************************************************/
         void RefreshGateReference(const std::vector<GameObjectComposition*>& levelObjects);
 
@@ -85,9 +86,10 @@ namespace Framework
         /*************************************************************************************
           \brief Determines whether level transition should occur due to player–gate contact.
           \param pendingLevelTransition If true, transition is already in progress.
-          \return True if player collides with unlocked gate and transition may begin.
+          \param outLevelPath Outputs the level path for the gate that was touched.
+          \return True if player collides with an unlocked gate and transition may begin.
         *************************************************************************************/
-        bool ShouldTransitionOnPlayerContact(bool pendingLevelTransition) const;
+        bool ShouldTransitionOnPlayerContact(bool pendingLevelTransition, std::string& outLevelPath) const;
 
     private:
         /*************************************************************************************
@@ -105,23 +107,24 @@ namespace Framework
         bool IsAlive(GameObjectComposition* obj) const;
 
         /*************************************************************************************
-          \brief Searches the level list for a GOC representing the gate.
+          \brief Searches the level list for GOCs representing gates.
           \param levelObjects Vector of GOCs in the current level.
-          \return Pointer to the gate GOC if found; otherwise nullptr.
+          \return Vector of gate GOCs found in the level.
         *************************************************************************************/
-        GameObjectComposition* FindGateInLevel(const std::vector<GameObjectComposition*>& levelObjects) const;
+        std::vector<GameObjectComposition*> FindGatesInLevel(
+            const std::vector<GameObjectComposition*>& levelObjects) const;
 
         /*************************************************************************************
           \brief Checks whether the player’s collider overlaps the gate’s collider.
           \return True if a valid collision occurs; false otherwise.
         *************************************************************************************/
-        bool PlayerIntersectsGate() const;
+        bool PlayerIntersectsGate(GameObjectComposition* gateObject) const;
 
         // === Internal Cached State ===
 
         GameObjectFactory* factory{ nullptr }; ///< Pointer to owning factory for object queries.
         GameObjectComposition* player{ nullptr };                ///< Cached player reference (for collision tests).
-        GameObjectComposition* gate{ nullptr };                  ///< Cached gate reference within current level.
+        std::vector<GameObjectComposition*> gates;               ///< Cached gate references within current level.
         bool gateUnlocked{ false };            ///< Indicates whether the gate has been unlocked.
     };
 }

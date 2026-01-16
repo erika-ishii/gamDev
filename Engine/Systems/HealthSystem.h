@@ -1,7 +1,8 @@
 /*********************************************************************************************
  \file      HealthSystem.h
  \par       SofaSpuds
- \author    jianwei.c (jianwei.c@digipen.edu) - Secondary Author, 80%
+ \author    jianwei.c (jianwei.c@digipen.edu) - Secondary Author, 40%
+            yimo.kong (yimo.kong@digipen.edu) - Secondary Author, 40%
             elvisshengjie.lim (elvisshengjie.lim@digipen.edu) - co Author, 20%
  \brief     Implements the HealthSystem responsible for managing player and enemy health,
             handling death timers, triggering death animations, and destroying objects at

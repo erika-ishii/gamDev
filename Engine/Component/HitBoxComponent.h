@@ -60,6 +60,7 @@ namespace Framework
         float spawnY = 0.0f;         ///< Y-position offset relative to the attacker.
         GOC* owner = nullptr;        ///< Optional reference to the entity that owns this hitbox.
         float damage = 1.0f;         ///< Amount of damage this hitbox inflicts.
+        bool soundTriggered = false; //< To be used with HitBox Sounds so it can play mutiple SlashSounds
 
         /*************************************************************************************
           \brief Initializes the hitbox component.

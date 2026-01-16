@@ -27,7 +27,7 @@
             "y": -0.3263888955116272
           }
         },
-        "layer": "Default",
+        "layer": "Gameplay:0",
         "name": "Rect"
       },
       {
@@ -56,7 +56,7 @@
             "y": 0.041999999433755875
           }
         },
-        "layer": "Default",
+        "layer": "Gameplay:0",
         "name": "Rect"
       },
       {
@@ -85,7 +85,7 @@
             "y": -1.7013888359069824
           }
         },
-        "layer": "Default",
+        "layer": "Gameplay:0",
         "name": "Rect"
       },
       {
@@ -114,7 +114,7 @@
             "y": 0.8999999761581421
           }
         },
-        "layer": "Default",
+        "layer": "Gameplay:0",
         "name": "Rect"
       },
       {
@@ -143,7 +143,7 @@
             "y": -1.6109999418258667
           }
         },
-        "layer": "Default",
+        "layer": "Gameplay:0",
         "name": "Rect"
       },
       {
@@ -172,7 +172,7 @@
             "y": -1.6096736192703247
           }
         },
-        "layer": "Default",
+        "layer": "Gameplay:0",
         "name": "Rect"
       },
       {
@@ -201,7 +201,7 @@
             "y": -0.42800000309944153
           }
         },
-        "layer": "Default",
+        "layer": "Gameplay:0",
         "name": "Rect"
       },
       {
@@ -230,7 +230,7 @@
             "y": -0.4300000071525574
           }
         },
-        "layer": "Default",
+        "layer": "Gameplay:0",
         "name": "Rect"
       },
       {
@@ -259,7 +259,7 @@
             "y": 0.8199999928474426
           }
         },
-        "layer": "Default",
+        "layer": "Gameplay:0",
         "name": "Rect"
       },
       {
@@ -288,7 +288,7 @@
             "y": 0.8199999928474426
           }
         },
-        "layer": "Default",
+        "layer": "Gameplay:0",
         "name": "Rect"
       },
       {
@@ -314,7 +314,7 @@
             "y": -1.0980000495910645
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset"
       },
       {
@@ -340,7 +340,7 @@
             "y": -1.1023402214050293
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset"
       },
       {
@@ -366,7 +366,7 @@
             "y": -1.0980000495910645
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset"
       },
       {
@@ -393,7 +393,7 @@
             "y": 0.40400004386901855
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset"
       },
       {
@@ -419,7 +419,7 @@
             "y": 0.4041403532028198
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset"
       },
       {
@@ -445,7 +445,7 @@
             "y": 0.4039999842643738
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset"
       },
       {
@@ -471,7 +471,7 @@
             "y": 1.899999976158142
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset"
       },
       {
@@ -497,7 +497,7 @@
             "y": 1.899999976158142
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset"
       },
       {
@@ -523,7 +523,7 @@
             "y": 1.899999976158142
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset"
       },
       {
@@ -549,7 +549,7 @@
             "y": 1.899999976158142
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset"
       },
       {
@@ -607,7 +607,7 @@
             "y": 0.6679999828338623
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Hawker_Store_Animated"
       },
       {
@@ -633,7 +633,7 @@
             "y": -1.664929986000061
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Front_Of_Player"
       },
       {
@@ -659,7 +659,7 @@
             "y": -1.7076386213302612
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Front_Of_Player"
       },
       {
@@ -685,7 +685,7 @@
             "y": -1.7069087028503418
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Front_Of_Player"
       },
       {
@@ -711,7 +711,7 @@
             "y": -1.7604155540466309
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Front_Of_Player"
       },
       {
@@ -737,7 +737,7 @@
             "y": -1.20277738571167
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Front_Of_Player"
       },
       {
@@ -763,7 +763,7 @@
             "y": -0.9190945029258728
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Forward"
       },
       {
@@ -789,7 +789,7 @@
             "y": -0.9401041269302368
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Forward"
       },
       {
@@ -815,7 +815,7 @@
             "y": -1.2024304866790771
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Forward"
       },
       {
@@ -841,7 +841,7 @@
             "y": -0.09893948584794998
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Forward"
       },
       {
@@ -867,7 +867,7 @@
             "y": 0.2682291865348816
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Forward"
       },
       {
@@ -893,7 +893,7 @@
             "y": -0.044270798563957214
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Forward"
       },
       {
@@ -919,7 +919,7 @@
             "y": 0.278645783662796
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Forward"
       },
       {
@@ -949,7 +949,7 @@
             "y": -1.085937261581421
           }
         },
-        "layer": "Default",
+        "layer": "Gameplay:0",
         "name": "Rect"
       },
       {
@@ -979,7 +979,7 @@
             "y": 0.0
           }
         },
-        "layer": "Default",
+        "layer": "Gameplay:0",
         "name": "Rect"
       },
       {
@@ -1005,7 +1005,7 @@
             "y": 0.40700000524520874
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset"
       },
       {
@@ -1031,7 +1031,7 @@
             "y": -1.0980000495910645
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset"
       },
       {
@@ -1057,7 +1057,7 @@
             "y": -2.549999952316284
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset"
       },
       {
@@ -1083,7 +1083,7 @@
             "y": -2.549999952316284
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset"
       },
       {
@@ -1109,7 +1109,7 @@
             "y": -2.549999952316284
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset"
       },
       {
@@ -1135,7 +1135,7 @@
             "y": -2.549999952316284
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset"
       },
       {
@@ -1161,7 +1161,7 @@
             "y": 1.899999976158142
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Forward"
       },
       {
@@ -1187,7 +1187,7 @@
             "y": 0.21400000154972076
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Forward"
       },
       {
@@ -1213,7 +1213,7 @@
             "y": 0.21400000154972076
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Forward"
       },
       {
@@ -1239,7 +1239,7 @@
             "y": 0.21400000154972076
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Forward"
       },
       {
@@ -1265,7 +1265,7 @@
             "y": 0.21400000154972076
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Forward"
       },
       {
@@ -1291,7 +1291,7 @@
             "y": 0.2240000069141388
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Forward"
       },
       {
@@ -1317,7 +1317,7 @@
             "y": 0.2199999988079071
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Forward"
       },
       {
@@ -1343,7 +1343,7 @@
             "y": -1.0138885974884033
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Forward"
       },
       {
@@ -1369,7 +1369,7 @@
             "y": -1.0140000581741333
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Forward"
       },
       {
@@ -1395,7 +1395,7 @@
             "y": -1.0140000581741333
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Forward"
       },
       {
@@ -1421,7 +1421,7 @@
             "y": -1.0140000581741333
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Forward"
       },
       {
@@ -1447,7 +1447,7 @@
             "y": -1.0140000581741333
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Forward"
       },
       {
@@ -1473,7 +1473,7 @@
             "y": -1.0140000581741333
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Forward"
       },
       {
@@ -1499,7 +1499,7 @@
             "y": -2.2024435997009277
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Forward"
       },
       {
@@ -1525,7 +1525,7 @@
             "y": -2.13700008392334
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Forward"
       },
       {
@@ -1551,7 +1551,7 @@
             "y": -2.13700008392334
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Forward"
       },
       {
@@ -1577,7 +1577,7 @@
             "y": -2.131120204925537
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Art_Asset_Forward"
       },
       {
@@ -1606,7 +1606,7 @@
             "y": 0.2800000011920929
           }
         },
-        "layer": "Default",
+        "layer": "Gameplay:0",
         "name": "Rect"
       },
       {
@@ -1635,7 +1635,7 @@
             "y": 0.2800000011920929
           }
         },
-        "layer": "Default",
+        "layer": "Gameplay:0",
         "name": "Rect"
       },
       {
@@ -1664,7 +1664,7 @@
             "y": 0.2800000011920929
           }
         },
-        "layer": "Default",
+        "layer": "Gameplay:0",
         "name": "Rect"
       },
       {
@@ -1693,7 +1693,7 @@
             "y": 0.2800000011920929
           }
         },
-        "layer": "Default",
+        "layer": "Gameplay:0",
         "name": "Rect"
       },
       {
@@ -1722,7 +1722,7 @@
             "y": -0.9449999928474426
           }
         },
-        "layer": "Default",
+        "layer": "Gameplay:0",
         "name": "Rect"
       },
       {
@@ -1751,7 +1751,7 @@
             "y": -0.9419999718666077
           }
         },
-        "layer": "Default",
+        "layer": "Gameplay:0",
         "name": "Rect"
       },
       {
@@ -1780,7 +1780,7 @@
             "y": -0.9419999718666077
           }
         },
-        "layer": "Default",
+        "layer": "Gameplay:0",
         "name": "Rect"
       },
       {
@@ -1809,11 +1809,1370 @@
             "y": -0.9419999718666077
           }
         },
-        "layer": "Default",
+        "layer": "Gameplay:0",
         "name": "Rect"
       },
       {
         "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": 0.7499999403953552,
+            "y": 0.6629999876022339
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": 0.33600008487701416,
+            "y": 0.6626735925674438
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -0.08000022172927856,
+            "y": 0.6639999747276306
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": 2.628000020980835,
+            "y": 0.6639999747276306
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": 3.0450000762939453,
+            "y": 0.6620000004768372
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": 3.4619998931884766,
+            "y": 0.6617830395698547
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -2.9809999465942383,
+            "y": 0.6620000004768372
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -4.6529998779296875,
+            "y": 0.6620000004768372
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -2.5620014667510986,
+            "y": 0.6620009541511536
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.004312515258789,
+            "scale_y": 1.0,
+            "x": -4.242000102996826,
+            "y": -1.6720000505447388
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -2.990000009536743,
+            "y": -1.6720000505447388
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": 1.5850000381469727,
+            "y": -1.6720000505447388
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -2.571000099182129,
+            "y": -0.5370000004768372
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6800000071525574,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 0.9965156316757202,
+            "scale_y": 1.0166406631469727,
+            "x": -4.242000102996826,
+            "y": -0.5370000004768372
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": 0.335999995470047,
+            "y": -1.6720000505447388
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": 2.8369998931884766,
+            "y": -1.6720000505447388
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -2.1530001163482666,
+            "y": -1.6720000505447388
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0158123970031738,
+            "x": 2.8369998931884766,
+            "y": -0.5370000004768372
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": 1.1670000553131104,
+            "y": -0.5370000004768372
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -0.07995840907096863,
+            "y": -0.5370001196861267
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": 0.7536529302597046,
+            "y": -0.5370000004768372
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0115000009536743,
+            "x": 1.5850000381469727,
+            "y": -0.5370000004768372
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 0.9978437423706055,
+            "scale_y": 1.0107812881469727,
+            "x": 2.4200000762939453,
+            "y": -0.5370000004768372
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -1.7259999513626099,
+            "y": 0.6620000004768372
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -1.309999942779541,
+            "y": 0.6620001792907715
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -3.816999912261963,
+            "y": 0.6620000004768372
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -2.1530001163482666,
+            "y": -0.5370000004768372
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 0.9989655613899231,
+            "scale_y": 1.0075905323028564,
+            "x": -3.4070000648498535,
+            "y": -0.5370000004768372
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -4.658999919891357,
+            "y": -0.5370000004768372
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -3.822998285293579,
+            "y": -1.6720000505447388
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -3.4069664478302,
+            "y": -1.6720000505447388
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -1.3170000314712524,
+            "y": -1.6718254089355469
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -0.07999999821186066,
+            "y": -1.6720000505447388
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": 0.7499930262565613,
+            "y": -1.6720000505447388
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6800000071525574,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": 2.4200000762939453,
+            "y": -1.6720000505447388
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -2.1429998874664307,
+            "y": 0.6639999747276306
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -3.4000000953674316,
+            "y": 0.6639999747276306
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -4.232999801635742,
+            "y": 0.6639999747276306
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 0.9992811679840088,
+            "scale_y": 0.9992811679840088,
+            "x": -2.990000009536743,
+            "y": -0.5370000004768372
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -1.3170000314712524,
+            "y": -0.5370000004768372
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -3.822999954223633,
+            "y": -0.5370000004768372
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 0.9971251487731934,
+            "x": -4.658999919891357,
+            "y": -1.6720000505447388
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -1.7359999418258667,
+            "y": -1.6720000505447388
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.00145423412323,
+            "scale_y": 1.0000168085098267,
+            "x": -2.571000576019287,
+            "y": -1.6720000505447388
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": 1.1669728755950928,
+            "y": -1.6720000505447388
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": 3.256999969482422,
+            "y": -1.6720000505447388
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": 2.002000093460083,
+            "y": -1.6720000505447388
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.004312515258789,
+            "x": 2.002000093460083,
+            "y": -0.5350000262260437
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": 0.3360000252723694,
+            "y": -0.5370000004768372
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0129375457763672,
+            "x": 3.256999969482422,
+            "y": -0.5370000004768372
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.6850000023841858,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.6850000023841858
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -1.7359999418258667,
+            "y": -0.5370000004768372
+          }
+        },
+        "layer": "Background:0",
+        "name": "Art_Asset_Forward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.10000000149011612,
+            "layer": 0,
+            "r": 1.0,
+            "visible": false,
+            "w": 1.0
+          },
+          "RigidBodyComponent": {
+            "height": 0.10000000149011612,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 1.0
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -0.6979166269302368,
+            "y": 0.7656248211860657
+          },
+          "ZoomTriggerComponent": {}
+        },
+        "layer": "Background:0",
+        "name": "zoom_Object"
+      },
+      {
+        "Components": {
+          "GateTargetComponent": {
+            "level_path": "RealLevel1.json"
+          },
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
@@ -1839,11 +3198,11 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": -0.7026041150093079,
-            "y": 0.8652083277702332
+            "x": -0.698845386505127,
+            "y": 0.8658650517463684
           }
         },
-        "layer": "Default",
+        "layer": "Background:0",
         "name": "Hawker_Gate"
       },
       {
@@ -1851,8 +3210,80 @@
           "AudioComponent": {
             "entityType": "player",
             "sounds": {
+              "ConcreteFootsteps1": {
+                "id": "ConcreteFootsteps1",
+                "loop": false
+              },
+              "ConcreteFootsteps10": {
+                "id": "ConcreteFootsteps10",
+                "loop": false
+              },
+              "ConcreteFootsteps11": {
+                "id": "ConcreteFootsteps11",
+                "loop": false
+              },
+              "ConcreteFootsteps12": {
+                "id": "ConcreteFootsteps12",
+                "loop": false
+              },
+              "ConcreteFootsteps2": {
+                "id": "ConcreteFootsteps2",
+                "loop": false
+              },
+              "ConcreteFootsteps3": {
+                "id": "ConcreteFootsteps3",
+                "loop": false
+              },
+              "ConcreteFootsteps4": {
+                "id": "ConcreteFootsteps4",
+                "loop": false
+              },
+              "ConcreteFootsteps5": {
+                "id": "ConcreteFootsteps5",
+                "loop": false
+              },
+              "ConcreteFootsteps6": {
+                "id": "ConcreteFootsteps6",
+                "loop": false
+              },
+              "ConcreteFootsteps7": {
+                "id": "ConcreteFootsteps7",
+                "loop": false
+              },
+              "ConcreteFootsteps8": {
+                "id": "ConcreteFootsteps8",
+                "loop": false
+              },
+              "ConcreteFootsteps9": {
+                "id": "ConcreteFootsteps9",
+                "loop": false
+              },
               "GrappleShoot1": {
                 "id": "GrappleShoot1",
+                "loop": false
+              },
+              "GrappleShoot2": {
+                "id": "GrappleShoot2",
+                "loop": false
+              },
+              "GrappleShoot3": {
+                "id": "GrappleShoot3",
+                "loop": false
+              },
+              "GrappleShoot4": {
+                "id": "GrappleShoot4",
+                "loop": false
+              },
+              "Ineffective Boink1": {
+                "id": "Ineffective Boink1",
+                "loop": false
+              },
+              "Ineffective Boink2": {
+                "id": "Ineffective Boink2",
+                "loop": false
+              },
+              "Ineffective Boink3": {
+                "id": "Ineffective Boink3",
                 "loop": false
               },
               "PlayerDead": {
@@ -1863,12 +3294,32 @@
                 "id": "PlayerHit",
                 "loop": false
               },
+              "Punch1": {
+                "id": "Punch1",
+                "loop": false
+              },
+              "Punch2": {
+                "id": "Punch2",
+                "loop": false
+              },
+              "Punch3": {
+                "id": "Punch3",
+                "loop": false
+              },
+              "Punch4": {
+                "id": "Punch4",
+                "loop": false
+              },
               "Slash1": {
                 "id": "Slash1",
                 "loop": false
               },
-              "footsteps": {
-                "id": "footsteps",
+              "Slash2": {
+                "id": "Slash2",
+                "loop": false
+              },
+              "Slash3": {
+                "id": "Slash3",
                 "loop": false
               }
             },
@@ -1897,12 +3348,12 @@
             "layer": 1,
             "r": 1.0,
             "visible": true,
-            "w": -0.20000000298023224
+            "w": -0.25
           },
           "RigidBodyComponent": {
             "height": 0.20999999344348907,
             "velocity_x": 1.401298464324817e-45,
-            "velocity_y": -1.401298464324817e-45,
+            "velocity_y": 0.0,
             "width": 0.10000000149011612
           },
           "SpriteAnimationComponent": {
@@ -1918,7 +3369,7 @@
                   "startFrame": 0,
                   "totalFrames": 5
                 },
-                "currentFrame": 3,
+                "currentFrame": 0,
                 "name": "idle",
                 "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/Idle_Sprite.png",
                 "textureKey": "idle_sheet"
@@ -1933,7 +3384,7 @@
                   "startFrame": 0,
                   "totalFrames": 10
                 },
-                "currentFrame": 0,
+                "currentFrame": 3,
                 "name": "run",
                 "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/Running_Sprite.png",
                 "textureKey": "run_sheet"
@@ -2026,1345 +3477,388 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": -0.7054135799407959,
-            "y": -1.5513888597488403
+            "x": -0.6872185468673706,
+            "y": -1.476219654083252
           }
         },
-        "layer": "Default",
+        "layer": "Gameplay:0",
         "name": "Player"
       },
       {
         "Components": {
+          "AudioComponent": {
+            "entityType": "enemy_fire",
+            "sounds": {
+              "FireGhostExplosion": {
+                "id": "FireGhostExplosion",
+                "loop": false
+              },
+              "FireGhostProjectile1": {
+                "id": "FireGhostProjectile1",
+                "loop": false
+              },
+              "FireGhostProjectile2": {
+                "id": "FireGhostProjectile2",
+                "loop": false
+              },
+              "GhostHurt1": {
+                "id": "GhostHurt1",
+                "loop": false
+              },
+              "GhostHurt2": {
+                "id": "GhostHurt2",
+                "loop": false
+              },
+              "GhostHurt3": {
+                "id": "GhostHurt3",
+                "loop": false
+              },
+              "GhostHurt4": {
+                "id": "GhostHurt4",
+                "loop": false
+              },
+              "GhostHurt5": {
+                "id": "GhostHurt5",
+                "loop": false
+              },
+              "GhostHurt6": {
+                "id": "GhostHurt6",
+                "loop": false
+              },
+              "GhostHurt7": {
+                "id": "GhostHurt7",
+                "loop": false
+              },
+              "GhostHurt8": {
+                "id": "GhostHurt8",
+                "loop": false
+              }
+            },
+            "volume": 0.4000000059604645
+          },
+          "EnemyAttackComponent": {
+            "attack_speed": 0.6000000238418579,
+            "damage": 1
+          },
+          "EnemyComponent": {},
+          "EnemyDecisionTreeComponent": {},
+          "EnemyHealthComponent": {
+            "enemyHealth": 2,
+            "enemyMaxhealth": 2
+          },
+          "EnemyTypeComponent": {
+            "type": "ranged"
+          },
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
             "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
+            "h": 0.30000001192092896,
+            "layer": 0,
             "r": 1.0,
             "visible": true,
-            "w": 0.6850000023841858
+            "w": 0.30000001192092896
+          },
+          "RigidBodyComponent": {
+            "height": 0.10000000149011612,
+            "velocity_x": 10.0,
+            "velocity_y": 0.0,
+            "width": 0.10000000149011612
+          },
+          "SpriteAnimationComponent": {
+            "activeAnimation": 0,
+            "animations": [
+              {
+                "config": {
+                  "columns": 6,
+                  "endFrame": 5,
+                  "fps": 10.0,
+                  "loop": true,
+                  "rows": 1,
+                  "startFrame": 0,
+                  "totalFrames": 6
+                },
+                "currentFrame": 0,
+                "name": "idle",
+                "spriteSheetPath": "../../assets/Textures/Character/Fire Enemy_Sprite/Idle_Sprite.png",
+                "textureKey": "fire_idle"
+              },
+              {
+                "config": {
+                  "columns": 15,
+                  "endFrame": 14,
+                  "fps": 10.0,
+                  "loop": false,
+                  "rows": 1,
+                  "startFrame": 0,
+                  "totalFrames": 15
+                },
+                "currentFrame": 0,
+                "name": "rangeattack",
+                "spriteSheetPath": "../../assets/Textures/Character/Fire Enemy_Sprite/Fire Attack_Sprite.png",
+                "textureKey": "fire_attack"
+              },
+              {
+                "config": {
+                  "columns": 8,
+                  "endFrame": 7,
+                  "fps": 10.0,
+                  "loop": false,
+                  "rows": 1,
+                  "startFrame": 0,
+                  "totalFrames": 8
+                },
+                "currentFrame": 0,
+                "name": "knockback",
+                "spriteSheetPath": "../../assets/Textures/Character/Fire Enemy_Sprite/Knockback_Sprite.png",
+                "textureKey": "fire_knockback"
+              },
+              {
+                "config": {
+                  "columns": 14,
+                  "endFrame": 13,
+                  "fps": 8.0,
+                  "loop": false,
+                  "rows": 1,
+                  "startFrame": 0,
+                  "totalFrames": 14
+                },
+                "currentFrame": 0,
+                "name": "death",
+                "spriteSheetPath": "../../assets/Textures/Character/Fire Enemy_Sprite/Death_Sprite.png",
+                "textureKey": "fire_death"
+              }
+            ],
+            "fps": 6.0,
+            "frames": [],
+            "loop": true,
+            "play": true
           },
           "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
+            "texture_key": "fire_idle"
           },
           "TransformComponent": {
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": 0.7499999403953552,
-            "y": 0.6629999876022339
+            "x": 0.6493592262268066,
+            "y": -0.023400306701660156
           }
         },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": 0.33600008487701416,
-            "y": 0.6626735925674438
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -0.08000022172927856,
-            "y": 0.6639999747276306
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": 2.628000020980835,
-            "y": 0.6639999747276306
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": 3.0450000762939453,
-            "y": 0.6620000004768372
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": 3.4619998931884766,
-            "y": 0.6617830395698547
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -2.9809999465942383,
-            "y": 0.6620000004768372
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -4.6529998779296875,
-            "y": 0.6620000004768372
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -2.5620014667510986,
-            "y": 0.6620009541511536
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.004312515258789,
-            "scale_y": 1.0,
-            "x": -4.242000102996826,
-            "y": -1.6720000505447388
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -2.990000009536743,
-            "y": -1.6720000505447388
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": 1.5850000381469727,
-            "y": -1.6720000505447388
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -2.571000099182129,
-            "y": -0.5370000004768372
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6800000071525574,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 0.9965156316757202,
-            "scale_y": 1.0166406631469727,
-            "x": -4.242000102996826,
-            "y": -0.5370000004768372
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": 0.335999995470047,
-            "y": -1.6720000505447388
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": 2.8369998931884766,
-            "y": -1.6720000505447388
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -2.1530001163482666,
-            "y": -1.6720000505447388
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0158123970031738,
-            "x": 2.8369998931884766,
-            "y": -0.5370000004768372
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": 1.1670000553131104,
-            "y": -0.5370000004768372
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -0.07995840907096863,
-            "y": -0.5370001196861267
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": 0.7500203847885132,
-            "y": -0.5370000004768372
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0115000009536743,
-            "x": 1.5850000381469727,
-            "y": -0.5370000004768372
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 0.9978437423706055,
-            "scale_y": 1.0107812881469727,
-            "x": 2.4200000762939453,
-            "y": -0.5370000004768372
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -1.7259999513626099,
-            "y": 0.6620000004768372
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -1.309999942779541,
-            "y": 0.6620001792907715
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -3.816999912261963,
-            "y": 0.6620000004768372
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -2.1530001163482666,
-            "y": -0.5370000004768372
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 0.9989655613899231,
-            "scale_y": 1.0075905323028564,
-            "x": -3.4070000648498535,
-            "y": -0.5370000004768372
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -4.658999919891357,
-            "y": -0.5370000004768372
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -3.822998285293579,
-            "y": -1.6720000505447388
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -3.4069664478302,
-            "y": -1.6720000505447388
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -1.3170000314712524,
-            "y": -1.6718254089355469
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -0.07999999821186066,
-            "y": -1.6720000505447388
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": 0.7499930262565613,
-            "y": -1.6720000505447388
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6800000071525574,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": 2.4200000762939453,
-            "y": -1.6720000505447388
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -2.1429998874664307,
-            "y": 0.6639999747276306
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -3.4000000953674316,
-            "y": 0.6639999747276306
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -4.232999801635742,
-            "y": 0.6639999747276306
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 0.9992811679840088,
-            "scale_y": 0.9992811679840088,
-            "x": -2.990000009536743,
-            "y": -0.5370000004768372
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -1.3170000314712524,
-            "y": -0.5370000004768372
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -3.822999954223633,
-            "y": -0.5370000004768372
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 0.9971251487731934,
-            "x": -4.658999919891357,
-            "y": -1.6720000505447388
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -1.7359999418258667,
-            "y": -1.6720000505447388
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.00145423412323,
-            "scale_y": 1.0000168085098267,
-            "x": -2.571000576019287,
-            "y": -1.6720000505447388
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": 1.1669728755950928,
-            "y": -1.6720000505447388
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": 3.256999969482422,
-            "y": -1.6720000505447388
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": 2.002000093460083,
-            "y": -1.6720000505447388
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.004312515258789,
-            "x": 2.002000093460083,
-            "y": -0.5350000262260437
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": 0.3360000252723694,
-            "y": -0.5370000004768372
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0129375457763672,
-            "x": 3.256999969482422,
-            "y": -0.5370000004768372
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 01.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -1.7359999418258667,
-            "y": -0.5370000004768372
-          }
-        },
-        "layer": "Default",
-        "name": "Art_Asset_Forward"
+        "layer": "Gameplay:0",
+        "name": "FireEnemy"
       },
       {
         "Components": {
           "AudioComponent": {
-            "entityType": "enemy",
-            "sounds": {},
-            "volume": 0.20000000298023224
+            "entityType": "enemy_fire",
+            "sounds": {
+              "FireGhostExplosion": {
+                "id": "FireGhostExplosion",
+                "loop": false
+              },
+              "FireGhostProjectile1": {
+                "id": "FireGhostProjectile1",
+                "loop": false
+              },
+              "FireGhostProjectile2": {
+                "id": "FireGhostProjectile2",
+                "loop": false
+              },
+              "GhostHurt1": {
+                "id": "GhostHurt1",
+                "loop": false
+              },
+              "GhostHurt2": {
+                "id": "GhostHurt2",
+                "loop": false
+              },
+              "GhostHurt3": {
+                "id": "GhostHurt3",
+                "loop": false
+              },
+              "GhostHurt4": {
+                "id": "GhostHurt4",
+                "loop": false
+              },
+              "GhostHurt5": {
+                "id": "GhostHurt5",
+                "loop": false
+              },
+              "GhostHurt6": {
+                "id": "GhostHurt6",
+                "loop": false
+              },
+              "GhostHurt7": {
+                "id": "GhostHurt7",
+                "loop": false
+              },
+              "GhostHurt8": {
+                "id": "GhostHurt8",
+                "loop": false
+              }
+            },
+            "volume": 0.4000000059604645
+          },
+          "EnemyAttackComponent": {
+            "attack_speed": 0.6000000238418579,
+            "damage": 1
+          },
+          "EnemyComponent": {},
+          "EnemyDecisionTreeComponent": {},
+          "EnemyHealthComponent": {
+            "enemyHealth": 2,
+            "enemyMaxhealth": 2
+          },
+          "EnemyTypeComponent": {
+            "type": "ranged"
+          },
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "g": 1.0,
+            "h": 0.30000001192092896,
+            "layer": 0,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.30000001192092896
+          },
+          "RigidBodyComponent": {
+            "height": 0.10000000149011612,
+            "velocity_x": 10.0,
+            "velocity_y": 0.0,
+            "width": 0.10000000149011612
+          },
+          "SpriteAnimationComponent": {
+            "activeAnimation": 0,
+            "animations": [
+              {
+                "config": {
+                  "columns": 6,
+                  "endFrame": 5,
+                  "fps": 10.0,
+                  "loop": true,
+                  "rows": 1,
+                  "startFrame": 0,
+                  "totalFrames": 6
+                },
+                "currentFrame": 0,
+                "name": "idle",
+                "spriteSheetPath": "../../assets/Textures/Character/Fire Enemy_Sprite/Idle_Sprite.png",
+                "textureKey": "fire_idle"
+              },
+              {
+                "config": {
+                  "columns": 15,
+                  "endFrame": 14,
+                  "fps": 10.0,
+                  "loop": false,
+                  "rows": 1,
+                  "startFrame": 0,
+                  "totalFrames": 15
+                },
+                "currentFrame": 0,
+                "name": "rangeattack",
+                "spriteSheetPath": "../../assets/Textures/Character/Fire Enemy_Sprite/Fire Attack_Sprite.png",
+                "textureKey": "fire_attack"
+              },
+              {
+                "config": {
+                  "columns": 8,
+                  "endFrame": 7,
+                  "fps": 10.0,
+                  "loop": false,
+                  "rows": 1,
+                  "startFrame": 0,
+                  "totalFrames": 8
+                },
+                "currentFrame": 0,
+                "name": "knockback",
+                "spriteSheetPath": "../../assets/Textures/Character/Fire Enemy_Sprite/Knockback_Sprite.png",
+                "textureKey": "fire_knockback"
+              },
+              {
+                "config": {
+                  "columns": 14,
+                  "endFrame": 13,
+                  "fps": 8.0,
+                  "loop": false,
+                  "rows": 1,
+                  "startFrame": 0,
+                  "totalFrames": 14
+                },
+                "currentFrame": 0,
+                "name": "death",
+                "spriteSheetPath": "../../assets/Textures/Character/Fire Enemy_Sprite/Death_Sprite.png",
+                "textureKey": "fire_death"
+              }
+            ],
+            "fps": 6.0,
+            "frames": [],
+            "loop": true,
+            "play": true
+          },
+          "SpriteComponent": {
+            "texture_key": "fire_idle"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": 0.8716622591018677,
+            "y": -1.1290658712387085
+          }
+        },
+        "layer": "Gameplay:0",
+        "name": "FireEnemy"
+      },
+      {
+        "Components": {
+          "AudioComponent": {
+            "entityType": "enemy_water",
+            "sounds": {
+              "GhostHurt1": {
+                "id": "GhostHurt1",
+                "loop": false
+              },
+              "GhostHurt2": {
+                "id": "GhostHurt2",
+                "loop": false
+              },
+              "GhostHurt3": {
+                "id": "GhostHurt3",
+                "loop": false
+              },
+              "GhostHurt4": {
+                "id": "GhostHurt4",
+                "loop": false
+              },
+              "GhostHurt5": {
+                "id": "GhostHurt5",
+                "loop": false
+              },
+              "GhostHurt6": {
+                "id": "GhostHurt6",
+                "loop": false
+              },
+              "GhostHurt7": {
+                "id": "GhostHurt7",
+                "loop": false
+              },
+              "GhostHurt8": {
+                "id": "GhostHurt8",
+                "loop": false
+              },
+              "WaterGhostAttack": {
+                "id": "WaterGhostAttack",
+                "loop": false
+              },
+              "WaterGhostExplosion": {
+                "id": "WaterGhostExplosion",
+                "loop": false
+              }
+            },
+            "volume": 0.4000000059604645
           },
           "EnemyAttackComponent": {
             "attack_speed": 1.2000000476837158,
@@ -3391,7 +3885,7 @@
           },
           "RigidBodyComponent": {
             "height": 0.10000000149011612,
-            "velocity_x": 0.20000000298023224,
+            "velocity_x": 10.0,
             "velocity_y": 0.0,
             "width": 0.10000000149011612
           },
@@ -3471,19 +3965,60 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": 0.2399994283914566,
-            "y": -1.1532058715820313
+            "x": -0.05850088596343994,
+            "y": -1.1407661437988281
           }
         },
-        "layer": "Default",
+        "layer": "Gameplay:0",
         "name": "Enemy"
       },
       {
         "Components": {
           "AudioComponent": {
-            "entityType": "enemy",
-            "sounds": {},
-            "volume": 1.0
+            "entityType": "enemy_water",
+            "sounds": {
+              "GhostHurt1": {
+                "id": "GhostHurt1",
+                "loop": false
+              },
+              "GhostHurt2": {
+                "id": "GhostHurt2",
+                "loop": false
+              },
+              "GhostHurt3": {
+                "id": "GhostHurt3",
+                "loop": false
+              },
+              "GhostHurt4": {
+                "id": "GhostHurt4",
+                "loop": false
+              },
+              "GhostHurt5": {
+                "id": "GhostHurt5",
+                "loop": false
+              },
+              "GhostHurt6": {
+                "id": "GhostHurt6",
+                "loop": false
+              },
+              "GhostHurt7": {
+                "id": "GhostHurt7",
+                "loop": false
+              },
+              "GhostHurt8": {
+                "id": "GhostHurt8",
+                "loop": false
+              },
+              "WaterGhostAttack": {
+                "id": "WaterGhostAttack",
+                "loop": false
+              },
+              "WaterGhostExplosion": {
+                "id": "WaterGhostExplosion",
+                "loop": false
+              }
+            },
+            "volume": 0.4000000059604645
           },
           "EnemyAttackComponent": {
             "attack_speed": 1.2000000476837158,
@@ -3510,7 +4045,7 @@
           },
           "RigidBodyComponent": {
             "height": 0.10000000149011612,
-            "velocity_x": 0.20000000298023224,
+            "velocity_x": 10.0,
             "velocity_y": 0.0,
             "width": 0.10000000149011612
           },
@@ -3590,399 +4125,12 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": 0.5,
-            "y": 0.025438368320465088
-          }
-        },
-        "layer": "Default",
-        "name": "Enemy"
-      },
-      {
-        "Components": {
-          "AudioComponent": {
-            "entityType": "enemy",
-            "sounds": {},
-            "volume": 0.20000000298023224
-          },
-          "EnemyAttackComponent": {
-            "attack_speed": 0.6000000238418579,
-            "damage": 1
-          },
-          "EnemyComponent": {},
-          "EnemyDecisionTreeComponent": {},
-          "EnemyHealthComponent": {
-            "enemyHealth": 2,
-            "enemyMaxhealth": 2
-          },
-          "EnemyTypeComponent": {
-            "type": "ranged"
-          },
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.30000001192092896,
-            "layer": 0,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.30000001192092896
-          },
-          "RigidBodyComponent": {
-            "height": 0.10000000149011612,
-            "velocity_x": 0.20000000298023224,
-            "velocity_y": 0.0,
-            "width": 0.10000000149011612
-          },
-          "SpriteAnimationComponent": {
-            "activeAnimation": 0,
-            "animations": [
-              {
-                "config": {
-                  "columns": 6,
-                  "endFrame": 5,
-                  "fps": 10.0,
-                  "loop": true,
-                  "rows": 1,
-                  "startFrame": 0,
-                  "totalFrames": 6
-                },
-                "currentFrame": 0,
-                "name": "idle",
-                "spriteSheetPath": "../../assets/Textures/Character/Fire Enemy_Sprite/Idle_Sprite.png",
-                "textureKey": "fire_idle"
-              },
-              {
-                "config": {
-                  "columns": 15,
-                  "endFrame": 14,
-                  "fps": 10.0,
-                  "loop": false,
-                  "rows": 1,
-                  "startFrame": 0,
-                  "totalFrames": 15
-                },
-                "currentFrame": 0,
-                "name": "rangeattack",
-                "spriteSheetPath": "../../assets/Textures/Character/Fire Enemy_Sprite/Fire Attack_Sprite.png",
-                "textureKey": "fire_attack"
-              },
-              {
-                "config": {
-                  "columns": 8,
-                  "endFrame": 7,
-                  "fps": 10.0,
-                  "loop": false,
-                  "rows": 1,
-                  "startFrame": 0,
-                  "totalFrames": 8
-                },
-                "currentFrame": 0,
-                "name": "knockback",
-                "spriteSheetPath": "../../assets/Textures/Character/Fire Enemy_Sprite/Knockback_Sprite.png",
-                "textureKey": "fire_knockback"
-              },
-              {
-                "config": {
-                  "columns": 14,
-                  "endFrame": 13,
-                  "fps": 8.0,
-                  "loop": false,
-                  "rows": 1,
-                  "startFrame": 0,
-                  "totalFrames": 14
-                },
-                "currentFrame": 0,
-                "name": "death",
-                "spriteSheetPath": "../../assets/Textures/Character/Fire Enemy_Sprite/Death_Sprite.png",
-                "textureKey": "fire_death"
-              }
-            ],
-            "fps": 6.0,
-            "frames": [],
-            "loop": true,
-            "play": true
-          },
-          "SpriteComponent": {
-            "texture_key": "fire_idle"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": 0.2399994283914566,
-            "y": 0.025438368320465088
-          }
-        },
-        "layer": "Default",
-        "name": "FireEnemy"
-      },
-      {
-        "Components": {
-          "AudioComponent": {
-            "entityType": "enemy",
-            "sounds": {},
-            "volume": 0.20000000298023224
-          },
-          "EnemyAttackComponent": {
-            "attack_speed": 0.6000000238418579,
-            "damage": 1
-          },
-          "EnemyComponent": {},
-          "EnemyDecisionTreeComponent": {},
-          "EnemyHealthComponent": {
-            "enemyHealth": 2,
-            "enemyMaxhealth": 2
-          },
-          "EnemyTypeComponent": {
-            "type": "ranged"
-          },
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.30000001192092896,
-            "layer": 0,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.30000001192092896
-          },
-          "RigidBodyComponent": {
-            "height": 0.10000000149011612,
-            "velocity_x": 0.20000000298023224,
-            "velocity_y": 0.0,
-            "width": 0.10000000149011612
-          },
-          "SpriteAnimationComponent": {
-            "activeAnimation": 0,
-            "animations": [
-              {
-                "config": {
-                  "columns": 6,
-                  "endFrame": 5,
-                  "fps": 10.0,
-                  "loop": true,
-                  "rows": 1,
-                  "startFrame": 0,
-                  "totalFrames": 6
-                },
-                "currentFrame": 0,
-                "name": "idle",
-                "spriteSheetPath": "../../assets/Textures/Character/Fire Enemy_Sprite/Idle_Sprite.png",
-                "textureKey": "fire_idle"
-              },
-              {
-                "config": {
-                  "columns": 15,
-                  "endFrame": 14,
-                  "fps": 10.0,
-                  "loop": false,
-                  "rows": 1,
-                  "startFrame": 0,
-                  "totalFrames": 15
-                },
-                "currentFrame": 0,
-                "name": "rangeattack",
-                "spriteSheetPath": "../../assets/Textures/Character/Fire Enemy_Sprite/Fire Attack_Sprite.png",
-                "textureKey": "fire_attack"
-              },
-              {
-                "config": {
-                  "columns": 8,
-                  "endFrame": 7,
-                  "fps": 10.0,
-                  "loop": false,
-                  "rows": 1,
-                  "startFrame": 0,
-                  "totalFrames": 8
-                },
-                "currentFrame": 0,
-                "name": "knockback",
-                "spriteSheetPath": "../../assets/Textures/Character/Fire Enemy_Sprite/Knockback_Sprite.png",
-                "textureKey": "fire_knockback"
-              },
-              {
-                "config": {
-                  "columns": 14,
-                  "endFrame": 13,
-                  "fps": 8.0,
-                  "loop": false,
-                  "rows": 1,
-                  "startFrame": 0,
-                  "totalFrames": 14
-                },
-                "currentFrame": 0,
-                "name": "death",
-                "spriteSheetPath": "../../assets/Textures/Character/Fire Enemy_Sprite/Death_Sprite.png",
-                "textureKey": "fire_death"
-              }
-            ],
-            "fps": 6.0,
-            "frames": [],
-            "loop": true,
-            "play": true
-          },
-          "SpriteComponent": {
-            "texture_key": "fire_idle"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": 0.5,
-            "y": -1.1108088493347168
-          }
-        },
-        "layer": "Default",
-        "name": "FireEnemy"
-      },
-      {
-        "Components": {
-          "AudioComponent": {
-            "entityType": "enemy",
-            "sounds": {},
-            "volume": 0.20000000298023224
-          },
-          "EnemyAttackComponent": {
-            "attack_speed": 0.6000000238418579,
-            "damage": 1
-          },
-          "EnemyComponent": {},
-          "EnemyDecisionTreeComponent": {},
-          "EnemyHealthComponent": {
-            "enemyHealth": 2,
-            "enemyMaxhealth": 2
-          },
-          "EnemyTypeComponent": {
-            "type": "ranged"
-          },
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.30000001192092896,
-            "layer": 0,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.30000001192092896
-          },
-          "RigidBodyComponent": {
-            "height": 0.10000000149011612,
-            "velocity_x": 0.20000000298023224,
-            "velocity_y": 0.0,
-            "width": 0.10000000149011612
-          },
-          "SpriteAnimationComponent": {
-            "activeAnimation": 0,
-            "animations": [
-              {
-                "config": {
-                  "columns": 6,
-                  "endFrame": 5,
-                  "fps": 10.0,
-                  "loop": true,
-                  "rows": 1,
-                  "startFrame": 0,
-                  "totalFrames": 6
-                },
-                "currentFrame": 0,
-                "name": "idle",
-                "spriteSheetPath": "../../assets/Textures/Character/Fire Enemy_Sprite/Idle_Sprite.png",
-                "textureKey": "fire_idle"
-              },
-              {
-                "config": {
-                  "columns": 15,
-                  "endFrame": 14,
-                  "fps": 10.0,
-                  "loop": false,
-                  "rows": 1,
-                  "startFrame": 0,
-                  "totalFrames": 15
-                },
-                "currentFrame": 0,
-                "name": "rangeattack",
-                "spriteSheetPath": "../../assets/Textures/Character/Fire Enemy_Sprite/Fire Attack_Sprite.png",
-                "textureKey": "fire_attack"
-              },
-              {
-                "config": {
-                  "columns": 8,
-                  "endFrame": 7,
-                  "fps": 10.0,
-                  "loop": false,
-                  "rows": 1,
-                  "startFrame": 0,
-                  "totalFrames": 8
-                },
-                "currentFrame": 0,
-                "name": "knockback",
-                "spriteSheetPath": "../../assets/Textures/Character/Fire Enemy_Sprite/Knockback_Sprite.png",
-                "textureKey": "fire_knockback"
-              },
-              {
-                "config": {
-                  "columns": 14,
-                  "endFrame": 13,
-                  "fps": 8.0,
-                  "loop": false,
-                  "rows": 1,
-                  "startFrame": 0,
-                  "totalFrames": 14
-                },
-                "currentFrame": 0,
-                "name": "death",
-                "spriteSheetPath": "../../assets/Textures/Character/Fire Enemy_Sprite/Death_Sprite.png",
-                "textureKey": "fire_death"
-              }
-            ],
-            "fps": 6.0,
-            "frames": [],
-            "loop": true,
-            "play": true
-          },
-          "SpriteComponent": {
-            "texture_key": "fire_idle"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": 0.5,
+            "x": 0.0,
             "y": 0.0
           }
         },
-        "layer": "Default",
-        "name": "FireEnemy"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
-            "g": 1.0,
-            "h": 0.10000000149011612,
-            "layer": 0,
-            "r": 1.0,
-            "visible": false,
-            "w": 1.0
-          },
-          "RigidBodyComponent": {
-            "height": 0.10000000149011612,
-            "velocity_x": 0.0,
-            "velocity_y": 0.0,
-            "width": 1.0
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -0.6979166269302368,
-            "y": 0.7656248211860657
-          },
-          "ZoomTriggerComponent": {}
-        },
-        "layer": "Default",
-        "name": "zoom_Object"
+        "layer": "Gameplay:0",
+        "name": "Enemy"
       }
     ],
     "name": "level_RealTutorial"

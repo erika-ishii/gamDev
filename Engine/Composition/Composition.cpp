@@ -15,6 +15,7 @@
 
 #include "Composition.h"
 #include "Factory/Factory.h"
+#include "Core/Layer.h"
 #include <utility>
 #include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 
@@ -36,7 +37,7 @@ namespace Framework {
   *************************************************************************************/
     void GameObjectComposition::SetLayerName(const std::string& layer)
     {
-        std::string newLayer = layer.empty() ? std::string("Default") : layer;
+        std::string newLayer = Framework::NormalizeLayerName(layer);
         if (LayerName == newLayer)
             return;
 

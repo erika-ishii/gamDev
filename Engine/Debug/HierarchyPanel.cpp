@@ -23,6 +23,9 @@
 *********************************************************************************************/
 
 #include "HierarchyPanel.h"
+
+#if SOFASPUDS_ENABLE_EDITOR
+
 #include "Factory/Factory.h"
 #include "Composition/Composition.h"
 #include "Selection.h"
@@ -39,6 +42,7 @@
 #ifdef _DEBUG
 #define new DBG_NEW       // <- redefine new AFTER all includes
 #endif
+
 namespace
 {
     /*****************************************************************************************
@@ -250,3 +254,5 @@ void mygame::DrawHierarchyPanel()
 
     ImGui::End();
 }
+
+#endif // SOFASPUDS_ENABLE_EDITOR

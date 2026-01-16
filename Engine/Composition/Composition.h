@@ -195,7 +195,7 @@ namespace Framework {
         std::vector<UptrComp> Components; //owned 
         GOCId ObjectId = 0;
         std::string ObjectName;
-        std::string LayerName{ "Default" };
+        std::string LayerName{ "Gameplay:0" };
 
   
     };

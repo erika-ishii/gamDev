@@ -92,6 +92,8 @@ namespace Framework
         *************************************************************************************/
         virtual void ReadString(const std::string& key, std::string& out) = 0;
 
+        virtual void ReadBool(const std::string& key, bool& out) = 0;
+
         /*************************************************************************************
           \brief Enters an array by key.
           \param key Array key to enter.
@@ -159,5 +161,7 @@ namespace Framework
     inline void StreamRead(ISerializer& stream, const std::string& key, std::string& out) {
         stream.ReadString(key, out);
     }
-
+    inline void StreamRead(ISerializer& stream, const std::string& key, bool& out) {
+        stream.ReadBool(key, out);
+    }
 }

@@ -18,9 +18,14 @@
               begins and recording the delta when the mouse is released.
             - Compiled in both debug and release builds so editor gizmo behavior is available
               regardless of configuration.
+\copyright
+            All content © 2025 DigiPen Institute of Technology Singapore.
+            All rights reserved.
 *********************************************************************************************/
 
 #include "EditorGizmo.h"
+
+#if SOFASPUDS_ENABLE_EDITOR
 
 #include "Component/TransformComponent.h"
 #include "Debug/Selection.h"
@@ -623,3 +628,5 @@ namespace Framework {
 
     } // namespace editor
 } // namespace Framework
+
+#endif // SOFASPUDS_ENABLE_EDITOR

@@ -283,8 +283,8 @@ namespace gfx {
         Resource_Manager::loadAll(Framework::ResolveAssetPath("Textures").string());
 
         // Use the string ID directly
-        bgTexture = Resource_Manager::resources_map["house"].handle;
-        if (!bgTexture) throw std::runtime_error("bg_texture|missing|house");
+        //bgTexture = Resource_Manager::resources_map["house"].handle;
+        //if (!bgTexture) throw std::runtime_error("bg_texture|missing|house");
 
         // ----- Background shader -----
         const char* bgVertexSrc =

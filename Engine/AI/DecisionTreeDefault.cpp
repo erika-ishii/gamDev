@@ -1,7 +1,8 @@
 /*********************************************************************************************
  \file      DecisionTreeDefault.cpp
  \par       SofaSpuds
- \author    jianwei.c (jianwei.c@digipen.edu) - Primary Author, 100%
+ \author    jianwei.c (jianwei.c@digipen.edu) - Primary Author, 80%
+            yimo kong (yimo.kong@digipen.edu)      - Author, 20%
 
  \brief     Implementation of default decision tree behavior for enemy AI. Defines helper
             functions that manage proximity checks, tree creation, and periodic updates
@@ -200,7 +201,6 @@ namespace Framework
                 auto* rb = enemy->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);
                 auto* tr = enemy->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
                 auto* ai = enemy->GetComponentType<EnemyDecisionTreeComponent>(ComponentTypeId::CT_EnemyDecisionTreeComponent);
-                auto* audio = enemy->GetComponentType<AudioComponent>(ComponentTypeId::CT_AudioComponent);
 
                 if (rb && tr && ai)
                 {
@@ -213,8 +213,6 @@ namespace Framework
                     {
                         ai->pauseTimer -= dt;
                         rb->velX = 0.0f;
-                        if (audio && audio->playing["GhostSounds"])
-                            audio->Stop("GhostSounds");
                         return;
                     }
 
@@ -282,18 +280,6 @@ namespace Framework
                         ai->dir = -1.0f;
                         ai->pauseTimer = pauseDuration;
                     }
-                    if (audio)
-                    {
-                        float speed = std::sqrt(rb->velX * rb->velX + rb->velY * rb->velY);
-                        const float moveThreshold = 0.01f; // tiny sliding is ignored
-
-                        if (speed > moveThreshold && !audio->playing["GhostSounds"])
-                            audio->Play("GhostSounds"); // true = loop
-                        else if (speed <= moveThreshold && audio->playing["GhostSounds"])
-                            audio->Stop("GhostSounds");
-                    }
-
-
                     // Optional: ensure a patrol/idle animation when not attacking
                     PlayAnimationIfAvailable(enemy, "idle");
                 }
@@ -320,6 +306,7 @@ namespace Framework
                 auto* tr = enemy->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
                 auto* ai = enemy->GetComponentType<EnemyDecisionTreeComponent>(ComponentTypeId::CT_EnemyDecisionTreeComponent);
                 auto* typeComp = enemy->GetComponentType<EnemyTypeComponent>(ComponentTypeId::CT_EnemyTypeComponent);
+                auto* audio = enemy->GetComponentType<AudioComponent>(ComponentTypeId::CT_AudioComponent);
 
                 if (!attack || !rb || !tr || !ai)
                     return;
@@ -417,14 +404,18 @@ namespace Framework
                                     enemy,
                                     spawnX, spawnY,
                                     dirX, dirY,
-                                    0.1f,       // Projectile speed 
+                                    0.2f,       // Projectile speed 
                                     0.3f, 0.15f, // Size
                                     static_cast<float>(attack->damage),
-                                    5.0f,        // Duration
+                                    3.0f,        // Duration
                                     HitBoxComponent::Team::Enemy
                                 );
-
+                                if (audio)
+                                {
+                                    audio->TriggerSound("EnemyAttack");
+                                }
                                 PlayAnimationIfAvailable(enemy, "rangeattack", true);
+                                attack->attack_timer = -3.0f;
                             }
                             else
                             {
@@ -451,6 +442,10 @@ namespace Framework
                                     attack->hitbox->duration,
                                     HitBoxComponent::Team::Enemy
                                 );
+                                if (audio)
+                                {
+                                    audio->TriggerSound("EnemyAttack");
+                                }
 
                                 // Play attack animation when slashing
                                 PlayAnimationIfAvailable(enemy, "slashattack", true);

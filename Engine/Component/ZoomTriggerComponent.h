@@ -25,7 +25,7 @@ namespace Framework {
     {
     public:
         // How far to zoom out (smaller = more zoomed out)
-        float targetZoom{ 0.7f };
+        float targetZoom{ 2.f };
 
         // If true, only triggers once
         bool oneShot{ true };

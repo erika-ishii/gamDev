@@ -17,6 +17,8 @@
 
 #include "Inspector.h"
 
+#if SOFASPUDS_ENABLE_EDITOR
+
 #include "Debug/Selection.h"
 #include "Factory/Factory.h"
 #include "Component/TransformComponent.h"
@@ -35,6 +37,7 @@
 #ifdef _DEBUG
 #define new DBG_NEW       // <- redefine new AFTER all includes
 #endif
+
 namespace {
     std::array<char, 128> gNameBuffer{};
     Framework::GOCId      gNameBufferObject = 0;
@@ -244,3 +247,5 @@ namespace mygame {
     }
 
 } // namespace mygame
+
+#endif // SOFASPUDS_ENABLE_EDITOR

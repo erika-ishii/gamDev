@@ -11,6 +11,7 @@
 #include "Systems/LogicSystem.h"
 #include "Systems/PhysicSystem.h"
 #include "Systems/RenderSystem.h"
+#include "Factory/Factory.h"
 #include "Systems/audioSystem.h"
 #include "Systems/EnemySystem.h"
 #include "Systems/AiSystem.h"
@@ -35,6 +36,27 @@
 namespace mygame {
 
     namespace {
+        //Audio booleans
+        //Main Menu Sounds
+        bool mainMenuBGMPlaying = false;
+        const char* MAIN_MENU_BGM = "MenuMusic";
+        const char* START_BUTTTON = "MenuGameStart";
+        // BGM Sounds
+        bool gameplayBGMPlaying = false;
+        const char* GAMEPLAY_BGM = "BGM";
+        //Exit Sound
+        bool quitButtonPlayed = false;
+        const char* QUIT_BUTTON = "Quit";
+        //Defeat Sounds
+        const char* DEFEAT = "Defeat";
+        const char* BOILING = "Boiling";
+        bool defeatBGMPlaying = false;
+        bool defeatSoundStarted = false;
+        bool boilingStarted = false;
+        //Timer
+        float bgmFadeTimer = 0.0f;
+        constexpr float kBGMFadeDuration = 1.5f;
+
         using clock = std::chrono::high_resolution_clock;
 
         Framework::SystemManager gSystems;
@@ -93,6 +115,7 @@ namespace mygame {
     void update(float dt)
     {
         TryGuard::Run([&] {
+            SoundManager::getInstance().update(dt);
             const bool editorMode = Framework::RenderSystem::IsEditorVisible();
             const bool systemsUpdating = (currentState == GameState::PLAYING && editorSimulationRunning);
             if (!systemsUpdating && gInputSystem) {
@@ -111,8 +134,19 @@ namespace mygame {
             case GameState::MAIN_MENU:
                 mainMenu.Update(gInputSystem);
                 handlePerfToggle();
+                if (!mainMenuBGMPlaying && SoundManager::getInstance().isSoundLoaded(MAIN_MENU_BGM)) {
+                    SoundManager::getInstance().playSound(MAIN_MENU_BGM, 1.0f, 1.0f, true);
+                    SoundManager::getInstance().setSoundVolume(MAIN_MENU_BGM, 0.0f);
+                    SoundManager::getInstance().fadeInMusic(MAIN_MENU_BGM, kBGMFadeDuration, 0.3f);
+                    mainMenuBGMPlaying = true;
+                    gameplayBGMPlaying = false;
+                }
                 if (mainMenu.ConsumeStart())
                 {
+                    if (SoundManager::getInstance().isSoundLoaded(START_BUTTTON))
+                        SoundManager::getInstance().playSound(START_BUTTTON);
+                    SoundManager::getInstance().isSoundLoaded(MAIN_MENU_BGM);
+                    SoundManager::getInstance().fadeOutMusic(MAIN_MENU_BGM, kBGMFadeDuration);
                     currentState = GameState::TRANSITIONING;
                     transitionTimer = kStartTransitionDuration;
                     editorSimulationRunning = false;
@@ -142,6 +176,15 @@ namespace mygame {
                 }
                 // When simulation is not running we already refreshed input above.
                 handlePerfToggle();
+
+                if (!gameplayBGMPlaying && SoundManager::getInstance().isSoundLoaded(GAMEPLAY_BGM))
+                {
+                    SoundManager::getInstance().playSound(GAMEPLAY_BGM, 1.0f, 1.0f, true);
+                    SoundManager::getInstance().setSoundVolume(GAMEPLAY_BGM, 0.0f); // start silent
+                    SoundManager::getInstance().fadeInMusic(GAMEPLAY_BGM, kBGMFadeDuration, 0.4f); // fade to 0.4
+                    gameplayBGMPlaying = true;
+                }
+     
                 if (!editorMode && gHealthSystem && gHealthSystem->HasPlayerDied())
                 {
                     defeatScreen.ResetLatches();
@@ -180,6 +223,18 @@ namespace mygame {
 
                 if (pauseMenu.ConsumeMainMenu())
                 {
+                    if (SoundManager::getInstance().isSoundLoaded(GAMEPLAY_BGM))
+                    {
+                        SoundManager::getInstance().fadeOutMusic(GAMEPLAY_BGM, kBGMFadeDuration);
+                        gameplayBGMPlaying = false;
+                    }
+                    if (SoundManager::getInstance().isSoundLoaded(MAIN_MENU_BGM))
+                    {
+                        SoundManager::getInstance().playSound(MAIN_MENU_BGM, true); // loop
+                        SoundManager::getInstance().setSoundVolume(MAIN_MENU_BGM, 0.0f);
+                        SoundManager::getInstance().fadeInMusic(MAIN_MENU_BGM, kBGMFadeDuration, 0.4f);
+                        mainMenuBGMPlaying = true;
+                    }
                     if (gLogicSystem)
                     {
                         gLogicSystem->ReloadLevel();
@@ -208,6 +263,24 @@ namespace mygame {
                 defeatScreen.Update(gInputSystem);
                 handlePerfToggle();
 
+                if (!defeatSoundStarted && SoundManager::getInstance().isSoundLoaded(DEFEAT))
+                {
+                    SoundManager::getInstance().playSound(DEFEAT, false); // one-shot
+                    SoundManager::getInstance().setSoundVolume(DEFEAT, 0.5f);
+                    defeatSoundStarted = true;
+                }
+                if (!boilingStarted && SoundManager::getInstance().isSoundLoaded(BOILING))
+                {
+                    SoundManager::getInstance().playSound(BOILING, false, 1.0f); // start silent
+                    SoundManager::getInstance().fadeInMusic(BOILING, 0.7f, 1.0f); // fade in to 0.5 volume over 2 seconds
+                    boilingStarted = true;
+                }
+                if (gameplayBGMPlaying && SoundManager::getInstance().isSoundLoaded(GAMEPLAY_BGM))
+                {
+                    SoundManager::getInstance().fadeOutMusic(GAMEPLAY_BGM, kBGMFadeDuration);
+                    gameplayBGMPlaying = false;
+                }
+
                 // [ADDED] Check for Pause input to go to Pause Menu
                 if (gInputSystem && !editorMode &&
                     (gInputSystem->IsKeyPressed(PAUSE_KEY) || gInputSystem->IsKeyPressed(START_KEY)))
@@ -219,6 +292,20 @@ namespace mygame {
 
                 if (defeatScreen.ConsumeTryAgain())
                 {
+                    if (SoundManager::getInstance().isSoundLoaded(DEFEAT)&& SoundManager::getInstance().isSoundLoaded(BOILING))
+                    {
+                        SoundManager::getInstance().stopSound(DEFEAT);
+                        SoundManager::getInstance().stopSound(BOILING);
+                    }
+                    if (SoundManager::getInstance().isSoundLoaded(GAMEPLAY_BGM))
+                    {
+                        SoundManager::getInstance().playSound(GAMEPLAY_BGM, true);
+                        SoundManager::getInstance().setSoundVolume(GAMEPLAY_BGM, 0.0f);
+                        SoundManager::getInstance().fadeInMusic(GAMEPLAY_BGM, kBGMFadeDuration, 0.4f);
+                        gameplayBGMPlaying = true;
+                    }
+
+                    defeatSoundStarted = false;
                     if (gLogicSystem)
                     {
                         gLogicSystem->ReloadLevel();
@@ -232,7 +319,8 @@ namespace mygame {
                 break;
 
 
-            case GameState::EXIT:
+                case GameState::EXIT:
+       
                 if (gInputSystem) {
                     if (auto* w = gInputSystem->Window()) w->close();
                 }
@@ -343,12 +431,16 @@ namespace mygame {
         editorSimulationRunning = true;
         if (currentState != GameState::PLAYING)
             currentState = GameState::PLAYING;
+        if (Framework::FACTORY)
+            Framework::FACTORY->Layers().LogVisibilitySummary("EditorPlaySimulation");
     }
 
     void EditorStopSimulation()
     {
 
         editorSimulationRunning = false;
+        if (Framework::FACTORY)
+            Framework::FACTORY->Layers().LogVisibilitySummary("EditorStopSimulation");
     }
 
 } // namespace mygame

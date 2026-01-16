@@ -15,7 +15,7 @@
 #pragma once
 #include "Composition/Component.h"
 #include "Serialization/Serialization.h"
-#include "Resource_Manager/Resource_Manager.h"
+#include "Resource_Asset_Manager/Resource_Manager.h"
 
 namespace Framework {
     /*****************************************************************************************

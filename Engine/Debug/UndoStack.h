@@ -9,6 +9,8 @@
 *********************************************************************************************/
 #pragma once
 
+#if SOFASPUDS_ENABLE_EDITOR
+
 #include "Core/Core.hpp"
 #include "Component/SpriteAnimationComponent.h" // Required for SpriteSheetAnimation struct
 #include <vector>
@@ -79,3 +81,5 @@ namespace mygame
         void ShutdownUndoSystem();
     }
 }
+
+#endif // SOFASPUDS_ENABLE_EDITOR

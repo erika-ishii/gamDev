@@ -23,14 +23,17 @@
 // Engine/Graphics/ImGuiLayer.cpp
 #include "ImGuiLayer.h"
 
+#if SOFASPUDS_ENABLE_EDITOR
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#endif
 #include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 
 #ifdef _DEBUG
 #define new DBG_NEW       // <- redefine new AFTER all includes
 #endif
+
 /// Internal state flag to track whether ImGui has been initialized.
 static bool s_imguiReady = false;
 
@@ -45,6 +48,7 @@ static bool s_imguiReady = false;
     - Initializes GLFW + OpenGL3 bindings.
     - Marks ImGui as ready for use.
 *************************************************************************************/
+#if SOFASPUDS_ENABLE_EDITOR
 void ImGuiLayer::Initialize(gfx::Window& win, const ImGuiLayerConfig& cfg) {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -65,27 +69,45 @@ void ImGuiLayer::Initialize(gfx::Window& win, const ImGuiLayerConfig& cfg) {
 
     s_imguiReady = true;
 }
+#else
+void ImGuiLayer::Initialize(gfx::Window&, const ImGuiLayerConfig&) {
+    // No ImGui in non-editor builds
+    s_imguiReady = false;
+}
+#endif
 
 /*************************************************************************************
   \brief Begins a new ImGui frame.
   \note Returns immediately if ImGui has not been initialized.
 *************************************************************************************/
+#if SOFASPUDS_ENABLE_EDITOR
 void ImGuiLayer::BeginFrame() {
     if (!s_imguiReady) return;
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 }
+#else
+void ImGuiLayer::BeginFrame() {
+    // no-op in non-editor builds
+}
+#endif
 
 /*************************************************************************************
   \brief Ends the current ImGui frame and renders the UI.
   \note Returns immediately if ImGui has not been initialized.
 *************************************************************************************/
+#if SOFASPUDS_ENABLE_EDITOR
 void ImGuiLayer::EndFrame() {
     if (!s_imguiReady) return;
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
+#else
+void ImGuiLayer::EndFrame() {
+    // no-op in non-editor builds
+}
+#endif
 
 /*************************************************************************************
   \brief Shuts down ImGui and releases its resources.
@@ -94,6 +116,7 @@ void ImGuiLayer::EndFrame() {
     - Destroys the ImGui context.
     - Marks ImGui as no longer ready.
 *************************************************************************************/
+#if SOFASPUDS_ENABLE_EDITOR
 void ImGuiLayer::Shutdown() {
     if (!s_imguiReady) return;
     ImGui_ImplOpenGL3_Shutdown();
@@ -101,3 +124,9 @@ void ImGuiLayer::Shutdown() {
     ImGui::DestroyContext();
     s_imguiReady = false;
 }
+#else
+void ImGuiLayer::Shutdown() {
+    // no-op in non-editor builds
+    s_imguiReady = false;
+}
+#endif

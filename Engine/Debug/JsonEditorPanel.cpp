@@ -24,6 +24,9 @@
 *********************************************************************************************/
 
 #include "Debug/JsonEditorPanel.h"
+
+#if SOFASPUDS_ENABLE_EDITOR
+
 #include <algorithm>
 #include <cctype>
 #include <cstddef>
@@ -35,6 +38,7 @@
 #ifdef _DEBUG
 #define new DBG_NEW       // <- redefine new AFTER all includes
 #endif
+
 namespace mygame {
 
 	namespace {
@@ -375,3 +379,5 @@ namespace mygame {
 		return 0;
 	}
 }
+
+#endif // SOFASPUDS_ENABLE_EDITOR

@@ -35,10 +35,13 @@
 
 #include <array>
 #include <memory>
+#if SOFASPUDS_ENABLE_EDITOR
 #include "Debug/AudioImGui.h"
-
+#endif
+#include "../Composition/Composition.h"
 namespace Framework {
 	class AudioImGui;
+
     /*****************************************************************************************
      \class AudioSystem
      \brief
@@ -51,6 +54,9 @@ namespace Framework {
     *****************************************************************************************/
 	class AudioSystem :public Framework::ISystem {
 	public:
+        bool footstepPlaying = false;           
+        std::string currentFootstep;           
+
 		explicit AudioSystem(gfx::Window& window);
 
 		void Initialize() override;
@@ -60,6 +66,9 @@ namespace Framework {
 		void draw();
 
 		void Shutdown() override;
+        //Helper for footsteps
+        std::string GetRandomClip(const std::vector<std::string>& footstepClips);
+        void HandlePlayerFootsteps(GOC* player);
 
 		std::string GetName() override{ return "AudioSystem"; }
 

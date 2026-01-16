@@ -53,20 +53,30 @@ Tay Wanxuan (Artist/ Audio Lead)
 Movement & Combat
 
 W/A/S/D: Move (intent goes into the rigid body; actual motion handled by physics).
-Left Mouse Button: Spawn a short-lived attack hitbox towards the cursor 
-   Q / E: Rotate
-   Z / X: Scale down/up with clamping
+Left Mouse Button: physical attack 
+Right Mouse Button: range attack
 
+Gizmos
+R- Rotate
+T - Translation
+S - Scale
+Control Z undo
 Editor & Viewport
 
 F10: Toggle Editor panels (dockspace & tools).
 F11: Toggle fullscreen/windowed mode.
+F1 Performance window
 F (Editor camera): Frame current selection.
+f9 crash game (debugging)
+Delete by pressing on keyboard Delete the selected object
+control Z to undo button
 
 Using the In-Game Editor (real time)
 
 Open the editor: press F10. Panels appear on the right (dockspace). 
 Viewport Controls: small floating helper to toggle editor/viewport sizing, and play/stop sim.
+
+
 
 
 Hierarchy Panel
@@ -86,6 +96,27 @@ JSON Editor (Level/Data)
 
 Load and edit JSON files from your data folder; 
 includes a selectable file list and dirty/modified state.
+
+properties editor 
+
+select and edit the object components
+
+animation editor 
+
+To edit the spritesheet and change the settings of the object
+
+inspector window
+
+To read the object component values
+
+
+Important!
+
+Use the clean.bat file then run the run.bat file for editor Mode (Offline)
+Go to build_game 
+Use the clean.bat file run run_game.bat for non editor mode in release mode (Offline)
+
+Run game in admin once to able to play 
 
 You can also toggle Editor Enabled (F10) via the on-screen Viewport Controls
 Crash logging test:

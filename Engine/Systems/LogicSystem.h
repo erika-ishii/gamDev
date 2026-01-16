@@ -30,6 +30,7 @@
 #include "Component/EnemyHealthComponent.h"
 #include "Component/EnemyTypeComponent.h"
 #include "Graphics/PlayerHUD.h"
+#include "Component/GateTargetComponent.h"
 #include "Component/ZoomTriggerComponent.h"
 #include "Physics/Dynamics/RigidBodyComponent.h"
 #include <Serialization/JsonSerialization.h>

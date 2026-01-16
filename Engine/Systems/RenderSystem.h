@@ -30,29 +30,32 @@
 #include "Component/PlayerAttackComponent.h"
 
 #include "Config/WindowConfig.h"
-
+#if SOFASPUDS_ENABLE_EDITOR
 #include "Debug/ImGuiLayer.h"
 #include "Debug/Perf.h"
 #include "Debug/Spawn.h"
+#include "Debug/LayerPanel.h"
 #include "Debug/Selection.h"
 #include "Debug/HierarchyPanel.h"
 #include "Debug/InspectorPanel.h"
 #include "Debug/AssetBrowserPanel.h"
 #include "Debug/AnimationEditorPanel.h"
 #include "Debug/JsonEditorPanel.h"
+#endif
 
 #include "Factory/Factory.h"
 #include "Graphics/Graphics.hpp"
 #include "Graphics/Camera2D.hpp"
 #include "Graphics/Window.hpp"
 #include "Graphics/GraphicsText.hpp"
-#include "Resource_Manager/Resource_Manager.h"
+#include "Resource_Asset_Manager/Resource_Manager.h"
 
 #include <array>
 #include <filesystem>
 #include <string>
-
+#if SOFASPUDS_ENABLE_EDITOR
 #include <imgui.h>
+#endif
 #include <glm/vec2.hpp>
 
 struct GLFWwindow;
@@ -135,23 +138,25 @@ namespace Framework {
 
     private:
         // --- Filesystem / asset resolution ------------------------------------------------
-        std::string           FindRoboto() const;
+        std::string             FindRoboto() const;
         std::filesystem::path FindAssetsRoot() const;
         std::filesystem::path FindDataFilesRoot() const;
 
         // --- Asset import / file-drop -----------------------------------------------------
         void HandleFileDrop(int count, const char** paths);
         void ProcessImportedAssets();
-
+#if SOFASPUDS_ENABLE_EDITOR
         // --- Editor frame scaffolding -----------------------------------------------------
         void DrawDockspace();
-        void HandleShortcuts();
-        void HandleViewportPicking();
 
+        void HandleViewportPicking();
+#endif
+        void HandleShortcuts();
         // --- Camera & picking helpers -----------------------------------------------------
+#if SOFASPUDS_ENABLE_EDITOR
         void  UpdateEditorCameraControls(GLFWwindow* native, const ImGuiIO& io,
             double cursorX, double cursorY);
-
+#endif
         bool  CursorToViewportNdc(double cursorX, double cursorY,
             float& ndcX, float& ndcY,
             bool& insideViewport) const;
@@ -167,8 +172,9 @@ namespace Framework {
         // --- Viewport layout --------------------------------------------------------------
         void UpdateGameViewport();
         void RestoreFullViewport();
+#if SOFASPUDS_ENABLE_EDITOR
         void DrawViewportControls();
-
+#endif
         // --- GLFW static callback ---------------------------------------------------------
         static void GlfwDropCallback(GLFWwindow* window, int count, const char** paths);
 
@@ -185,9 +191,14 @@ namespace Framework {
         static RenderSystem* sInstance;
 
         // --- Editor panels & roots --------------------------------------------------------
+        // These members rely on types that are only included when editor is enabled.
+#if SOFASPUDS_ENABLE_EDITOR
         mygame::AssetBrowserPanel assetBrowser;
-        std::filesystem::path     assetsRoot;
         mygame::JsonEditorPanel   jsonEditor;
+#endif
+        // These paths are used in HandleFileDrop even if editor is off (checked for empty),
+        // so we keep them available to avoid modifying the interface too heavily.
+        std::filesystem::path     assetsRoot;
         std::filesystem::path     dataFilesRoot;
 
         // --- Frame/viewport state ---------------------------------------------------------
@@ -255,6 +266,7 @@ namespace Framework {
 
         // --- Layout persistence -----------------------------------------------------------
         std::string imguiLayoutPath{};       //!< Optional saved ImGui layout path.
+
     };
 
 } // namespace Framework

@@ -62,6 +62,21 @@ namespace Framework
         bool initialized = false;
         std::unordered_map<std::string, SoundInfo> sounds;
         std::unordered_map<std::string, bool> playing;
+        //Footsteps
+        std::vector<std::string> footstepClips;
+        std::string currentFootstep;
+        bool isFootstepPlaying = false;
+        //Slashes Sound
+        std::vector<std::string> slashClips;//Slashing Enemy
+        std::vector<std::string> punchClips;//Slashing Air
+        std::vector<std::string> ineffectiveClips;//Ineffective Slashes
+        //Grapple
+        std::vector<std::string> grappleClips;
+        //Enemy Sounds
+        std::vector<std::string> attackClips;
+        std::vector<std::string> hurtClips;
+        std::vector<std::string> deathClips;
+
         float volume{ 1.0f }; 
         std::string entityType;
         
@@ -115,17 +130,83 @@ namespace Framework
         {
             sounds.clear();
             playing.clear();
+            footstepClips.clear();
             if (entityType == "player")
             {
-                sounds["footsteps"] = { "footsteps", true };
-                sounds["Slash1"] = { "Slash1", false };
-                sounds["GrappleShoot1"] = { "GrappleShoot1", false };
+                for (int i = 1; i <= 6; i++)
+                {
+                    std::string clip = "ConcreteFootsteps" + std::to_string(i);
+                    sounds[clip] = { clip, false };
+                    playing[clip] = false;
+                    footstepClips.push_back(clip);
+                }
+                //Slashes on Enemy
+                for (int i = 1; i <= 3; i++)
+                {
+                    sounds["Slash" + std::to_string(i)] = { "Slash" + std::to_string(i), false };
+                    slashClips.push_back("Slash" + std::to_string(i));
+                }
+                //Slashes in Air
+                for (int i = 1; i <= 4; i++)
+                {
+                    sounds["Punch" + std::to_string(i)] = { "Punch" + std::to_string(i), false };
+                    punchClips.push_back("Punch" + std::to_string(i));
+                }
+                
+                //Ineffective Slashes
+                for (int i = 1; i <= 3; i++)
+                {
+                    sounds["Ineffective Boink" + std::to_string(i)] = { "Ineffective Boink" + std::to_string(i), false };
+                    ineffectiveClips.push_back("Ineffective Boink" + std::to_string(i));
+                }
+
+                for (int i = 1; i <= 4; i++)
+                {
+                    sounds["GrappleShoot" + std::to_string(i)] = { "GrappleShoot" + std::to_string(i), false };
+                    grappleClips.push_back("GrappleShoot" + std::to_string(i));
+                }
                 sounds["PlayerHit"] = { "PlayerHit", false };
                 sounds["PlayerDead"] = { "PlayerDead", false };
             }
-            else if (entityType == "enemy")
+            else if (entityType == "enemy_fire")
             {
-               sounds["GhostSounds"] = { "GhostSounds", false };
+                // Projectile variants
+                for (int i = 1; i <= 2; i++)
+                {
+                    std::string id = "FireGhostProjectile" + std::to_string(i);
+                    sounds[id] = { id, false };
+                    attackClips.push_back(id);
+                }
+
+                // Hurt variants
+                for (int i = 1; i <= 8; i++)
+                {
+                    std::string id = "GhostHurt" + std::to_string(i);
+                    sounds[id] = { id, false };
+                    hurtClips.push_back(id);
+                }
+
+                sounds["FireGhostExplosion"] = { "FireGhostExplosion", false };
+                deathClips.push_back("FireGhostExplosion");
+            }
+            else if (entityType == "enemy_water")
+            {
+                // Water ghost attack (1 only)
+                std::string atk = "WaterGhostAttack";
+                sounds[atk] = { atk, false };
+                attackClips.push_back(atk);
+
+                // Shared GhostHurt1–8
+                for (int i = 1; i <= 8; i++)
+                {
+                    std::string id = "GhostHurt" + std::to_string(i);
+                    sounds[id] = { id, false };
+                    hurtClips.push_back(id);
+                }
+
+                // Water ghost death — only 1 clip
+                sounds["WaterGhostExplosion"] = { "WaterGhostExplosion", false };
+                deathClips.push_back("WaterGhostExplosion");
             }
 
             // Build playing map
@@ -133,6 +214,9 @@ namespace Framework
                 playing[action] = false;
             std::cout << "[AudioComponent] initialize called, entityType='" << entityType << "'\n";
         }
+
+ 
+
         /*************************************************************************************
           \brief Plays a sound associated with the given action key.
 
@@ -169,12 +253,38 @@ namespace Framework
           \details
               Useful for one-shot events such as effects, hits, UI sounds, or ambient cues.
         *************************************************************************************/
-        void TriggerSound(const std::string& action)
+        void TriggerSound(const std::string& name)
         {
             ensureInitialized();
-            auto it = sounds.find(action);
-            if (it != sounds.end()) { SoundManager::getInstance().playSound(it->second.id, volume, 1.f, it->second.loop);}
+            std::string clipToPlay = name;
+
+            if (name == "Slash")
+                clipToPlay = GetRandomFrom(slashClips);
+            else if (name == "Punch")
+                clipToPlay = GetRandomFrom(punchClips);
+            else if (name == "Ineffective")
+                clipToPlay = GetRandomFrom(ineffectiveClips);
+            else if (name == "GrappleShoot")
+                clipToPlay = GetRandomFrom(grappleClips);
+
+            // Enemy groups
+            else if (name == "EnemyAttack")
+                clipToPlay = GetRandomFrom(attackClips);
+            else if (name == "EnemyHit")
+                clipToPlay = GetRandomFrom(hurtClips);
+            else if (name == "EnemyDeath")
+                clipToPlay = GetRandomFrom(deathClips);
+
+            Play(clipToPlay);
         }
+
+        std::string GetRandomFrom(const std::vector<std::string>& list)
+        {
+            if (list.empty()) return "";
+            int index = rand() % list.size();
+            return list[index];
+        }
+
         /*************************************************************************************
           \brief Serializes sound configuration and volume settings.
 

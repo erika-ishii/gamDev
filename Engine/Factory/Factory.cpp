@@ -54,6 +54,7 @@
 #include "Component/EnemyDecisionTreeComponent.h"
 #include "Component/EnemyHealthComponent.h"
 #include "Component/EnemyTypeComponent.h"
+#include "Component/GateTargetComponent.h"
 #include "Graphics/PlayerHUD.h"
 
 #include "Physics/Dynamics/RigidBodyComponent.h"
@@ -350,6 +351,13 @@ namespace Framework {
             json out = json::object();
             if (!sp.texture_key.empty()) out["texture_key"] = sp.texture_key;
             if (!sp.path.empty()) out["path"] = sp.path;
+            return out;
+        }
+        case ComponentTypeId::CT_GateTargetComponent: {
+            auto const& gateTarget = static_cast<GateTargetComponent const&>(component);
+            json out = json::object();
+            if (!gateTarget.levelPath.empty())
+                out["level_path"] = gateTarget.levelPath;
             return out;
         }
         case ComponentTypeId::CT_SpriteAnimationComponent: {

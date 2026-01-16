@@ -39,6 +39,11 @@ CMake is required to generate Visual Studio solutions.
    start giraphics..sln
    ```
 
+Important!
+
+Use the clean.bat file then run the run.bat file for editor Mode (Offline)
+Use the clean.bat file run run_game.bat for non editor mode in release mode (Offline)
+
 3. PROJECT SETTINGS (DEBUG VS RELEASE)
 --------------------------------------
 Once the solution is open in Visual Studio, you can toggle between configurations using the dropdown menu in the top toolbar.
@@ -47,11 +52,13 @@ Once the solution is open in Visual Studio, you can toggle between configuration
   - Features: Unoptimized code, full debug symbols, and enables console logging/assertions.
   - Performance: Slower.
   - able to use F9 for Crash logging
+  -F1 to show performance panel
 
 * **Release Mode:**
   - Use this for final deployment or performance testing.
   - Features: Fully optimized code. Debug logs may be disabled.
   - Performance: Runs at maximum speed.
+    -F1 to show performance panel
   
 
 Real-time (in-game) editor

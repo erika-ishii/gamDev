@@ -103,4 +103,17 @@ namespace Framework
       \return Resolved path to the data file, or a best-effort combination if no candidate exists.
     *************************************************************************************/
     std::filesystem::path ResolveDataPath(const std::filesystem::path& relative);
+    /*************************************************************************************
+       \brief Locate a user-writable Documents directory to store runtime data/logs.
+
+       Prefers the current user's Documents folder (derived from USERPROFILE on Windows
+       or HOME on Unix-likes). Falls back to the Public Documents folder on Windows, and
+       finally the current working directory if no other candidates are available.
+
+       The function will attempt to create the directory if it does not exist so callers
+       can safely append subdirectories/files without requiring admin privileges.
+
+       \return Canonical path to a user-writable Documents directory.
+     *************************************************************************************/
+    std::filesystem::path GetUserDocumentsDir();
 }

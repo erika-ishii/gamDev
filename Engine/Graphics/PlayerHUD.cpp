@@ -21,7 +21,7 @@
 
 #include "Component/PlayerHealthComponent.h"
 #include "Core/PathUtils.h"
-#include "Resource_Manager/Resource_Manager.h"
+#include "Resource_Asset_Manager/Resource_Manager.h"
 
 #include <algorithm>
 #include <iostream>
@@ -105,7 +105,8 @@ namespace Framework
         texFaceHappy = LoadTexture("hud_face_happy", "Textures/UI/Health Bar/Health_HappyFace.png");
         texFaceUpset = LoadTexture("hud_face_upset", "Textures/UI/Health Bar/Health_UpsetFace.png");
         texBottleFull = LoadTexture("hud_bottle", "Textures/UI/Health Bar/Health_Life.png");
-        texBottleBreak = LoadTexture("hud_bottle_break", "Textures/UI/Health Bar/Broken_Life_VFX_Sprite.png");
+        texBottleBreak = LoadTexture("hud_bottle_break", "Textures/UI/Broken_Life_VFX_Sprite.png");
+        texBottleBroken = LoadTexture("hud_bottle_broken", "Textures/UI/Health Bar/Health_BrokenLife.png");
     }
 
     /*****************************************************************************************
@@ -201,6 +202,22 @@ namespace Framework
                 }
             }
         }
+
+        displayedHealth = currentHealth;
+
+        // Update bottle break timers
+        for (auto& b : bottles)
+        {
+            if (b.breakAnimTimer > 0.0f)
+            {
+                b.breakAnimTimer -= dt;
+                if (b.breakAnimTimer <= 0.0f)
+                {
+                    b.breakAnimTimer = 0.0f;
+                    // [REMOVED] b.isVisible = false;  <-- Delete this line so it keeps drawing
+                }
+            }
+        }
     }
 
     /*****************************************************************************************
@@ -212,35 +229,56 @@ namespace Framework
     {
         using namespace gfx;
 
-        // Splash background
-        float startX = 20.0f;
-        float startY = static_cast<float>(screenH) - 130.0f;
-        float splashW = 350.0f;
-        float splashH = 150.0f;
+        // 1. DEFINE REFERENCE RESOLUTION (The resolution you designed the numbers for)
+        //const float refWidth = 1280.0f;
+        const float refHeight = 720.0f;
+
+        // 2. CALCULATE SCALE FACTOR
+        // We scale based on height to maintain aspect ratio even if width changes
+        float scaleFactor = static_cast<float>(screenH) / refHeight;
+
+        // Optional: Clamp scale so it doesn't get too tiny or too massive
+        // scaleFactor = std::clamp(scaleFactor, 0.5f, 2.0f);
+
+        // 3. APPLY SCALE TO VARIABLES
+        // Multiply all your hardcoded positions and sizes by scaleFactor
+
+        float startX = 20.0f * scaleFactor;
+        float startY = static_cast<float>(screenH) - (150.0f * scaleFactor); // Offset scaled from bottom
+        float splashW = 250.0f * scaleFactor;
+        float splashH = 120.0f * scaleFactor;
+        float splashX = startX + (90.0f * scaleFactor);
+
+        float splashY = startY  -(10.0f * scaleFactor);
 
         if (texSplash)
-            Graphics::renderSpriteUI(texSplash, startX, startY, splashW, splashH, 1, 1, 1, 1, screenW, screenH);
+        {
+            // Use 'splashX' and 'splashY' here
+            Graphics::renderSpriteUI(texSplash, splashX, splashY, splashW, splashH, 1, 1, 1, 1, screenW, screenH);
+        }
         // Compute health percentage
         float healthPercent = 0.0f;
         if (health && health->playerMaxhealth > 0)
             healthPercent = (static_cast<float>(displayedHealth) / health->playerMaxhealth) * 100.0f;
-
-        // Choose face based on percentage
         unsigned faceTex = (healthPercent >= 50.0f) ? texFaceHappy : texFaceUpset;
 
-        float faceSize = 110.0f;
-        float faceX = startX + 10.0f;
-        float faceY = startY + 20.0f;
+        float faceW = 110.0f * scaleFactor;  // Adjust this for Width
+        float faceH = 100.0f * scaleFactor;  // Adjust this for Height (try 110.0f or 120.0f if it looks short)
+
+        float faceX = startX + (10.0f * scaleFactor);
+        float faceY = startY + (20.0f * scaleFactor);
 
         if (faceTex)
-            Graphics::renderSpriteUI(faceTex, faceX, faceY, faceSize, faceSize, 1, 1, 1, 1, screenW, screenH);
+            Graphics::renderSpriteUI(faceTex, faceX, faceY, faceW, faceH, 1, 1, 1, 1, screenW, screenH);
 
-        // Bottle positions
-        float bottleStartX = faceX + faceSize + 40.0f;
-        float bottleY = faceY + 20.0f;
-        float bottleW = 40.0f;
-        float bottleH = 80.0f;
-        float bottleSpacing = 35.0f;
+
+        // Bottle scaling
+        float bottleW = 45.0f * scaleFactor;
+        float bottleH = 70.0f * scaleFactor;
+        float bottleSpacing = -10.0f * scaleFactor;
+       
+        float bottleStartX = faceX + faceW - (10.0f * scaleFactor) ;
+        float bottleY = faceY + (5.0f * scaleFactor);
 
         // Setup screen-space ortho projection
         glm::mat4 uiOrtho = glm::ortho(0.0f, static_cast<float>(screenW),
@@ -249,37 +287,60 @@ namespace Framework
 
         Graphics::setViewProjection(glm::mat4(1.0f), uiOrtho);
 
-        // Draw bottles
+        // -------------------------------------------------------------------------
+     // DEBUG DRAW LOOP
+     // -------------------------------------------------------------------------
         for (int i = 0; i < static_cast<int>(bottles.size()); i++)
         {
             float xPos = bottleStartX + (i * (bottleW + bottleSpacing));
             const auto& b = bottles[static_cast<std::size_t>(i)];
 
-            // Break animation frames
+            // Only debug the 3rd bottle (index 2) which seems to be the broken one
+            bool debugThisBottle = (i == 2);
+            float yPos = bottleY;
+
+            //  If it's the 3rd, 4th, or 5th bottle (index 2+), move it down.
+            if (i >= 2)
+            {
+                yPos -= (5.0f * scaleFactor); // Change 15.0f to adjust how far down it goes
+            }
+            // CASE A: ANIMATION
             if (b.breakAnimTimer > 0.0f)
             {
+                if (debugThisBottle) std::cout << "[HUD] Bottle 2 is ANIMATING. Timer: " << b.breakAnimTimer << "\n";
+
                 float timePercent = 1.0f - (b.breakAnimTimer / BREAK_ANIM_DURATION);
                 int frame = static_cast<int>(timePercent * BREAK_FRAMES);
                 frame = std::clamp(frame, 0, BREAK_FRAMES - 1);
 
                 if (texBottleBreak)
-                    Graphics::renderSpriteFrame(
-                        texBottleBreak,
-                        xPos + bottleW / 2, bottleY + bottleH / 2,
-                        0.0f,
-                        bottleW, bottleH,
-                        frame, 3, 1);
+                    Graphics::renderSpriteFrame(texBottleBreak, xPos + bottleW / 2, yPos + bottleH / 2, 0.0f, bottleW, bottleH, frame, 3, 1);
             }
-            // Full bottle
-            else if (!b.isBroken)
+            // CASE B: BROKEN (STATIC)
+            else if (b.isBroken)
             {
+                if (debugThisBottle) std::cout << "[HUD] Bottle 2 is BROKEN. Texture ID: " << texBottleBroken << "\n";
+
+                if (texBottleBroken != 0)
+                {
+                    // Normal Draw
+                    Graphics::renderSpriteFrame(texBottleBroken, xPos + bottleW / 2, yPos + bottleH / 2, 0.0f, bottleW, bottleH, 0, 1, 1);
+                }
+                else
+                {
+                    // FALLBACK: Draw a MAGENTA square if texture is missing/failed to load
+                    // (Assuming you have a function to draw a simple rect, or re-use another texture with color mod)
+                    // If not, we will use the Full Bottle but Tint it RED to prove logic works.
+                    if (texBottleFull)
+                        Graphics::renderSpriteFrame(texBottleFull, xPos + bottleW / 2, yPos + bottleH / 2, 0.0f, bottleW, bottleH, 0, 1, 1, 1.0f, 0.0f, 1.0f, 1.0f); // Magenta Tint
+                }
+            }
+            // CASE C: HEALTHY
+            else
+            {
+                // if (debugThisBottle) std::cout << "[HUD] Bottle 2 is HEALTHY.\n";
                 if (texBottleFull)
-                    Graphics::renderSpriteFrame(
-                        texBottleFull,
-                        xPos + bottleW / 2, bottleY + bottleH / 2,
-                        0.0f,
-                        bottleW, bottleH,
-                        0, 1, 1);
+                    Graphics::renderSpriteFrame(texBottleFull, xPos + bottleW / 2, yPos + bottleH / 2, 0.0f, bottleW, bottleH, 0, 1, 1);
             }
         }
 

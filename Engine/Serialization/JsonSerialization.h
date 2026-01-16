@@ -94,6 +94,8 @@ namespace Framework
         **************************************************************************************/
         void ReadString(const std::string& key, std::string& out) override;
 
+        void ReadBool(const std::string& key, bool& out) override;
+
         /*************************************************************************************
           \name   Array Navigation Helpers
           \brief  Utilities for entering arrays and iterating by index.

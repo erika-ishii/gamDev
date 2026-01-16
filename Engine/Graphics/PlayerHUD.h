@@ -81,7 +81,8 @@ namespace Framework
         unsigned texFaceHappy = 0;    ///< Happy face shown at high health.
         unsigned texFaceUpset = 0;    ///< Upset face shown at low health.
         unsigned texBottleFull = 0;   ///< Full bottle representing health.
-        unsigned texBottleBreak = 0;  ///< Sprite sheet for bottle break animation.
+        unsigned texBottleBreak = 0;  ///< Sprite sheet for bottle break animation
+        unsigned texBottleBroken{ 0 }; //< break bottle when health is lost
 
         int displayedHealth = 100;    ///< The health value last interpreted into bottle counts.
         PlayerHealthComponent* health = nullptr; ///< Cached pointer to player's health component.
@@ -104,6 +105,8 @@ namespace Framework
         // -------------------------
         static constexpr float BREAK_ANIM_DURATION = 0.4f; ///< Bottle break anim length.
         static constexpr int BREAK_FRAMES = 3;              ///< Number of frames in break sheet.
+
+
 
         // -------------------------
         // Internal helpers

@@ -25,10 +25,13 @@ namespace Framework
 	public:
 		float velX = 1.0f;
 		float velY = 1.0f;
+		float knockVelX = 0.0f;
+		float knockVelY = 0.0f;
 		float width = 1.0f;
 		float height = 1.0f;
 		float knockbackTime = 0.0f;
 		float dampening = 0.7f;
+		float lungeTime = 0.0f;
 
 		void initialize() override {}
 		void SendMessage(Message& m) override { (void)m; }

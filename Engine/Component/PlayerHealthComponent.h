@@ -28,6 +28,7 @@
 #pragma once
 #include "Composition/Component.h"
 #include "Serialization/Serialization.h"
+#include "Component/AudioComponent.h"
 #include <iostream>
 #include <algorithm>
 
@@ -111,6 +112,7 @@ namespace Framework
             playerHealth = std::max(playerHealth - dmg, 0);
             std::cout << "[PlayerHealthComponent] Took " << dmg
                 << " damage, current health = " << playerHealth << "\n";
+
             if (playerHealth <= 0)
             {
                 isDead = true;

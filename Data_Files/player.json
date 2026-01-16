@@ -156,8 +156,44 @@
       },
       "AudioComponent": {
         "entityType": "player",
+        "sounds": {
+          "GrappleShoot1": { "id": "GrappleShoot1", "loop": false },
+          "GrappleShoot2": { "id": "GrappleShoot2", "loop": false },
+          "GrappleShoot3": { "id": "GrappleShoot3", "loop": false },
+          "GrappleShoot4": { "id": "GrappleShoot4", "loop": false },
+
+          "Slash1": { "id": "Slash1", "loop": false },
+          "Slash2": { "id": "Slash2", "loop": false },
+          "Slash3": { "id": "Slash3", "loop": false },
+
+          "Punch1": { "id": "Punch1", "loop": false },
+          "Punch2": { "id": "Punch2", "loop": false },
+          "Punch3": { "id": "Punch3", "loop": false },
+          "Punch4": { "id": "Punch4", "loop": false },
+
+          "IneffectiveBoink1": { "id": "Ineffective Boink1", "loop": false },
+          "IneffectiveBoink2": { "id": "Ineffective Boink2", "loop": false },
+          "IneffectiveBoink3": { "id": "Ineffective Boink3", "loop": false },
+
+          "PlayerHit": { "id": "PlayerHit", "loop": false },
+          "PlayerDead": { "id": "PlayerDead", "loop": false },
+
+          "ConcreteFootsteps1": { "id": "ConcreteFootsteps1", "loop": false },
+          "ConcreteFootsteps2": { "id": "ConcreteFootsteps2", "loop": false },
+          "ConcreteFootsteps3": { "id": "ConcreteFootsteps3", "loop": false },
+          "ConcreteFootsteps4": { "id": "ConcreteFootsteps4", "loop": false },
+          "ConcreteFootsteps5": { "id": "ConcreteFootsteps5", "loop": false },
+          "ConcreteFootsteps6": { "id": "ConcreteFootsteps6", "loop": false },
+          "ConcreteFootsteps7": { "id": "ConcreteFootsteps7", "loop": false },
+          "ConcreteFootsteps8": { "id": "ConcreteFootsteps8", "loop": false },
+          "ConcreteFootsteps9": { "id": "ConcreteFootsteps9", "loop": false },
+          "ConcreteFootsteps10": { "id": "ConcreteFootsteps10", "loop": false },
+          "ConcreteFootsteps11": { "id": "ConcreteFootsteps11", "loop": false },
+          "ConcreteFootsteps12": { "id": "ConcreteFootsteps12", "loop": false }
+        },
         "volume": 1.0
       }
+
     }
   }
 }

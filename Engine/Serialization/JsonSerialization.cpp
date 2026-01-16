@@ -145,6 +145,7 @@ namespace Framework
         return false; // Key not found or not an array
     }
 
+
     /***************************************************************************************
       \brief Exits the current array scope.
     ***************************************************************************************/
@@ -178,5 +179,34 @@ namespace Framework
             return true;
         }
         return false;
+    }
+
+    void JsonSerializer::ReadBool(const std::string& key, bool& out)
+    {
+        json* current = objectStack.top();
+        const json& v = (*current)[key];
+
+        // Normal JSON boolean: true/false
+        if (v.is_boolean()) {
+            out = v.get<bool>();
+            return;
+        }
+
+        // support 0/1 in JSON
+        if (v.is_number_integer()) {
+            out = (v.get<int>() != 0);
+            return;
+        }
+
+        // support "true"/"false" strings (if you ever store them that way)
+        if (v.is_string()) {
+            const std::string s = v.get<std::string>();
+            out = (s == "true" || s == "TRUE" || s == "1");
+            return;
+        }
+
+        // Fallback (or throw) – pick one style
+        out = false;
+        // or: throw std::runtime_error("ReadBool: key is not a bool/int/string: " + key);
     }
 }

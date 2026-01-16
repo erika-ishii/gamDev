@@ -7,7 +7,9 @@
 *********************************************************************************************/
 
 #include "Perf.h"
+#if SOFASPUDS_ENABLE_EDITOR
 #include "imgui.h"
+#endif
 #include <algorithm>   // std::max
 #include <cstddef>     // size_t
 #include <numeric>
@@ -40,7 +42,7 @@ namespace {
     static std::vector<SystemTiming> gCurrSystemTimings;
     static std::vector<SystemTiming> gLastSystemTimings;
 
-    void accumulateSystemTiming(std::vector<SystemTiming>& container, std::string_view name, double ms){
+    void accumulateSystemTiming(std::vector<SystemTiming>& container, std::string_view name, double ms) {
 
         if (name.empty()) return;
         auto it = std::find_if(container.begin(), container.end(), [&](SystemTiming const& entry) {return entry.name == name; });
@@ -104,6 +106,7 @@ void Framework::RecordSystemTiming(std::string_view systemName, double milliseco
 
 
 // ---------- mini summary (embed-only, no Begin/End) ----------
+#if SOFASPUDS_ENABLE_EDITOR
 void Framework::DrawInCurrentWindow() {
     const double totalTracked = gLast.TrackedTotal();
     const double denom = (totalTracked > 0.0) ? totalTracked : 0.0001; // avoid divide-by-zero
@@ -117,6 +120,9 @@ void Framework::DrawInCurrentWindow() {
     ImGui::Text("Render:   %.3f ms (%.1f%%)", gLast.gRenderMs, (gLast.gRenderMs / denom) * 100.0);
     ImGui::Text("ImGui:    %.3f ms (%.1f%%)", gLast.gImGuIMs, (gLast.gImGuIMs / denom) * 100.0);
 }
+#else
+void Framework::DrawInCurrentWindow() {}
+#endif
 
 // ---------- per-frame hook + full overlay window ----------
 void Framework::PerfFrameStart(float dt, bool toggleKeyDown) {
@@ -131,6 +137,7 @@ void Framework::PerfFrameStart(float dt, bool toggleKeyDown) {
     pushFpsSampleAndReturn(dt);
 }
 
+#if SOFASPUDS_ENABLE_EDITOR
 void Framework::DrawPerformanceWindow() {
     if (!sPerfVisible) return;
     ImGuiIO& io = ImGui::GetIO();
@@ -183,6 +190,9 @@ void Framework::DrawPerformanceWindow() {
 
     ImGui::End();
 }
+#else
+void Framework::DrawPerformanceWindow() {}
+#endif
 
 // ---------- Optional helpers / getters ----------
 void Framework::SetVisible(bool v) { sPerfVisible = v; }

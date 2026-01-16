@@ -93,8 +93,20 @@
         "type": "physical"
       },
       "AudioComponent": {
-        "entityType": "enemy",
-        "volume": 1.0
+        "entityType": "enemy_water",
+        "sounds": {
+            "WaterGhostAttack": { "id": "WaterGhostAttack", "loop": false },
+            "GhostHurt1": { "id": "GhostHurt1", "loop": false },
+            "GhostHurt2": { "id": "GhostHurt2", "loop": false },
+            "GhostHurt3": { "id": "GhostHurt3", "loop": false },
+            "GhostHurt4": { "id": "GhostHurt4", "loop": false },
+            "GhostHurt5": { "id": "GhostHurt5", "loop": false },
+            "GhostHurt6": { "id": "GhostHurt6", "loop": false },
+            "GhostHurt7": { "id": "GhostHurt7", "loop": false },
+            "GhostHurt8": { "id": "GhostHurt8", "loop": false },
+            "WaterGhostExplosion1": { "id": "WaterGhostExplosion1", "loop": false }
+        },
+        "volume": 0.4
       }
     }
   }

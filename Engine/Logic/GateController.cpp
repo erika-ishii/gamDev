@@ -6,7 +6,7 @@
             checks, player–gate interactions, and safe reference tracking across level loads.
  \details   Responsibilities:
             - Tracks the player and gate GameObjectComposition pointers safely.
-            - Scans level objects to find and cache the gate object ("hawker_gate").
+            - Scans level objects to find and cache gate objects with GateTargetComponent.
             - Unlocks the gate once all enemies with EnemyHealthComponent are defeated.
             - Performs collision testing between player and gate using AABB + physics data.
             - Determines when a level transition should occur (player touches unlocked gate).
@@ -22,12 +22,11 @@
 #include "Factory/Factory.h"
 #include "Component/EnemyComponent.h"
 #include "Component/EnemyHealthComponent.h"
-#include "Component/RenderComponent.h"
+#include "Component/GateTargetComponent.h"
 #include "Component/TransformComponent.h"
 #include "Physics/Collision/Collision.h"
 #include "Physics/Dynamics/RigidBodyComponent.h"
-#include <cctype>
-#include <string>
+
 #include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 
 #ifdef _DEBUG
@@ -55,34 +54,25 @@ namespace Framework
     }
 
     /*****************************************************************************************
-      \brief Updates the cached gate pointer by checking the active level objects.
+      \brief Updates the cached gate list by checking the active level objects.
 
-      - If the cached pointer is stale (destroyed or invalid), it is cleared.
-      - If there is no cached gate, the function attempts to locate one.
+      - Refreshes the gate list based on GateTargetComponent presence.
       - If no gate is found, the unlocked state is reset.
 
       \param levelObjects Vector of active objects in the current level.
     *****************************************************************************************/
     void GateController::RefreshGateReference(const std::vector<GameObjectComposition*>& levelObjects)
     {
-        if (!IsAlive(gate))
-        {
-            gate = nullptr;
-        }
+        gates = FindGatesInLevel(levelObjects);
 
-        if (!gate)
-        {
-            gate = FindGateInLevel(levelObjects);
-        }
-
-        if (!gate)
+        if (gates.empty())
         {
             gateUnlocked = false;
         }
     }
 
     /*****************************************************************************************
-      \brief Resets all cached state (player, gate, unlocked flag).
+      \brief Resets all cached state (player, gates, unlocked flag).
 
       Called during level reload to ensure the next level begins with clean state and the
       controller does not reference stale objects.
@@ -90,7 +80,7 @@ namespace Framework
     void GateController::Reset()
     {
         player = nullptr;
-        gate = nullptr;
+        gates.clear();
         gateUnlocked = false;
     }
 
@@ -109,7 +99,7 @@ namespace Framework
     *****************************************************************************************/
     void GateController::UpdateGateUnlockState()
     {
-        if (!gate || gateUnlocked)
+        if (gates.empty() || gateUnlocked)
             return;
 
         if (HasRemainingEnemies())
@@ -124,16 +114,33 @@ namespace Framework
       \brief Determines whether level transition should occur due to player–gate collision.
 
       \param pendingLevelTransition True if a transition is already underway.
-      \return True if the gate is unlocked, the player is alive, and a collision occurs.
+      \param outLevelPath Outputs the gate's target level path.
+      \return True if a gate is unlocked, the player is alive, and a collision occurs.
 
       \note Prevents multiple transitions if the flag is already set.
     *****************************************************************************************/
-    bool GateController::ShouldTransitionOnPlayerContact(bool pendingLevelTransition) const
+    bool GateController::ShouldTransitionOnPlayerContact(bool pendingLevelTransition, std::string& outLevelPath) const
     {
-        if (!gateUnlocked || !gate || !IsAlive(player) || pendingLevelTransition)
+        if (!gateUnlocked || gates.empty() || !IsAlive(player) || pendingLevelTransition)
             return false;
 
-        return PlayerIntersectsGate();
+        for (auto* gateObject : gates)
+        {
+            if (!IsAlive(gateObject))
+                continue;
+            if (!PlayerIntersectsGate(gateObject))
+                continue;
+
+            auto* target = gateObject->GetComponentType<GateTargetComponent>(
+                ComponentTypeId::CT_GateTargetComponent);
+            if (!target || target->levelPath.empty())
+                continue;
+
+            outLevelPath = target->levelPath;
+            return true;
+        }
+
+        return false;
     }
 
     /*****************************************************************************************
@@ -191,37 +198,30 @@ namespace Framework
     }
 
     /*****************************************************************************************
-      \brief Locates the gate object in the provided level object list.
+      \brief Locates gate objects in the provided level object list.
 
-      Gate identification is performed via case-insensitive comparison of object names,
-      matching "hawker_gate".
+     Gate identification is performed via GateTargetComponent presence.
 
       \param levelObjects Vector of active objects in the level.
-      \return Pointer to the gate object if found, otherwise nullptr.
+      \return Vector of gate objects found in the level.
     *****************************************************************************************/
-    GameObjectComposition* GateController::FindGateInLevel(const std::vector<GameObjectComposition*>& levelObjects) const
+    std::vector<GameObjectComposition*> GateController::FindGatesInLevel(
+        const std::vector<GameObjectComposition*>& levelObjects) const
     {
-        auto nameEqualsIgnoreCase = [](const std::string& lhs, std::string_view rhs)
-            {
-                if (lhs.size() != rhs.size())
-                    return false;
-                for (std::size_t i = 0; i < lhs.size(); ++i)
-                {
-                    unsigned char c1 = static_cast<unsigned char>(lhs[i]);
-                    unsigned char c2 = static_cast<unsigned char>(rhs[i]);
-                    if (std::tolower(c1) != std::tolower(c2))
-                        return false;
-                }
-                return true;
-            };
+        std::vector<GameObjectComposition*> found;
 
         for (auto* obj : levelObjects)
         {
-            if (obj && nameEqualsIgnoreCase(obj->GetObjectName(), "hawker_gate"))
-                return obj;
+            if (!obj)
+                continue;
+
+            auto* target = obj->GetComponentType<GateTargetComponent>(
+                ComponentTypeId::CT_GateTargetComponent);
+            if (target)
+                found.push_back(obj);
         }
 
-        return nullptr;
+        return found;
     }
 
     /*****************************************************************************************
@@ -232,10 +232,13 @@ namespace Framework
 
       \note Relies on Collision::CheckCollisionRectToRect for final evaluation.
     *****************************************************************************************/
-    bool GateController::PlayerIntersectsGate() const
+    bool GateController::PlayerIntersectsGate(GameObjectComposition* gateObject) const
     {
-        auto* gateTr = gate->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
-        auto* gateRb = gate->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);
+        if (!gateObject)
+            return false;
+
+        auto* gateTr = gateObject->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
+        auto* gateRb = gateObject->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);
         auto* tr = player->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
         auto* rb = player->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);
 

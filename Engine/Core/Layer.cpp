@@ -27,6 +27,10 @@
 
 #include "Layer.h"
 #include <algorithm>
+#include <charconv>
+#include <cctype>
+#include <iostream>
+#include <string>
 #include <utility>
 
 #include "Common/CRTDebug.h"   // <- bring in DBG_NEW
@@ -40,19 +44,196 @@ namespace Framework {
     // Helpers (anonymous namespace limits visibility to this translation unit)
     //--------------------------------------------------------------------------------------
     namespace {
-        // Default bucket for objects that don't specify a layer.
-        constexpr std::string_view kDefaultLayerName{ "Default" };
+        constexpr LayerKey kDefaultLayer{ LayerGroup::Gameplay, 0 };
 
-        /**
-         * \brief Normalize a layer name for storage/lookup.
-         * Empty names collapse to "Default" so we never store empty keys.
-         */
-        std::string NormalizeLayerName(std::string_view name)
+        constexpr std::size_t ToIndex(LayerGroup group)
         {
-            if (name.empty())
-                return std::string{ kDefaultLayerName };
-            return std::string{ name };
+            return static_cast<std::size_t>(group);
         }
+
+        std::string_view TrimView(std::string_view value)
+        {
+            while (!value.empty() && std::isspace(static_cast<unsigned char>(value.front())))
+                value.remove_prefix(1);
+            while (!value.empty() && std::isspace(static_cast<unsigned char>(value.back())))
+                value.remove_suffix(1);
+            return value;
+        }
+
+        LayerGroup ParseLayerGroup(std::string_view name, bool& ok)
+        {
+            std::string lowered;
+            lowered.resize(name.size());
+            std::transform(name.begin(), name.end(), lowered.begin(),
+                [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+
+            if (lowered == "background")
+            {
+                ok = true;
+                return LayerGroup::Background;
+            }
+            if (lowered == "gameplay")
+            {
+                ok = true;
+                return LayerGroup::Gameplay;
+            }
+            if (lowered == "foreground")
+            {
+                ok = true;
+                return LayerGroup::Foreground;
+            }
+            if (lowered == "ui")
+            {
+                ok = true;
+                return LayerGroup::UI;
+            }
+            if (lowered == "default")
+            {
+                ok = true;
+                return LayerGroup::Gameplay;
+            }
+
+            ok = false;
+            return LayerGroup::Gameplay;
+        }
+
+        int ParseSublayer(std::string_view value)
+        {
+            value = TrimView(value);
+            if (value.empty())
+                return 0;
+
+            int parsed = 0;
+            auto result = std::from_chars(value.data(), value.data() + value.size(), parsed);
+            if (result.ec != std::errc())
+                return 0;
+
+            return std::clamp(parsed, 0, kMaxLayerSublayer);
+        }
+    }
+
+    bool operator==(const LayerKey& lhs, const LayerKey& rhs)
+    {
+        return lhs.group == rhs.group && lhs.sublayer == rhs.sublayer;
+    }
+
+    std::size_t LayerKeyHasher::operator()(const LayerKey& key) const noexcept
+    {
+        return (static_cast<std::size_t>(key.group) << 8) ^ static_cast<std::size_t>(key.sublayer);
+    }
+
+    const char* LayerGroupName(LayerGroup group)
+    {
+        switch (group)
+        {
+        case LayerGroup::Background:
+            return "Background";
+        case LayerGroup::Gameplay:
+            return "Gameplay";
+        case LayerGroup::Foreground:
+            return "Foreground";
+        case LayerGroup::UI:
+            return "UI";
+        default:
+            return "Background";
+        }
+    }
+
+    LayerKey ParseLayerName(std::string_view name)
+    {
+        name = TrimView(name);
+        if (name.empty())
+            return kDefaultLayer;
+
+        const auto split = name.find(':');
+        const std::string_view groupPart = TrimView(name.substr(0, split));
+        const std::string_view sublayerPart = (split == std::string_view::npos)
+            ? std::string_view{}
+        : name.substr(split + 1);
+
+        bool ok = false;
+        LayerGroup group = ParseLayerGroup(groupPart, ok);
+        if (!ok)
+            return kDefaultLayer;
+
+        int sublayer = ParseSublayer(sublayerPart);
+        return LayerKey{ group, sublayer };
+    }
+
+    std::string LayerNameFromKey(LayerKey key)
+    {
+        return std::string{ LayerGroupName(key.group) } + ":" + std::to_string(std::clamp(key.sublayer, 0, kMaxLayerSublayer));
+    }
+
+    std::string NormalizeLayerName(std::string_view name)
+    {
+        return LayerNameFromKey(ParseLayerName(name));
+    }
+
+    //--------------------------------------------------------------------------------------
+    // LayerVisibility
+    //--------------------------------------------------------------------------------------
+    LayerVisibility::LayerVisibility()
+    {
+        EnableAll();
+    }
+
+    bool LayerVisibility::IsGroupEnabled(LayerGroup group) const
+    {
+        return groupEnabled[ToIndex(group)];
+    }
+
+    bool LayerVisibility::IsSublayerEnabled(LayerGroup group, int sublayer) const
+    {
+        if (sublayer < 0 || sublayer > kMaxLayerSublayer)
+            return false;
+        return sublayerEnabled[ToIndex(group)][static_cast<std::size_t>(sublayer)];
+    }
+
+    bool LayerVisibility::IsLayerEnabled(LayerKey key) const
+    {
+        return IsGroupEnabled(key.group) && IsSublayerEnabled(key.group, key.sublayer);
+    }
+
+    void LayerVisibility::SetGroupEnabled(LayerGroup group, bool enabled)
+    {
+        groupEnabled[ToIndex(group)] = enabled;
+    }
+
+    void LayerVisibility::SetSublayerEnabled(LayerGroup group, int sublayer, bool enabled)
+    {
+        if (sublayer < 0 || sublayer > kMaxLayerSublayer)
+            return;
+        sublayerEnabled[ToIndex(group)][static_cast<std::size_t>(sublayer)] = enabled;
+    }
+
+    void LayerVisibility::EnableAll()
+    {
+        for (std::size_t groupIndex = 0; groupIndex < groupEnabled.size(); ++groupIndex)
+        {
+            groupEnabled[groupIndex] = true;
+            for (auto& enabled : sublayerEnabled[groupIndex])
+            {
+                enabled = true;
+            }
+        }
+
+    }
+
+    void LayerVisibility::EnableOnly(LayerKey key)
+    {
+        for (std::size_t groupIndex = 0; groupIndex < groupEnabled.size(); ++groupIndex)
+        {
+            groupEnabled[groupIndex] = false;
+            for (auto& enabled : sublayerEnabled[groupIndex])
+            {
+                enabled = false;
+            }
+        }
+        const std::size_t groupIndex = ToIndex(key.group);
+        groupEnabled[groupIndex] = true;
+        const int clampedSublayer = std::clamp(key.sublayer, 0, kMaxLayerSublayer);
+        sublayerEnabled[groupIndex][static_cast<std::size_t>(clampedSublayer)] = true;
     }
 
     //--------------------------------------------------------------------------------------
@@ -60,11 +241,12 @@ namespace Framework {
     //--------------------------------------------------------------------------------------
 
     /**
-     * \brief Construct a Layer with a given name.
+     * \brief Construct a Layer with a given key.
      * \note Name is stored as-is; callers should use NormalizeLayerName() when appropriate.
      */
-    Layer::Layer(std::string name)
-        : LayerName(std::move(name))
+    Layer::Layer(LayerKey key)
+        : LayerName(LayerNameFromKey(key))
+        , KeyValue(key)
     {
     }
 
@@ -123,12 +305,12 @@ namespace Framework {
      */
     Layer& LayerManager::EnsureLayer(std::string_view layerName)
     {
-        auto key = NormalizeLayerName(layerName);
-        auto it = LayersByName.find(key);
-        if (it == LayersByName.end())
+        LayerKey key = ParseLayerName(layerName);
+        auto it = LayersByKey.find(key);
+        if (it == LayersByKey.end())
         {
-            // Create an empty layer with this name.
-            it = LayersByName.emplace(key, Layer{ key }).first;
+            // Create an empty layer with this key.
+            it = LayersByKey.emplace(key, Layer{ key }).first;
         }
         return it->second;
     }
@@ -139,9 +321,9 @@ namespace Framework {
      */
     const Layer* LayerManager::FindLayer(std::string_view layerName) const
     {
-        auto key = NormalizeLayerName(layerName);
-        auto it = LayersByName.find(key);
-        return it == LayersByName.end() ? nullptr : &it->second;
+        LayerKey key = ParseLayerName(layerName);
+        auto it = LayersByKey.find(key);
+        return it == LayersByKey.end() ? nullptr : &it->second;
     }
 
     /**
@@ -150,9 +332,9 @@ namespace Framework {
      */
     Layer* LayerManager::FindLayer(std::string_view layerName)
     {
-        auto key = NormalizeLayerName(layerName);
-        auto it = LayersByName.find(key);
-        return it == LayersByName.end() ? nullptr : &it->second;
+        LayerKey key = ParseLayerName(layerName);
+        auto it = LayersByKey.find(key);
+        return it == LayersByKey.end() ? nullptr : &it->second;
     }
 
     /**
@@ -164,7 +346,7 @@ namespace Framework {
      */
     void LayerManager::AssignToLayer(GOCId id, std::string_view layerName)
     {
-        auto key = NormalizeLayerName(layerName);
+        LayerKey key = ParseLayerName(layerName);
 
         // If already mapped, and the layer is the same, early-out.
         auto existing = ObjectToLayer.find(id);
@@ -173,11 +355,11 @@ namespace Framework {
             if (existing->second == key)
                 return;
             // Move from old layer to new layer.
-            RemoveFromLayer(id, existing->second);
+            RemoveFromLayer(id, LayerNameFromKey(existing->second));
         }
 
         // Ensure destination layer exists and insert.
-        Layer& layer = EnsureLayer(key);
+        Layer& layer = EnsureLayer(LayerNameFromKey(key));
         layer.Add(id);
         ObjectToLayer[id] = key;
     }
@@ -190,17 +372,17 @@ namespace Framework {
      */
     void LayerManager::RemoveFromLayer(GOCId id, std::string_view layerName)
     {
-        auto key = NormalizeLayerName(layerName);
+        LayerKey key = ParseLayerName(layerName);
 
         // Remove from the named layer if present.
-        auto it = LayersByName.find(key);
-        if (it != LayersByName.end())
+        auto it = LayersByKey.find(key);
+        if (it != LayersByKey.end())
         {
             it->second.Remove(id);
             if (it->second.Objects().empty())
             {
                 // Prune empty layers to keep LayerNames() compact/accurate.
-                LayersByName.erase(it);
+                LayersByKey.erase(it);
             }
         }
 
@@ -222,7 +404,7 @@ namespace Framework {
         if (it == ObjectToLayer.end())
             return;
 
-        RemoveFromLayer(id, it->second);
+        RemoveFromLayer(id, LayerNameFromKey(it->second));
     }
 
     /**
@@ -233,7 +415,15 @@ namespace Framework {
     {
         auto it = ObjectToLayer.find(id);
         if (it == ObjectToLayer.end())
-            return std::string{ kDefaultLayerName };
+            return LayerNameFromKey(kDefaultLayer);
+        return LayerNameFromKey(it->second);
+    }
+
+    LayerKey LayerManager::LayerKeyFor(GOCId id) const
+    {
+        auto it = ObjectToLayer.find(id);
+        if (it == ObjectToLayer.end())
+            return kDefaultLayer;
         return it->second;
     }
 
@@ -244,22 +434,64 @@ namespace Framework {
     std::vector<std::string> LayerManager::LayerNames() const
     {
         std::vector<std::string> names;
-        names.reserve(LayersByName.size());
-        for (auto const& [name, _] : LayersByName)
+        names.reserve(LayersByKey.size());
+        for (auto const& [key, layer] : LayersByKey)
         {
-            (void)_; // suppress unused warning
-            names.push_back(name);
+            (void)key;
+            names.push_back(layer.Name());
         }
+        std::sort(names.begin(), names.end(), [](const std::string& a, const std::string& b)
+            {
+                const LayerKey keyA = ParseLayerName(a);
+                const LayerKey keyB = ParseLayerName(b);
+                if (keyA.group != keyB.group)
+                    return static_cast<int>(keyA.group) < static_cast<int>(keyB.group);
+                return keyA.sublayer < keyB.sublayer;
+            });
+
         return names;
     }
 
+    bool LayerManager::IsLayerEnabled(std::string_view layerName) const
+    {
+        return visibility.IsLayerEnabled(ParseLayerName(layerName));
+    }
+
+    bool LayerManager::IsLayerEnabled(LayerKey key) const
+    {
+        return visibility.IsLayerEnabled(key);
+    }
+
+    void LayerManager::LogVisibilitySummary(std::string_view label) const
+    {
+        std::cout << "[LayerManager] Visibility Summary (" << label << ")\n";
+        for (std::size_t groupIndex = 0; groupIndex < static_cast<std::size_t>(LayerGroup::Count); ++groupIndex)
+        {
+            const auto group = static_cast<LayerGroup>(groupIndex);
+            std::cout << "  Group " << LayerGroupName(group)
+                << " enabled=" << (visibility.IsGroupEnabled(group) ? "true" : "false") << "\n";
+            for (int sublayer = 0; sublayer <= kMaxLayerSublayer; ++sublayer)
+            {
+                if (visibility.IsSublayerEnabled(group, sublayer))
+                {
+                    std::cout << "    Sublayer " << sublayer << " enabled\n";
+                }
+            }
+        }
+
+        std::cout << "  Layers with objects:\n";
+        for (auto const& [key, layer] : LayersByKey)
+        {
+            std::cout << "    " << layer.Name() << " (" << layer.Objects().size() << " objects)\n";
+        }
+    }
     /**
      * \brief Clear all layers and object-to-layer mappings.
      * \warning This forgets all assignments; objects will appear as "Default" until reassigned.
      */
     void LayerManager::Clear()
     {
-        LayersByName.clear();
+        LayersByKey.clear();
         ObjectToLayer.clear();
     }
 

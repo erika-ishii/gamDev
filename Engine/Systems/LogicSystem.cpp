@@ -31,8 +31,9 @@
 #include "Core/PathUtils.h"
 #include "Systems/RenderSystem.h"      // for ScreenToWorld / camera-based world mapping
 #include "Debug/Selection.h"
+#include "Debug/Spawn.h"
 #include "Systems/VfxHelpers.h"
-#include "Resource_Manager/Resource_Manager.h"
+#include "Resource_Asset_Manager/Resource_Manager.h"
 
 #include <cctype>
 #include <string>
@@ -460,7 +461,8 @@ namespace Framework {
     *****************************************************************************************/
     void LogicSystem::Initialize()
     {
-        crashLogger = std::make_unique<CrashLogger>(std::string("../../logs"),
+        auto crashLogDir = Framework::GetUserDocumentsDir() / "BloodyGoodCurry" / "logs";
+        crashLogger = std::make_unique<CrashLogger>(crashLogDir.string(),
             std::string("crash.log"),
             std::string("ENGINE/CRASH"));
         g_crashLogger = crashLogger.get();
@@ -491,6 +493,7 @@ namespace Framework {
         RegisterComponent(EnemyTypeComponent);
         RegisterComponent(AudioComponent);
         RegisterComponent(ZoomTriggerComponent);
+        RegisterComponent(GateTargetComponent);
         RegisterComponent(PlayerHUDComponent);
         FACTORY = factory.get();
         gateController.SetFactory(factory.get());
@@ -499,8 +502,18 @@ namespace Framework {
         auto playerPrefab = resolveData("player.json");
         std::cout << "[Prefab] Player path = " << std::filesystem::absolute(playerPrefab)
             << "  exists=" << std::filesystem::exists(playerPrefab) << "\n";
+        std::filesystem::path startLevelPath = resolveData("level_RealTutorial.json");
 
-        levelObjects = factory->CreateLevel(resolveData("level_RealTutorial.json").string());
+#if SOFASPUDS_ENABLE_EDITOR
+        const std::string& startLevelName = mygame::SelectedStartLevel();
+        if (!startLevelName.empty())
+        {
+            std::filesystem::path requestedPath(startLevelName);
+            startLevelPath = requestedPath.is_absolute() ? requestedPath : resolveData(startLevelName);
+        }
+#endif
+
+        levelObjects = factory->CreateLevel(startLevelPath.string());
 
         const bool hasAnimatedStore = std::any_of(levelObjects.begin(), levelObjects.end(), [](Framework::GOC* obj) {
             if (!obj)
@@ -545,6 +558,14 @@ namespace Framework {
         WindowConfig cfg = LoadWindowConfig(resolveData("window.json").string());
         screenW = cfg.width;
         screenH = cfg.height;
+
+        // Build HitBoxSystem after references are valid.
+        if (hitBoxSystem)
+        {
+            hitBoxSystem->Shutdown();
+            delete hitBoxSystem;
+            hitBoxSystem = nullptr;
+        }
 
         // Build HitBoxSystem after references are valid.
         hitBoxSystem = new HitBoxSystem(*this);
@@ -792,12 +813,37 @@ namespace Framework {
             // Velocity intent set on RigidBody; an external system integrates it.
             if (rb && tr && playerHealth && !playerHealth->isDead)
             {
-                if (input.IsKeyHeld(GLFW_KEY_D)) rb->velX = std::max(rb->velX, 1.f);
-                if (input.IsKeyHeld(GLFW_KEY_A)) rb->velX = std::min(rb->velX, -1.f);
-                if (!input.IsKeyHeld(GLFW_KEY_A) && !input.IsKeyHeld(GLFW_KEY_D)) rb->velX *= rb->dampening;
-                if (input.IsKeyHeld(GLFW_KEY_W)) rb->velY = std::max(rb->velY, 1.f);
-                if (input.IsKeyHeld(GLFW_KEY_S)) rb->velY = std::min(rb->velY, -1.f);
-                if (!input.IsKeyHeld(GLFW_KEY_W) && !input.IsKeyHeld(GLFW_KEY_S)) rb->velY *= rb->dampening;
+                if (rb->lungeTime > 0.0f)
+                {
+                    rb->lungeTime -= dt;
+                    if (rb->lungeTime <= 0.0f)
+                    {
+                        rb->velX = 0.0f;
+                        rb->lungeTime = 0.0f;
+                    }
+                }
+                else
+                {
+                    // Stop movement during attacks
+                    if (IsAttackState(animState))
+                    {
+                        rb->velX = 0.0f;
+                        rb->velY = 0.0f;
+                    }
+                    else
+                    {
+                        if (input.IsKeyHeld(GLFW_KEY_D)) rb->velX = std::max(rb->velX, 1.f);
+                        if (input.IsKeyHeld(GLFW_KEY_A)) rb->velX = std::min(rb->velX, -1.f);
+                        if (!input.IsKeyHeld(GLFW_KEY_A) && !input.IsKeyHeld(GLFW_KEY_D))
+                            rb->velX *= rb->dampening;
+
+                        if (input.IsKeyHeld(GLFW_KEY_W)) rb->velY = std::max(rb->velY, 1.f);
+                        if (input.IsKeyHeld(GLFW_KEY_S)) rb->velY = std::min(rb->velY, -1.f);
+                        if (!input.IsKeyHeld(GLFW_KEY_W) && !input.IsKeyHeld(GLFW_KEY_S))
+                            rb->velY *= rb->dampening;
+                    }
+                }
+   
             }
 
             // Running state if any movement keys are held (arrow keys supported too).
@@ -822,6 +868,10 @@ namespace Framework {
                 // Only spawn if we have a valid direction (mouse in viewport & not exactly on player).
                 if (aimDirX != 0.0f || aimDirY != 0.0f)
                 {
+                    // Determine left/right direction
+                    float dirX = (mouseWorldX > tr->x) ? 1.0f : -1.0f;
+                    rb->velX = dirX * 0.1f;        // speed
+                    rb->lungeTime = 0.15f;         // duration
                     auto attackTr = *tr;
                     const float offset = 0.05f;
                     const float halfW = std::abs(rc->w) * 0.5f;
@@ -837,8 +887,6 @@ namespace Framework {
                         HitBoxComponent::Team::Player);
 
                     std::cout << "Hurtbox spawned at (" << attackTr.x << ", " << attackTr.y << ")\n";
-                    audio->TriggerSound("Slash1");
-
                     // Start / advance melee combo animation (Attack1,2,3 cycling)
                     BeginComboAttack();
                 }
@@ -860,12 +908,12 @@ namespace Framework {
                     hitBoxSystem->SpawnProjectile(player,
                         attackTr.x, attackTr.y,
                         aimDirX, aimDirY,
-                        0.1f,
-                        0.1f, 0.1f,
+                        0.3f,
+                        0.2f, 0.2f,
                         1.0f, 5.f, HitBoxComponent::Team::Thrown);
 
                     std::cout << "Hurtbox spawned at (" << attackTr.x << ", " << attackTr.y << ")\n";
-                    audio->TriggerSound("GrappleShoot1");
+                    audio->TriggerSound("GrappleShoot");
                 }
             }
 
@@ -873,10 +921,16 @@ namespace Framework {
             UpdateAnimation(dt, wantRun);
 
             gateController.UpdateGateUnlockState();
-            if (gateController.ShouldTransitionOnPlayerContact(pendingLevelTransition))
+            std::string targetLevel;
+            if (gateController.ShouldTransitionOnPlayerContact(pendingLevelTransition, targetLevel))
             {
                 pendingLevelTransition = true;
-                LoadLevelAndResetState(resolveData("RealLevel1.json"));
+                std::filesystem::path targetPath(targetLevel);
+                if (!targetPath.is_absolute())
+                {
+                    targetPath = resolveData(targetLevel);
+                }
+                LoadLevelAndResetState(targetPath);
             }
 
             // Collision debug info (player vs a target rect)

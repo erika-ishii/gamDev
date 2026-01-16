@@ -14,7 +14,7 @@
             (transform, render, circle, sprite), and spawns instances via ImGui. Supports
             batch spawning with configurable offsets.
             Additionally:
-              - Layer-aware spawning and an “isolate layer” toggle for selective rendering.
+              - Layer-aware spawning via the dedicated Layer panel.
               - Sprite hookup via drag&drop from the Content Browser (texture key + handle).
               - Level quick save/list/load, with on-disk layer discovery to pre-populate UI.
 
@@ -28,7 +28,10 @@
             All rights reserved.
 *********************************************************************************************/
 
+#if SOFASPUDS_ENABLE_EDITOR
+
 #include "Debug/Spawn.h"
+#include "Debug/LayerPanel.h"
 #include "Core/PathUtils.h"
 #include "Selection.h"
 #include "Debug/UndoStack.h"
@@ -60,7 +63,7 @@
 #include "Component/RenderComponent.h"
 #include "Component/CircleRenderComponent.h"
 #include "Component/SpriteComponent.h"
-#include "Resource_Manager/Resource_Manager.h"
+#include "Resource_Asset_Manager/Resource_Manager.h"
 
 // Player & Enemy Components
 #include "Component/PlayerComponent.h"
@@ -72,6 +75,7 @@
 #include "Component/EnemyDecisionTreeComponent.h"
 #include "Component/EnemyHealthComponent.h"
 #include "Component/EnemyTypeComponent.h"
+#include "Component/GateTargetComponent.h"
 #include "Ai/DecisionTreeDefault.h"
 #include "Physics/Dynamics/RigidBodyComponent.h"
 
@@ -82,11 +86,10 @@
 #include <cctype>
 #include <cstdint>
 #include <system_error>
-#include <unordered_map>
-#include <unordered_set>
+
 #include <string_view>
 #include <cstdio>
-#include "Serialization/JsonSerialization.h"
+
 #include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 
 #ifdef _DEBUG
@@ -116,6 +119,19 @@ namespace mygame {
     static std::vector<std::string> gLevelFiles;
     /// Selected index into the level list.
     static int gSelectedLevelIndex = 0;
+
+    //Gate and start level
+    /// Selected index for start level choice.
+    static int gStartLevelIndex = 0;
+    /// Selected index for gate target level choice.
+    static int gGateTargetLevelIndex = 0;
+    /// Selected start level filename.
+    static std::string gStartLevelSelection = "level_RealTutorial.json";
+    /// Selected gate target level filename.
+    static std::string gGateTargetLevelSelection = "RealLevel1.json";
+    /// If true, assign selected gate target level to newly spawned gates.
+    static bool gApplyGateTargetOnSpawn = true;
+
     /// Input buffer for “Level Name”.
     static char gLevelNameBuffer[128] = "level";
     /// Transient status line (text + isError flag) for level operations.
@@ -124,17 +140,7 @@ namespace mygame {
     /// Directory where level JSON files are located (relative to executable).
     static const std::filesystem::path kLevelDirectory(Framework::ResolveDataPath(""));
 
-    /// Active layer name used for newly spawned objects.
-    static std::string gActiveLayer = "Default";
-    /// If true, only render the active layer (downstream systems may consult ShouldRenderLayer()).
-    static bool gIsolateActiveLayer = false;
-    /// Editable buffer for layer name.
-    static char gLayerInputBuffer[64] = "Default";
 
-    /// Cache of layer names discovered in level files: filename -> layers.
-    static std::unordered_map<std::string, std::vector<std::string>> gLevelLayers;
-    /// Last level for which we synced the default active layer.
-    static std::string gLastLayerSynchronizedLevel;
 
     using namespace Framework;
 
@@ -178,15 +184,6 @@ namespace mygame {
             return value;
         }
 
-        /*************************************************************************************
-          \brief  Normalize a layer name for UI + engine (trim; fallback to "Default").
-        *************************************************************************************/
-        std::string NormalizeLayerUi(std::string_view name) {
-            std::string trimmed = TrimCopy(std::string{ name });
-            if (trimmed.empty())
-                return "Default";
-            return trimmed;
-        }
 
         /*************************************************************************************
           \brief  Quick filter: treat a file as a level only if its name contains "level".
@@ -199,44 +196,13 @@ namespace mygame {
             return lower.find("level") != std::string::npos;
         }
 
-        /*************************************************************************************
-          \brief  Read unique layer names directly from a level JSON file on disk.
-          \param  levelPath Full path to the level .json.
-          \return Sorted vector of unique layer names (always includes "Default").
-        *************************************************************************************/
-        std::vector<std::string> ExtractLayersFromLevel(const std::filesystem::path& levelPath) {
-            std::unordered_set<std::string> unique;
-
-            JsonSerializer s{};
-            if (s.Open(levelPath.string()) && s.IsGood()) {
-                if (s.EnterObject("Level")) {
-                    if (s.EnterArray("GameObjects")) {
-                        const size_t n = s.ArraySize();
-                        for (size_t i = 0; i < n; ++i) {
-                            if (!s.EnterIndex(i)) continue; // now at GameObjects[i]
-                            std::string layer;
-                            if (s.HasKey("layer")) s.ReadString("layer", layer);
-                            unique.insert(NormalizeLayerUi(layer));
-                            s.ExitObject();
-                        }
-                        s.ExitArray();
-                    }
-                    s.ExitObject();
-                }
-            }
-
-            unique.insert("Default"); // always present
-            std::vector<std::string> out(unique.begin(), unique.end());
-            std::sort(out.begin(), out.end());
-            return out;
-        }
 
         /*************************************************************************************
           \brief  Scan level directory to refresh file list and per-file layer cache.
         *************************************************************************************/
         void RefreshLevelFileList() {
             gLevelFiles.clear();
-            gLevelLayers.clear();
+
 
             std::error_code ec;
             if (!std::filesystem::exists(kLevelDirectory, ec))
@@ -251,56 +217,29 @@ namespace mygame {
                 if (!ContainsLevelKeyword(filename)) continue;
 
                 gLevelFiles.push_back(filename);
-                // Cache layers to pre-populate the UI.
-                gLevelLayers[filename] = ExtractLayersFromLevel(path);
+
             }
 
             std::sort(gLevelFiles.begin(), gLevelFiles.end());
             if (gSelectedLevelIndex >= static_cast<int>(gLevelFiles.size()))
                 gSelectedLevelIndex = gLevelFiles.empty() ? 0 : static_cast<int>(gLevelFiles.size() - 1);
+
+            auto findIndex = [](const std::vector<std::string>& list, const std::string& value) {
+                auto it = std::find(list.begin(), list.end(), value);
+                if (it == list.end())
+                    return 0;
+                return static_cast<int>(std::distance(list.begin(), it));
+                };
+
+            if (!gLevelFiles.empty()) {
+                gStartLevelIndex = findIndex(gLevelFiles, gStartLevelSelection);
+                gGateTargetLevelIndex = findIndex(gLevelFiles, gGateTargetLevelSelection);
+                gStartLevelSelection = gLevelFiles[gStartLevelIndex];
+                gGateTargetLevelSelection = gLevelFiles[gGateTargetLevelIndex];
+            }
         }
 
-        /*************************************************************************************
-          \brief  Set active layer and ensure it exists in the LayerManager.
-          \param  name Desired layer name (will be normalized).
-        *************************************************************************************/
-        void ApplyActiveLayer(std::string_view name) {
-            gActiveLayer = NormalizeLayerUi(name);
-            std::snprintf(gLayerInputBuffer, sizeof(gLayerInputBuffer), "%s", gActiveLayer.c_str());
-            if (FACTORY) FACTORY->Layers().EnsureLayer(gActiveLayer);
-        }
-
-        /*************************************************************************************
-          \brief  Populate cache for a level's layers if missing.
-        *************************************************************************************/
-        void EnsureLevelLayersCached(const std::string& levelKey, const std::filesystem::path& levelPath) {
-            if (levelKey.empty() || levelPath.empty()) return;
-            if (gLevelLayers.find(levelKey) == gLevelLayers.end())
-                gLevelLayers[levelKey] = ExtractLayersFromLevel(levelPath);
-        }
-
-        /*************************************************************************************
-          \brief  Choose a reasonable default UI layer for a given level.
-          \return "Default" if present; otherwise the first available layer name.
-        *************************************************************************************/
-        std::string ChooseDefaultLayerForLevel(const std::string& key) {
-            auto it = gLevelLayers.find(key);
-            if (it == gLevelLayers.end()) return "Default";
-            bool hasDefault = false;
-            for (auto& nm : it->second) if (NormalizeLayerUi(nm) == "Default") hasDefault = true;
-            return hasDefault ? "Default" : (it->second.empty() ? "Default" : NormalizeLayerUi(it->second.front()));
-        }
-
-        /*************************************************************************************
-          \brief  Sync the UI's active layer once per level selection.
-        *************************************************************************************/
-        void SyncActiveLayerWithLevel(const std::string& levelKey) {
-            if (levelKey.empty()) return;
-            if (gLastLayerSynchronizedLevel == levelKey) return; // already synced
-            ApplyActiveLayer(ChooseDefaultLayerForLevel(levelKey));
-            gLastLayerSynchronizedLevel = levelKey;
-        }
-
+      
         /*************************************************************************************
           \brief  Construct absolute path to a level JSON from a filename.
         *************************************************************************************/
@@ -486,9 +425,17 @@ namespace mygame {
                 audio->entityType = s.entityType;
             audio->ensureInitialized(true);
         }
+
+        if (applyTransformAndLayer && gApplyGateTargetOnSpawn) {
+            if (auto* gateTarget = obj.GetComponentType<GateTargetComponent>(
+                ComponentTypeId::CT_GateTargetComponent)) {
+                if (!gGateTargetLevelSelection.empty())
+                    gateTarget->levelPath = gGateTargetLevelSelection;
+            }
+        }
         // NOTE: layer is *not* changed here. For new spawns we still set layer in SpawnOnePrefab().
     }
- 
+
     /*************************************************************************************
      \brief  Helper to spawn a single prefab and apply current SpawnSettings.
      \param  prefab Name of the prefab to clone (must exist in master_copies).
@@ -502,9 +449,9 @@ namespace mygame {
 
         // For new objects: full application (including transform offsets)
         ApplySpawnSettingsToObject(*obj, s, index, /*applyTransformAndLayer*/ true);
-                
-       // Assign layer on creation
-        obj->SetLayerName(gActiveLayer);
+
+        // Assign layer on creation
+        obj->SetLayerName(ActiveLayerName());
 
 
         // Track the creation so the editor undo stack can remove it if requested.
@@ -627,30 +574,14 @@ namespace mygame {
         return sSpriteTextureId;
     }
 
-    /*************************************************************************************
-      \brief  Get the UI’s active layer name (used on spawn).
-    *************************************************************************************/
-    const std::string& ActiveLayerName() {
-        return gActiveLayer;
-    }
+
 
     /*************************************************************************************
-      \brief  Check if “isolate active layer” mode is enabled.
-      \return true to render only ActiveLayerName(); false to render all layers.
+      \brief Returns the currently selected start level filename (from the debug UI).
+      \return Level filename (may be empty if no level files are available).
     *************************************************************************************/
-    bool IsLayerIsolationEnabled() {
-        return gIsolateActiveLayer;
-    }
-
-    /*************************************************************************************
-      \brief  Helper consulted by rendering systems to decide if a layer should draw.
-      \param  layerName Candidate layer for rendering.
-      \return true if drawing is permitted given the isolate toggle; false otherwise.
-    *************************************************************************************/
-    bool ShouldRenderLayer(const std::string& layerName) {
-        if (!gIsolateActiveLayer)
-            return true;
-        return NormalizeLayerUi(layerName) == NormalizeLayerUi(gActiveLayer);
+    const std::string& SelectedStartLevel() {
+        return gStartLevelSelection;
     }
 
     //=====================================================================================
@@ -723,75 +654,7 @@ namespace mygame {
             return;
         }
 
-        // --- Layer UI -------------------------------------------------------
-        // Merge candidate layer names from runtime + on-disk levels + current selection
-        std::unordered_set<std::string> layerSet;
-
-        if (FACTORY) {
-            for (auto const& nm : FACTORY->Layers().LayerNames())
-                layerSet.insert(NormalizeLayerUi(nm));
-        }
-
-        // From last loaded level
-        std::string currentLevelKey;
-        if (FACTORY) {
-            auto const& lastPath = FACTORY->LastLevelPath();
-            if (!lastPath.empty())
-                currentLevelKey = lastPath.filename().string();
-        }
-        if (!currentLevelKey.empty()) {
-            if (auto it = gLevelLayers.find(currentLevelKey); it != gLevelLayers.end()) {
-                for (auto const& nm : it->second)
-                    layerSet.insert(NormalizeLayerUi(nm));
-            }
-        }
-
-        // From the currently selected level in dropdown (before any load)
-        if (layerSet.empty() && !gLevelFiles.empty()) {
-            const std::string& sel = gLevelFiles[gSelectedLevelIndex];
-            if (auto it = gLevelLayers.find(sel); it != gLevelLayers.end()) {
-                for (auto const& nm : it->second)
-                    layerSet.insert(NormalizeLayerUi(nm));
-            }
-        }
-
-        // Ensure we have at least the active layer + Default
-        layerSet.insert(NormalizeLayerUi(gActiveLayer));
-        layerSet.insert("Default");
-
-        std::vector<std::string> layerNames(layerSet.begin(), layerSet.end());
-        std::sort(layerNames.begin(), layerNames.end());
-
-        std::string normalizedActive = NormalizeLayerUi(gActiveLayer);
-
-        if (ImGui::BeginCombo("Active Layer", normalizedActive.c_str())) {
-            for (const auto& layerName : layerNames) {
-                bool selected = (layerName == normalizedActive);
-                if (ImGui::Selectable(layerName.c_str(), selected)) {
-                    ApplyActiveLayer(layerName);
-                    normalizedActive = gActiveLayer;
-                }
-                if (selected)
-                    ImGui::SetItemDefaultFocus();
-            }
-            ImGui::EndCombo();
-        }
-
-        // Editable layer field; applied by button press
-        ImGui::InputTextWithHint("Layer Name", "Default", gLayerInputBuffer, sizeof(gLayerInputBuffer));
-
-        if (ImGui::Button("Apply Layer")) {
-            std::string fromInput = NormalizeLayerUi(gLayerInputBuffer);
-            ApplyActiveLayer(fromInput);
-            normalizedActive = gActiveLayer;
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Reset##LayerSelection")) {
-            ApplyActiveLayer("Default");
-            normalizedActive = gActiveLayer;
-        }
-
-        ImGui::Checkbox("Render only active layer", &gIsolateActiveLayer);
+        
 
         // Component presence flags for conditional UI
         const bool hasTransform =
@@ -810,6 +673,8 @@ namespace mygame {
             (master->GetComponentType<PlayerAttackComponent>(ComponentTypeId::CT_PlayerAttackComponent) != nullptr);
         const bool hasPlayerHealth =
             (master->GetComponentType<PlayerHealthComponent>(ComponentTypeId::CT_PlayerHealthComponent) != nullptr);
+        const bool hasGateTarget =
+            (master->GetComponentType<GateTargetComponent>(ComponentTypeId::CT_GateTargetComponent) != nullptr);
 
         // One-time sync from master to panel when prefab changes
         if (gPendingPrefabSizeSync) {
@@ -916,7 +781,7 @@ namespace mygame {
             ImGui::DragFloat("h", &gS.h, 0.005f, 0.01f, 1.0f);
             if (disableSizeControls) ImGui::EndDisabled();
             //Visibility controls-
-                ImGui::SeparatorText("Visibility");
+            ImGui::SeparatorText("Visibility");
             if (ImGui::Checkbox("Override prefab visibility", &gS.overridePrefabVisible)) {
                 if (!gS.overridePrefabVisible && masterRender) {
                     // When turning override OFF, reset to prefab's visibility
@@ -1103,15 +968,6 @@ namespace mygame {
             RefreshLevelFileList();
         }
 
-        // Fill cache and sync active layer with last loaded level
-        if (FACTORY) {
-            const auto& lastPath = FACTORY->LastLevelPath();
-            if (!lastPath.empty()) {
-                const std::string key = lastPath.filename().string();
-                EnsureLevelLayersCached(key, lastPath);
-                SyncActiveLayerWithLevel(key);
-            }
-        }
 
         if (!gLevelFiles.empty()) {
             const char* preview = gLevelFiles[gSelectedLevelIndex].c_str();
@@ -1125,22 +981,44 @@ namespace mygame {
                 }
                 ImGui::EndCombo();
             }
-
-            // Show the layer names found in the selected level for quick verification
-            const std::string& selectedLevel = gLevelFiles[gSelectedLevelIndex];
-            if (auto it = gLevelLayers.find(selectedLevel); it != gLevelLayers.end()) {
-                ImGui::Spacing();
-                ImGui::Text("Layers in %s:", selectedLevel.c_str());
-                ImGui::Indent();
-                if (!it->second.empty()) {
-                    for (auto const& layerName : it->second)
-                        ImGui::BulletText("%s", layerName.c_str());
+            //Select level to start
+            const char* startPreview = gStartLevelSelection.c_str();
+            if (ImGui::BeginCombo("Start Level", startPreview)) {
+                for (size_t i = 0; i < gLevelFiles.size(); ++i) {
+                    bool selected = (static_cast<int>(i) == gStartLevelIndex);
+                    if (ImGui::Selectable(gLevelFiles[i].c_str(), selected)) {
+                        gStartLevelIndex = static_cast<int>(i);
+                        gStartLevelSelection = gLevelFiles[gStartLevelIndex];
+                    }
+                    if (selected)
+                        ImGui::SetItemDefaultFocus();
                 }
-                else {
-                    ImGui::TextDisabled("(none)");
-                }
-                ImGui::Unindent();
+                ImGui::EndCombo();
             }
+
+            //Select gate 
+            if (hasGateTarget) {
+                ImGui::SeparatorText("Gate Settings");
+
+                const char* gateTargetPreview = gGateTargetLevelSelection.c_str();
+                if (ImGui::BeginCombo("Gate Target Level", gateTargetPreview)) {
+                    for (size_t i = 0; i < gLevelFiles.size(); ++i) {
+                        bool selected = (static_cast<int>(i) == gGateTargetLevelIndex);
+                        if (ImGui::Selectable(gLevelFiles[i].c_str(), selected)) {
+                            gGateTargetLevelIndex = static_cast<int>(i);
+                            gGateTargetLevelSelection = gLevelFiles[gGateTargetLevelIndex];
+                        }
+                        if (selected)
+                            ImGui::SetItemDefaultFocus();
+                    }
+                    ImGui::EndCombo();
+                }
+
+                ImGui::Checkbox("Apply gate target on spawn", &gApplyGateTargetOnSpawn);
+            }
+
+
+
 
             if (ImGui::Button("Load Selected Level")) {
                 const std::string selected = gLevelFiles[gSelectedLevelIndex];
@@ -1157,10 +1035,6 @@ namespace mygame {
                     FACTORY->Update(0.0f);
 
                     FACTORY->CreateLevel(levelPath.string());
-                    // After loading, cache layers and sync the UI's active layer
-                    gLevelLayers[selected] = ExtractLayersFromLevel(levelPath);
-                    gLastLayerSynchronizedLevel.clear();
-                    SyncActiveLayerWithLevel(selected);
 
                     size_t count = FACTORY->LastLevelObjects().size();
                     gLevelStatusMessage = "Loaded level from " + levelPath.string() +
@@ -1256,3 +1130,5 @@ namespace mygame {
         ImGui::End();
     }
 } // namespace mygame
+
+#endif // SOFASPUDS_ENABLE_EDITOR

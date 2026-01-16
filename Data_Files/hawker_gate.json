@@ -20,7 +20,11 @@
         "velocity_x": 0.0,
         "velocity_y": 0.0,
         "width": 0.5,
-        "height": 0.6      }
+        "height": 0.6
+      },
+      "GateTargetComponent": {
+        "level_path": "RealLevel1.json"
+      }
     }
   }
 }

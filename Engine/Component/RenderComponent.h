@@ -17,7 +17,7 @@
 #include <string>
 #include "Composition/Component.h"
 #include "Serialization/Serialization.h"
-#include "Resource_Manager/Resource_Manager.h"
+#include "Resource_Asset_Manager/Resource_Manager.h"
 #include "Core/PathUtils.h"
 #include <filesystem>
 

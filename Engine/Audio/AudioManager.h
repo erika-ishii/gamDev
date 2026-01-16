@@ -19,6 +19,14 @@
 #include <vector>
 #include "fmod.h"
 
+struct FadeData
+{
+    FMOD_CHANNEL* channel;
+    float startVolume;
+    float endVolume;
+    float duration;
+    float elapsed;
+};
 /*********************************************************************************************
   \class AudioManager
   \brief Manages the initialization, loading, playback, and cleanup of audio using FMOD.
@@ -34,7 +42,7 @@ class AudioManager
     ~AudioManager();
     bool initialize();
     void shutdown();
-    void update();
+    void update(float dt);
     bool loadSound(const std::string& name, const std::string& filePath, bool loop = false);
     void unloadSound(const std::string& name);
     void unloadAllSounds();
@@ -49,12 +57,16 @@ class AudioManager
     void setSoundLoop(const std::string& name, bool loop);
     bool isSoundLoaded(const std::string& name) const;
     bool isSoundPlaying(const std::string& name) const;
+    void fadeInSound(const std::string& name, float duration, float targetVolume = 1.0f);
+    void fadeOutSound(const std::string& name, float duration);
     std::vector<std::string> getLoadedSounds() const;
     private:
     FMOD_SYSTEM* m_system;///Pointer to the FMOD system instance.
     std::unordered_map<std::string, FMOD_SOUND*> m_sounds;///Map of loaded sounds by name.
     std::unordered_map<std::string, std::vector<FMOD_CHANNEL*>> m_channels;///Map of channels for each sound.
+    std::vector<FadeData> m_fades;
     std::string getFullPath(const std::string& fileName) const;
+    void updateFades(float deltaTime);
     void checkFMODError(FMOD_RESULT result, const std::string& operation) const;
     void pruneStoppedChannels();
 };

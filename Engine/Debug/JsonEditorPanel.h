@@ -26,6 +26,8 @@
 *********************************************************************************************/
 #pragma once
 
+#if SOFASPUDS_ENABLE_EDITOR
+
 #include <chrono>
 #include <filesystem>
 #include <string>
@@ -107,3 +109,5 @@ namespace mygame {
         Clock::time_point m_statusTimestamp{};           ///< When the current status message was set.
     };
 }
+
+#endif // SOFASPUDS_ENABLE_EDITOR

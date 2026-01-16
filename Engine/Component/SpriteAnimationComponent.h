@@ -1,31 +1,22 @@
 ﻿/*********************************************************************************************
  \file      SpriteAnimationComponent.h
  \par       SofaSpuds
- \author    elvisshengjie.lim (elvisshengjie.lim@digipen.edu) - Primary Author, 100%
+ \author     Ho Jun (h.jun@digipen.edu) - Primary Author, 100% - Primary Author, 60%
+            yimo.kong ( yimo.kong@digipen.edu) - Author, 40%
 
  \brief     Declares the SpriteAnimationComponent responsible for 2D sprite-based animation.
             Supports both legacy frame-array animations and modern sprite-sheet animations
             (grid-based UV sampling), with per-animation FPS, looping, and active animation
             selection. Integrates with the Resource_Manager to resolve and (re)bind textures.
 
- \details   Features:
-            - Legacy frame-array animation:
-              * Each frame references a texture key and (optional) path for lazy loading.
-              * Global fps/loop/play flags to drive simple frame stepping.
-            - Sprite-sheet animation set:
-              * Named animations (idle, run, attack, etc.) backed by sprite sheets.
-              * Configurable rows/columns/totalFrames/startFrame/endFrame/fps/loop.
-              * Per-animation runtime state (currentFrame, accumulator, textureId).
-            - Serialization:
-              * Reads legacy "frames[]" array.
-              * Reads "animations[]" array with nested "config" object.
-              * Persists activeAnimation index to restore current clip.
-            - Runtime helpers:
-              * Advance() tick for both legacy and sheet-based animations.
-              * CurrentSheetSample() to compute UV rect for current frame.
-              * Texture rebind logic (RebindAllTextures / EnsureTexture / ReloadAnimationTexture).
-              * Path normalization for packaged assets (ResolveAnimationPath).
-
+ \details   Responsibilities:
+            - Supports legacy frame-array animations and grid-based sprite-sheet animations.
+            - Stores per-animation playback parameters (FPS, looping, frame range).
+            - Integrates with Resource_Manager to resolve and (re)bind textures at runtime.
+            - Advances animation state over time and exposes sampling info (texture + UV)
+              for the RenderSystem and editor tools such as the Animation Editor panel.
+            - Handles JSON-driven serialization for both legacy and sprite-sheet formats,
+              including restoration of the active animation index.
  \copyright
             All content © 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
@@ -34,7 +25,7 @@
 
 #include "Composition/Component.h"
 #include "Serialization/Serialization.h"
-#include "Resource_Manager/Resource_Manager.h"
+#include "Resource_Asset_Manager/Resource_Manager.h"
 #include "Core/PathUtils.h"
 #include <glm/vec4.hpp>
 

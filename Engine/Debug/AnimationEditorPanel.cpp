@@ -1,5 +1,26 @@
+/*********************************************************************************************
+ \file      AnimationEditorPanel.cpp
+ \par       SofaSpuds
+ \author    yimo.kong (yimo.kong@digipen.edu) - Primary Author, 100%
+ \brief     Implements the ImGui-based Animation Editor panel for sprite-sheet animations.
+ \details   Responsibilities:
+            - Renders the "Animation Editor" window inside the in-game editor overlay.
+            - Uses the current Selection and Factory systems to locate the active GameObject.
+            - Reads and modifies SpriteAnimationComponent data (active clip, spritesheet path,
+              frame layout, FPS, looping).
+            - Clamps configuration values to valid ranges to avoid out-of-bounds frames.
+            - Provides a small preview of the selected frame region from the spritesheet to
+              validate configuration without leaving the editor.
+            - Triggers texture reloads when the spritesheet path is changed and supports
+              seeding default animations when none exist.
+ \copyright
+            All content ? 2025 DigiPen Institute of Technology Singapore.
+            All rights reserved.
+*********************************************************************************************/
 
 #include "Debug/AnimationEditorPanel.h"
+
+#if SOFASPUDS_ENABLE_EDITOR
 
 #include <algorithm>
 #include <array>
@@ -15,10 +36,17 @@
 #ifdef _DEBUG
 #define new DBG_NEW       // <- redefine new AFTER all includes
 #endif
+
 namespace
 {
     using Framework::SpriteAnimationComponent;
 
+    //-----------------------------------------------------------------------------------------
+    /// \brief Clamps animation configuration values to valid ranges.
+    ///
+    /// Ensures that total frames, rows, columns, start/end frames, and the current frame
+    /// all stay within safe bounds so that UV sampling and indexing remain valid.
+    //-----------------------------------------------------------------------------------------
     void ClampConfig(SpriteAnimationComponent::SpriteSheetAnimation& anim)
     {
         anim.config.totalFrames = std::max(1, anim.config.totalFrames);
@@ -31,6 +59,12 @@ namespace
         anim.currentFrame = std::clamp(anim.currentFrame, anim.config.startFrame, anim.config.endFrame);
     }
 
+    //-----------------------------------------------------------------------------------------
+    /// \brief Draws ImGui controls for editing a single sprite-sheet animation config.
+    ///
+    /// Exposes total frames, grid layout (rows/columns), start/end frame range, FPS,
+    /// and loop flag. Each edit is validated via ClampConfig to keep values consistent.
+    //-----------------------------------------------------------------------------------------
     void DrawAnimConfigFields(SpriteAnimationComponent::SpriteSheetAnimation& anim)
     {
         ClampConfig(anim);
@@ -56,6 +90,17 @@ namespace
 
 namespace mygame
 {
+    //-----------------------------------------------------------------------------------------
+    /// \brief Renders the Animation Editor panel for the currently selected GameObject.
+    ///
+    /// The panel:
+    ///   - Requires a valid Factory and a selected GameObject.
+    ///   - Only operates on objects that have a SpriteAnimationComponent.
+    ///   - Lets the user pick an animation clip, edit its config, and preview the result.
+    ///
+    /// \param open Reference to a flag that controls the panel visibility. The flag is
+    ///             updated if the user closes the window via the ImGui close button.
+    //-----------------------------------------------------------------------------------------
     void DrawAnimationEditor(bool& open)
     {
         using namespace Framework;
@@ -172,3 +217,6 @@ namespace mygame
         ImGui::End();
     }
 }
+
+#endif // SOFASPUDS_ENABLE_EDITOR
+
