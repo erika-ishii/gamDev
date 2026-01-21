@@ -1,7 +1,7 @@
 #if SOFASPUDS_ENABLE_EDITOR
-#include "AssetManagerPanel.h"
 #include "Resource_Asset_Manager/Asset_Manager.h"
 #include "Resource_Asset_Manager/Resource_Manager.h"
+#include "JsonEditorPanel.h"
 #include <filesystem>
 #include <vector>
 #include <imgui.h>
@@ -11,7 +11,7 @@
 #endif
 namespace mygame
 {
-	void DrawAssetManagerPanel()
+	void DrawAssetManagerPanel(JsonEditorPanel* jsonPanel)
 	{
 		ImGui::Begin("Debug Asset Manager");
 		static std::vector<AssetManager::Asset> assets;
@@ -21,12 +21,13 @@ namespace mygame
 			assets = AssetManager::GetAllAssets();
 			selected = -1;
 		}
+		//Search bar
 		static char searchBuffer[128] = "";
 		ImGui::InputText("Search", searchBuffer, sizeof(searchBuffer));
 
 		ImGui::Separator();
 		ImGui::BeginChild("AssetList", ImVec2(0, 200), true);
-		
+		//Searcher
 		for (int i = 0; i < (int)assets.size(); ++i)
 		{
 			if (searchBuffer[0] != '\0')
@@ -53,36 +54,65 @@ namespace mygame
 			ImGui::Text("Type: %d", (int)asset.type);
 			if (ImGui::Button("Load Asset"))
 			{Resource_Manager::LoadAsset(asset.path);}
-			if (asset.type != AssetManager::AssetType::Prefab && asset.type != AssetManager::AssetType::Json)
+			// Delete button - for all
+			ImGui::SameLine();
+			if (ImGui::Button("Delete Asset"))
+			{ImGui::OpenPopup("ConfirmDelete");}
+			if (ImGui::BeginPopupModal("ConfirmDelete", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 			{
-				ImGui::SameLine();
-				if (ImGui::Button("Delete Asset"))
+				ImGui::Text("Delete '%s'?", asset.name.c_str());
+				ImGui::Text("This action cannot be undone.");
+				ImGui::Separator();
+
+				if (ImGui::Button("Delete", ImVec2(120, 0)))
 				{
 					AssetManager::DeleteAsset(asset.path);
-					assets = AssetManager::GetAllAssets();
+					if (jsonPanel)
+						jsonPanel->RefreshFiles();
+					assets=AssetManager::GetAllAssets();
 					selected = -1;
+					ImGui::CloseCurrentPopup();
 				}
-			}
-			else
-			{
-				ImGui::TextDisabled("JSON assets cannot be deleted here");
+				ImGui::SameLine();
+				if (ImGui::Button("Cancel", ImVec2(120, 0)))
+				{
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::EndPopup();
 			}
 		}
 		ImGui::Separator();
-		// ---- Create Prefab (JSON only) ----
 		ImGui::TextDisabled("Only Prefabs (JSON) can be created via the editor.");
 		ImGui::TextDisabled("Binary assets must be imported externally.");
-		static char newPrefabName[128] = "";
-		ImGui::InputText("Prefab Name", newPrefabName, sizeof(newPrefabName));
-		if (ImGui::Button("Create Prefab"))
+		static char prefabName[128] = "";
+		ImGui::InputText("Prefab Name", prefabName, sizeof(prefabName));
+		bool createObject = ImGui::Button("Create Object Prefab");
+		ImGui::SameLine();
+		bool createEnemy = ImGui::Button("Create Enemy Prefab");
+		if ((createObject || createEnemy) && prefabName[0] != '\0')
 		{
-			if (strlen(newPrefabName) > 0)
+			bool success = false;
+			if (createObject)
+			{success = AssetManager::CreateObjectAsset(prefabName, "json");}
+			else if (createEnemy)
+			{success = AssetManager::CreateEnemyAsset(prefabName, "json");}
+
+			if (success)
 			{
-				AssetManager::CreateEmptyAsset(newPrefabName, "json");
+				prefabName[0] = '\0';
 				assets = AssetManager::GetAllAssets();
-				newPrefabName[0] = '\0';
+				if (jsonPanel)
+					jsonPanel->RefreshFiles();
+			}
+			else
+			{
+				ImGui::TextColored(
+					ImVec4(1, 0, 0, 1),
+					"Failed to create prefab. Name might exist or template missing."
+				);
 			}
 		}
+
 		ImGui::End();
 	}
 }

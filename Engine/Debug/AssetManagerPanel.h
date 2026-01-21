@@ -1,4 +1,5 @@
 #pragma once
+#include "JsonEditorPanel.h"
 namespace mygame {
-    void DrawAssetManagerPanel();
+    void DrawAssetManagerPanel(JsonEditorPanel* jsonPanel);
 }

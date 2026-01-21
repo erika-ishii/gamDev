@@ -1,0 +1,18 @@
+{
+  "GameObject": {
+    "name": "",
+    "Components": {
+      "TransformComponent": { "x": 0.0, "y": 0.0, "rot": 0.0 },
+      "RenderComponent": {
+        "w": 0.3,
+        "h": 0.4,
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0,
+        "a": 1.0,
+        "texture_key": "",
+        "texture_path": ""
+      }
+    }
+  }
+}

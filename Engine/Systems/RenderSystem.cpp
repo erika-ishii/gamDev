@@ -1,4 +1,4 @@
-﻿/*********************************************************************************************
+/*********************************************************************************************
  \file      RenderSystem.cpp
  \par       SofaSpuds
  \author    yimo.kong ( yimo.kong@digipen.edu) - Primary Author, 50%
@@ -61,6 +61,7 @@
 #include <unordered_map>
 #include <iostream>
 #if SOFASPUDS_ENABLE_EDITOR
+#include "Resource_Asset_Manager/Asset_Manager.h"
 #include "Debug/AssetManagerPanel.h"
 #include "Debug/AudioImGui.h"
 #include "Debug/UndoStack.h"
@@ -1520,7 +1521,7 @@ namespace Framework {
         }
 
 
-        jsonEditor.Initialize(dataFilesRoot);
+        jsonEditor.Initialize(AssetManager::ProjectRoot() / "Data_Files");
 
         if (window && window->raw())
             glfwSetDropCallback(window->raw(), &RenderSystem::GlfwDropCallback);
@@ -1813,7 +1814,7 @@ namespace Framework {
                             model = glm::translate(model, glm::vec3(hb->spawnX, hb->spawnY, 0.0f));
                             const float angle = std::atan2(activeHit.velY, activeHit.velX);
                             model = glm::rotate(model, angle, glm::vec3(0, 0, 1));
-                            model = glm::scale(model, glm::vec3(hb->width, hb->height, 1.0f));
+                            model = glm::scale(model, glm::vec3(hb->width+0.15, hb->height+0.15, 1.0f));
                             instance.model = model;
                             instance.tint = glm::vec4(1.0f);
 
@@ -2154,7 +2155,7 @@ namespace Framework {
                 mygame::DrawPropertiesEditor();
                 mygame::DrawInspectorWindow();
                 mygame::DrawAnimationEditor(showAnimationEditor);
-                mygame::DrawAssetManagerPanel();
+                mygame::DrawAssetManagerPanel(&jsonEditor);
 
                 if (ImGui::Begin("Crash Tests"))
                 {

@@ -109,29 +109,60 @@ bool AssetManager::DeleteAsset(const std::filesystem::path& assetPath)
 	std::filesystem::remove(assetPath);
 	return true;
 }
-bool AssetManager::CreateEmptyAsset(
+bool AssetManager::CreateEnemyAsset(
 	const std::string& name,
 	const std::string& extension)
 {
+    // Only allow JSON prefabs
+    if (extension != "json")
+        return false;
+    // Destination path in Data_Files
+    std::filesystem::path basePath = ProjectRoot() / "Data_Files";
+    std::filesystem::create_directories(basePath);
+    std::filesystem::path path = basePath / (name + ".json");
+    // Do not overwrite existing prefabs
+    if (std::filesystem::exists(path))
+        return false;
+    // Path to the base enemy template INSIDE Data_Files
+    std::filesystem::path templatePath = basePath / "enemy_template.json";
+    if (!std::filesystem::exists(templatePath))
+        return false; // template must exist
+    try {std::filesystem::copy_file(templatePath, path,std::filesystem::copy_options::overwrite_existing);}
+    catch (const std::exception& e) 
+	{
+        std::cerr << "Failed to create prefab from template: " << e.what() << std::endl;
+        return false;
+    }
+    return true;
+}
+
+bool AssetManager::CreateObjectAsset(
+	const std::string& name,
+	const std::string& extension)
+{
+	// Only allow JSON prefabs
 	if (extension != "json")
 		return false;
+	// Destination path in Data_Files
 	std::filesystem::path basePath = ProjectRoot() / "Data_Files";
 	std::filesystem::create_directories(basePath);
 	std::filesystem::path path = basePath / (name + ".json");
+	// Do not overwrite existing prefabs
 	if (std::filesystem::exists(path))
 		return false;
-	std::ofstream file(path);
-	if (!file.is_open())
+	// Path to the base enemy template INSIDE Data_Files
+	std::filesystem::path templatePath = basePath / "object_template.json";
+	if (!std::filesystem::exists(templatePath))
+		return false; // template must exist
+	try { std::filesystem::copy_file(templatePath, path, std::filesystem::copy_options::overwrite_existing); }
+	catch (const std::exception& e)
+	{
+		std::cerr << "Failed to create prefab from template: " << e.what() << std::endl;
 		return false;
-	file <<
-		"{\n"
-		"  \"type\": \"Prefab\",\n"
-		"  \"name\": \"" << name << "\",\n"
-		"  \"entities\": []\n"
-		"}\n";
-
+	}
 	return true;
 }
+
 bool AssetManager::DeletePrefab(const std::string& prefabName)
 {
 	std::filesystem::path prefabPath =

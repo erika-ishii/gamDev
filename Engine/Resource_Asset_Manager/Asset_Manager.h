@@ -16,12 +16,13 @@ class AssetManager
 		static bool ImportAsset(const std::filesystem::path& sourceFile);
 		static bool DeleteAsset(const std::filesystem::path& assetPath);
 		static AssetType IdentifyAssetType(const std::filesystem::path& assetPath);
-		static bool CreateEmptyAsset(const std::string& name,const std::string& extension);
+		static bool CreateEnemyAsset(const std::string& name,const std::string& extension);
+		static bool CreateObjectAsset(const std::string& name, const std::string& extension);
 		static bool DeletePrefab(const std::string& prefabName);
 		static const std::vector<Asset>& GetAllAssets();
 		static bool IsValidAssetFile(const std::filesystem::path& path);
-	private:
 		static std::filesystem::path ProjectRoot();
+		
 
 
 

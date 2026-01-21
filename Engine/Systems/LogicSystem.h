@@ -151,6 +151,7 @@ namespace Framework {
         void                 RefreshLevelReferences();
         void                 LoadLevelAndResetState(const std::filesystem::path& levelPath);
         void                 UpdateAnimation(float dt, bool wantRun);
+        void                 RecountEnemies();
 
         gfx::Window* window;
         InputSystem& input;
@@ -182,6 +183,8 @@ namespace Framework {
         bool                                 crashTestLatched{ false };
         bool                                 pendingLevelTransition{ false };
         std::unique_ptr<CrashLogger>         crashLogger;
+
+        int                                  enemiesAlive{ 0 }; 
     };
 
 } // namespace Framework

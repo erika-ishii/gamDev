@@ -555,6 +555,15 @@ namespace Framework {
         }
         RefreshLevelReferences();
 
+        enemiesAlive = 0;
+        for (auto* obj : levelObjects)
+        {
+            if (!obj) continue;
+
+            if (obj->GetComponentType<EnemyComponent>(ComponentTypeId::CT_EnemyComponent))
+                enemiesAlive++;
+        }
+
         WindowConfig cfg = LoadWindowConfig(resolveData("window.json").string());
         screenW = cfg.width;
         screenH = cfg.height;
@@ -635,6 +644,11 @@ namespace Framework {
 
             // Keep references fresh each frame in case of spawns/deletions.
             RefreshLevelReferences();
+
+            RecountEnemies();
+
+            if (input.IsKeyPressed(GLFW_KEY_P))
+                std::cout << "Number of enemies alive: " << enemiesAlive << "\n";
 
             std::vector<GOC*> finishedVfx;
 
@@ -909,7 +923,7 @@ namespace Framework {
                         attackTr.x, attackTr.y,
                         aimDirX, aimDirY,
                         0.3f,
-                        0.2f, 0.2f,
+                        0.1f, 0.1f,
                         1.0f, 5.f, HitBoxComponent::Team::Thrown);
 
                     std::cout << "Hurtbox spawned at (" << attackTr.x << ", " << attackTr.y << ")\n";
@@ -987,6 +1001,15 @@ namespace Framework {
         gateController.SetPlayer(nullptr);
 
         RefreshLevelReferences();
+        enemiesAlive = 0;
+        for (auto* obj : levelObjects)
+        {
+            if (!obj) continue;
+
+            if (obj->GetComponentType<EnemyComponent>(ComponentTypeId::CT_EnemyComponent))
+                enemiesAlive++;
+        }
+
     }
 
     /*****************************************************************************************
@@ -1037,5 +1060,27 @@ namespace Framework {
             delete hitBoxSystem;
             hitBoxSystem = nullptr;
         }
+    }
+
+
+    void LogicSystem::RecountEnemies()
+    {
+        int count = 0;
+
+        for (auto* obj : levelObjects)
+        {
+            if (!obj)
+                continue;
+
+            if (obj->GetComponentType<EnemyComponent>(ComponentTypeId::CT_EnemyComponent))
+            {
+                auto* health = obj->GetComponentType<EnemyHealthComponent>(ComponentTypeId::CT_EnemyHealthComponent);
+
+                if (!health || !health->isDead)
+                    count++;
+            }
+        }
+
+        enemiesAlive = count;
     }
 } // namespace Framework
