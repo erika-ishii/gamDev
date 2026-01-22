@@ -796,7 +796,9 @@ void PauseMenuPage::SyncLayout(int screenW, int screenH)
                headerW, headerH };
 
     const float closeSize = headerH * 0.72f;
-    closeBtn = { note.x + note.w - closeSize * 0.75f, note.y + note.h - closeSize * 0.72f, closeSize, closeSize };
+    const float closeOffsetX = closeSize * 2.6f;
+    const float closeOffsetY = closeSize * 1.1f;
+    closeBtn = { note.x + note.w - closeOffsetX, note.y + note.h - closeOffsetY, closeSize, closeSize };
 
     int buttonWpx = 0, buttonHpx = 0;
     const float defaultButtonAspect = 3.5f;
