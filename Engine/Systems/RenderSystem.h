@@ -22,6 +22,7 @@
 
 #include "LogicSystem.h"
 #include "Component/CircleRenderComponent.h"
+#include "Component/GlowComponent.h"
 #include "Component/RenderComponent.h"
 #include "Component/SpriteComponent.h"
 #include "Component/TransformComponent.h"
@@ -127,7 +128,8 @@ namespace Framework {
         int ScreenWidth()  const { return screenW; }
         /// \brief  Back-buffer height in pixels.
         int ScreenHeight() const { return screenH; }
-
+        /// \brief  Get the active game viewport rectangle in window pixel coordinates.
+        bool GetGameViewportRect(int& x, int& y, int& width, int& height) const;
         /// \brief  Convert a screen cursor position to world space using the active camera.
         bool ScreenToWorld(double cursorX, double cursorY,
             float& worldX, float& worldY,
@@ -148,6 +150,7 @@ namespace Framework {
 #if SOFASPUDS_ENABLE_EDITOR
         // --- Editor frame scaffolding -----------------------------------------------------
         void DrawDockspace();
+        void DrawGameViewportWindow();
 
         void HandleViewportPicking();
 #endif
@@ -228,6 +231,11 @@ namespace Framework {
         };
 
         ViewRect gameViewport{};              //!< Active game viewport in pixels.
+#if SOFASPUDS_ENABLE_EDITOR
+        ViewRect imguiViewportRect{};         //!< ImGui content rect (top-left coords).
+        bool     imguiViewportValid = false;  //!< True when ImGui viewport has valid size.
+        bool     imguiViewportMouseInContent = false; //!< Mouse is over viewport content.
+#endif
 
         // --- Editor layout flags ---------------------------------------------------------
         bool  showEditor = false;              //!< Toggle editor UI visibility.
@@ -250,6 +258,26 @@ namespace Framework {
         bool  draggingSelection = false;
         float dragOffsetX = 0.0f;
         float dragOffsetY = 0.0f;
+
+        // --- Glow drawing tool (editor) --------------------------------------------------
+        struct GlowBrushSettings
+        {
+            float color[3]{ 1.0f, 0.8f, 0.3f };
+            float opacity{ 1.0f };
+            float brightness{ 1.0f };
+            float innerRadius{ 0.05f };
+            float outerRadius{ 0.2f };
+            float falloffExponent{ 1.0f };
+            float pointSpacing{ 0.02f };
+        };
+
+        bool          glowDrawMode = false;
+        bool          glowDrawing = false;
+        float         glowLastPointX = 0.0f;
+        float         glowLastPointY = 0.0f;
+        GOC*          glowDrawObject = nullptr;
+        GlowComponent* glowDrawComponent = nullptr;
+        GlowBrushSettings glowBrush{};
 
         // --- Game camera -----------------------------------------------------------------
         gfx::Camera2D camera;                 //!< In-game camera.

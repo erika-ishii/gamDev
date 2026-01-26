@@ -1,0 +1,199 @@
+{
+  "GameObject": {
+    "Components": {
+      "TransformComponent": {
+        "x": -0.5,
+        "y": -0.5,
+        "rot": 0.0
+      },
+      "RenderComponent": {
+        "w": 0.25,
+        "h": 0.25,
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 1,
+        "layer": 1
+      },
+      "SpriteComponent": {
+        "texture_key": "idle_sheet"
+      },
+     "PlayerHUDComponent": {
+},
+      "RigidBodyComponent": {
+        "velocity_x": 0.0,
+        "velocity_y": 0.0,
+        "width": 0.1,
+        "height": 0.21
+      },
+      "PlayerComponent": {},
+      "PlayerHealthComponent": {
+        "playerHealth": 5,
+        "playerMaxhealth": 5
+      },
+      "PlayerAttackComponent": {
+        "damage": 1,
+        "attack_speed": 1.2
+      },
+      "SpriteAnimationComponent": {
+        "activeAnimation": 0,
+        "animations": [
+          {
+            "config": {
+              "columns": 5,
+              "endFrame": 4,
+              "fps": 6.0,
+              "loop": true,
+              "rows": 1,
+              "startFrame": 0,
+              "totalFrames": 5
+            },
+            "currentFrame": 3,
+            "name": "idle",
+            "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/Idle_Sprite.png",
+            "textureKey": "idle_sheet"
+          },
+          {
+            "config": {
+              "columns": 10,
+              "endFrame": 9,
+              "fps": 20.0,
+              "loop": true,
+              "rows": 1,
+              "startFrame": 0,
+              "totalFrames": 10
+            },
+            "currentFrame": 0,
+            "name": "run",
+            "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/Running_Sprite.png",
+            "textureKey": "run_sheet"
+          },
+          {
+            "config": {
+              "columns": 13,
+              "endFrame": 12,
+              "fps": 18.0,
+              "loop": true,
+              "rows": 1,
+              "startFrame": 0,
+              "totalFrames": 13
+            },
+            "currentFrame": 0,
+            "name": "attack1",
+            "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/1st_Attack Sprite.png",
+            "textureKey": "attack1_sheet"
+          },
+          {
+            "config": {
+              "columns": 8,
+              "endFrame": 7,
+              "fps": 18.0,
+              "loop": true,
+              "rows": 1,
+              "startFrame": 0,
+              "totalFrames": 8
+            },
+            "currentFrame": 7,
+            "name": "attack2",
+            "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/2nd_Attack Sprite.png",
+            "textureKey": "attack2_sheet"
+          },
+          {
+            "config": {
+              "columns": 9,
+              "endFrame": 8,
+              "fps": 18.0,
+              "loop": true,
+              "rows": 1,
+              "startFrame": 0,
+              "totalFrames": 9
+            },
+            "currentFrame": 0,
+            "name": "attack3",
+            "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/3rd_Attack Sprite.png",
+            "textureKey": "attack3_sheet"
+            },
+          {
+            "config": {
+              "columns": 4,
+              "endFrame": 3,
+              "fps": 5.0,
+              "loop": false,
+              "rows": 1,
+              "startFrame": 0,
+              "totalFrames": 4
+            },
+            "currentFrame": 0,
+            "name": "knockback",
+            "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/Knockback_Sprite.png",
+            "textureKey": "knockback_sheet"
+          },
+          {
+            "config": {
+              "columns": 8,
+              "endFrame": 7,
+              "fps": 8.0,
+              "loop": false,
+              "rows": 1,
+              "startFrame": 0,
+              "totalFrames": 8
+            },
+            "currentFrame": 0,
+            "name": "death",
+            "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/Death_Sprite.png",
+            "textureKey": "death_sheet"
+          }
+        ],
+        "fps": 6.0,
+        "frames": [],
+        "loop": true,
+        "play": true
+      },
+      "HitBoxComponent": {
+        "width": 0.15,
+        "height": 0.15,
+        "duration": 0.15
+      },
+      "AudioComponent": {
+        "entityType": "player",
+        "sounds": {
+          "GrappleShoot1": { "id": "GrappleShoot1", "loop": false },
+          "GrappleShoot2": { "id": "GrappleShoot2", "loop": false },
+          "GrappleShoot3": { "id": "GrappleShoot3", "loop": false },
+          "GrappleShoot4": { "id": "GrappleShoot4", "loop": false },
+
+          "Slash1": { "id": "Slash1", "loop": false },
+          "Slash2": { "id": "Slash2", "loop": false },
+          "Slash3": { "id": "Slash3", "loop": false },
+
+          "Punch1": { "id": "Punch1", "loop": false },
+          "Punch2": { "id": "Punch2", "loop": false },
+          "Punch3": { "id": "Punch3", "loop": false },
+          "Punch4": { "id": "Punch4", "loop": false },
+
+          "IneffectiveBoink1": { "id": "Ineffective Boink1", "loop": false },
+          "IneffectiveBoink2": { "id": "Ineffective Boink2", "loop": false },
+          "IneffectiveBoink3": { "id": "Ineffective Boink3", "loop": false },
+
+          "PlayerHit": { "id": "PlayerHit", "loop": false },
+          "PlayerDead": { "id": "PlayerDead", "loop": false },
+
+          "ConcreteFootsteps1": { "id": "ConcreteFootsteps1", "loop": false },
+          "ConcreteFootsteps2": { "id": "ConcreteFootsteps2", "loop": false },
+          "ConcreteFootsteps3": { "id": "ConcreteFootsteps3", "loop": false },
+          "ConcreteFootsteps4": { "id": "ConcreteFootsteps4", "loop": false },
+          "ConcreteFootsteps5": { "id": "ConcreteFootsteps5", "loop": false },
+          "ConcreteFootsteps6": { "id": "ConcreteFootsteps6", "loop": false },
+          "ConcreteFootsteps7": { "id": "ConcreteFootsteps7", "loop": false },
+          "ConcreteFootsteps8": { "id": "ConcreteFootsteps8", "loop": false },
+          "ConcreteFootsteps9": { "id": "ConcreteFootsteps9", "loop": false },
+          "ConcreteFootsteps10": { "id": "ConcreteFootsteps10", "loop": false },
+          "ConcreteFootsteps11": { "id": "ConcreteFootsteps11", "loop": false },
+          "ConcreteFootsteps12": { "id": "ConcreteFootsteps12", "loop": false }
+        },
+        "volume": 1.0
+      }
+
+    }
+  }
+}

@@ -340,15 +340,60 @@ namespace Framework
                 float dx = trplayer->x - tr->x;
                 float dy = trplayer->y - tr->y;
                 float distance = std::sqrt(dx * dx + dy * dy);
-
+                attack->attack_timer += dt;
                 const float speed = 1.0f;
                 const float accel = 2.0f;
 
                 // Determine behavior based on Type (melee vs ranged)
                 bool isRanged = (typeComp && typeComp->Etype == EnemyTypeComponent::EnemyType::ranged);
+ 
 
                 // Keep ranged enemies a bit closer so they don't aggro from too far away
                 float stopDistance = isRanged ? 1.0f : 0.1f;
+                //Ranged Retreat
+                const float preferredMinDistance = 0.5f;   // Too close → retreat
+                const float preferredMaxDistance = 1.2f;   // Too far → approach
+                const float retreatSpeed = 0.45f;
+                const float retreatDurationAfterShot = 3.0f;
+                // ---------------------------------------
+                // RANGED MOVEMENT / RETREAT
+                // ---------------------------------------
+                if (isRanged)
+                {
+                    float norm = (distance > 0.001f) ? distance : 1.0f;
+                    float dirX = dx / norm;
+                    float dirY = dy / norm;
+
+                    // 1️ Retreat after shooting
+                    if (ai->retreatTimer > 0.0f)
+                    {
+                        ai->retreatTimer -= dt;
+                        rb->velX = -dirX * retreatSpeed;
+                        rb->velY = -dirY * retreatSpeed;
+                    }
+                    // 2️ Player too close → retreat with chance
+                    else if (distance < preferredMinDistance)
+                    {
+                        if ((rand() % 100) < 20) 
+                        {rb->velX = -dirX * retreatSpeed; }
+                        else
+                        {rb->velX *= 0.5f;}
+                    }
+                    // 3️ Player too far → approach
+                    else if (distance > preferredMaxDistance)
+                    {
+                        rb->velX = dirX * speed;
+                        
+                    }
+                    // 4️ Ideal distance → idle/slow down
+                    else
+                    {
+                        rb->velX *= 0.85f;
+                      
+                    }
+                }
+
+
 
                 // Smoothly move towards the player
                 if (distance > stopDistance)
@@ -368,13 +413,12 @@ namespace Framework
                     rb->velY *= 0.5f;
                 }
 
-                // Update attack timer and spawn hitbox if ready
-                attack->attack_timer += dt;
 
                 // Determine facing direction based on player position
                 ai->facing = (dx < 0.0f) ? Facing::LEFT : Facing::RIGHT;
 
-                if (attack->attack_timer >= attack->attack_speed)
+                if (attack->attack_timer >= attack->attack_speed &&
+                    ai->retreatTimer <= 0.0f)
                 {
                     // Check range before attacking. Ranged enemies should only fire when much closer.
                     bool canAttack = isRanged ? (distance < 3.5f) : (distance < 0.8f);
@@ -415,7 +459,7 @@ namespace Framework
                                     audio->TriggerSound("EnemyAttack");
                                 }
                                 PlayAnimationIfAvailable(enemy, "rangeattack", true);
-                                attack->attack_timer = -3.0f;
+                                ai->retreatTimer = retreatDurationAfterShot;
                             }
                             else
                             {

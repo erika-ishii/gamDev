@@ -24,11 +24,12 @@
 #include "HealthSystem.h"
 #include "Factory/Factory.h"
 #include "Component/SpriteAnimationComponent.h"
-
+#include "RenderSystem.h"
 #include <algorithm>
 #include <cctype>
 #include <iostream>
 #include <string_view>
+#include <glad/glad.h>
 #include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 
 #ifdef _DEBUG
@@ -390,9 +391,26 @@ namespace Framework
     {
         if (!window)
             return;
+        int viewportX = 0;
+        int viewportY = 0;
+        int viewportW = 0;
+        int viewportH = 0;
+        bool hasViewport = false;
+        if (auto* renderer = RenderSystem::Get())
+        {
+            hasViewport = renderer->GetGameViewportRect(viewportX, viewportY, viewportW, viewportH);
+        }
+        if (!hasViewport)
+        {
+            viewportX = 0;
+            viewportY = 0;
+            viewportW = window->Width();
+            viewportH = window->Height();
+        }
+        if (viewportW <= 0 || viewportH <= 0)
+            return;
 
-        const int screenW = window->Width();
-        const int screenH = window->Height();
+        glViewport(viewportX, viewportY, viewportW, viewportH);
 
         for (GOCId id : gameObjectIds)
         {
@@ -410,8 +428,9 @@ namespace Framework
                 continue;
 
             hud->Update(lastDt);
-            hud->Draw(screenW, screenH);
+            hud->Draw(viewportW, viewportH);
         }
+        glViewport(0, 0, window->Width(), window->Height());
     }
 
     void HealthSystem::Shutdown()

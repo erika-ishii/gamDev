@@ -42,6 +42,9 @@ namespace Framework
         /// CircleRenderComponent: specialized rendering for circles
         CT_CircleRenderComponent,
 
+        /// GlowComponent: procedural glow blobs/strokes
+        CT_GlowComponent,
+
         /// InputComponents: manages input bindings and player controls
         CT_InputComponents,
 

@@ -65,8 +65,8 @@ namespace Framework {
     };
 
     const char* LayerGroupName(LayerGroup group);
-    LayerKey ParseLayerName(std::string_view name);
-    std::string NormalizeLayerName(std::string_view name);
+    LayerKey ParseLayerName(const std::string& name);
+    std::string NormalizeLayerName(const std::string& name);
     std::string LayerNameFromKey(LayerKey key);
 
     class LayerVisibility {
@@ -166,35 +166,36 @@ namespace Framework {
           \param layerName  The name of the desired layer.
           \return A reference to the ensured Layer instance.
         *************************************************************************************/
-        Layer& EnsureLayer(std::string_view layerName);
+        Layer& EnsureLayer(const std::string& layerName);
 
         /*************************************************************************************
           \brief Finds a layer by name (read-only).
           \param layerName  The layer name to search for.
           \return Pointer to the layer, or nullptr if not found.
         *************************************************************************************/
-        const Layer* FindLayer(std::string_view layerName) const;
+        const Layer* FindLayer(const std::string& layerName) const;
 
         /*************************************************************************************
           \brief Finds a layer by name (modifiable).
           \param layerName  The layer name to search for.
           \return Pointer to the layer, or nullptr if not found.
         *************************************************************************************/
-        Layer* FindLayer(std::string_view layerName);
+        Layer* FindLayer(const std::string& layerName);
 
         /*************************************************************************************
           \brief Assigns an object to a layer, removing it from any previous layer.
           \param id         The GameObject ID to assign.
           \param layerName  The target layer name.
         *************************************************************************************/
-        void AssignToLayer(GOCId id, std::string_view layerName);
+        void AssignToLayer(GOCId id, const std::string& layerName);
 
         /*************************************************************************************
           \brief Removes an object from a specific layer.
           \param id         The GameObject ID to remove.
           \param layerName  The layer name from which to remove it.
         *************************************************************************************/
-        void RemoveFromLayer(GOCId id, std::string_view layerName);
+        void RemoveFromLayer(GOCId id, const std::string& layerName);
+
 
         /*************************************************************************************
           \brief Removes an object from whichever layer it currently belongs to.
@@ -216,7 +217,7 @@ namespace Framework {
         *************************************************************************************/
         std::vector<std::string> LayerNames() const;
 
-        bool IsLayerEnabled(std::string_view layerName) const;
+        bool IsLayerEnabled(const std::string& layerName) const;
         bool IsLayerEnabled(LayerKey key) const;
 
         LayerVisibility& Visibility() { return visibility; }

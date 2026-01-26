@@ -1,0 +1,25 @@
+{
+  "GameObject": {
+    "Components": {
+      "TransformComponent": {
+        "x": 0.0,
+        "y": 0.0,
+        "rot": 0.0
+      },
+      "GlowComponent": {
+        "r": 1.0,
+        "g": 0.8,
+        "b": 0.3,
+        "opacity": 1.0,
+        "brightness": 1.0,
+        "inner_radius": 0.05,
+        "outer_radius": 0.2,
+        "falloff_exponent": 1.0,
+        "visible": true,
+        "points": [
+          { "x": 0.0, "y": 0.0 }
+        ]
+      }
+    }
+  }
+}

@@ -479,6 +479,7 @@ namespace Framework {
         RegisterComponent(TransformComponent);
         RegisterComponent(RenderComponent);
         RegisterComponent(CircleRenderComponent);
+        RegisterComponent(GlowComponent);
         RegisterComponent(SpriteComponent);
         RegisterComponent(RigidBodyComponent);
         RegisterComponent(PlayerComponent);

@@ -87,6 +87,15 @@ namespace Framework {
         return sInstance;
     }
 
+    bool RenderSystem::GetGameViewportRect(int& x, int& y, int& width, int& height) const
+    {
+        x = gameViewport.x;
+        y = gameViewport.y;
+        width = gameViewport.width;
+        height = gameViewport.height;
+        return width > 0 && height > 0;
+    }
+
     namespace {
         using clock = std::chrono::high_resolution_clock;
 
@@ -627,8 +636,7 @@ namespace Framework {
         }
 
         ImGuiIO& io = ImGui::GetIO();
-        const bool wantCapture = io.WantCaptureMouse;
-
+        const bool wantCapture = io.WantCaptureMouse && !imguiViewportMouseInContent;
         const bool mouseDown = glfwGetMouseButton(native, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
         const bool pressed = mouseDown && !leftMouseDownPrev;
         const bool released = !mouseDown && leftMouseDownPrev;
@@ -638,6 +646,13 @@ namespace Framework {
         glfwGetCursorPos(native, &cursorX, &cursorY);
         UpdateEditorCameraControls(native, io, cursorX, cursorY);
 
+        if (glowDrawMode && released)
+        {
+            glowDrawing = false;
+            glowDrawObject = nullptr;
+            glowDrawComponent = nullptr;
+        }
+
         float worldX = 0.0f;
         float worldY = 0.0f;
         bool  insideViewport = false;
@@ -645,6 +660,69 @@ namespace Framework {
         {
             draggingSelection = false;
             leftMouseDownPrev = mouseDown;
+            return;
+        }
+
+        if (glowDrawMode)
+        {
+            if (pressed && insideViewport && !wantCapture)
+            {
+                glowDrawObject = FACTORY->CreateEmptyComposition();
+                if (glowDrawObject)
+                {
+                    glowDrawObject->SetObjectName("Glow");
+                    glowDrawObject->SetLayerName(mygame::ActiveLayerName());
+
+                    auto* tr = glowDrawObject->EmplaceComponent<Framework::TransformComponent>(
+                        Framework::ComponentTypeId::CT_TransformComponent);
+                    tr->x = worldX;
+                    tr->y = worldY;
+                    tr->rot = 0.0f;
+                    tr->scaleX = 1.0f;
+                    tr->scaleY = 1.0f;
+
+                    glowDrawComponent = glowDrawObject->EmplaceComponent<Framework::GlowComponent>(
+                        Framework::ComponentTypeId::CT_GlowComponent);
+                    glowDrawComponent->r = glowBrush.color[0];
+                    glowDrawComponent->g = glowBrush.color[1];
+                    glowDrawComponent->b = glowBrush.color[2];
+                    glowDrawComponent->opacity = glowBrush.opacity;
+                    glowDrawComponent->brightness = glowBrush.brightness;
+                    glowDrawComponent->innerRadius = glowBrush.innerRadius;
+                    glowDrawComponent->outerRadius = glowBrush.outerRadius;
+                    glowDrawComponent->falloffExponent = glowBrush.falloffExponent;
+                    glowDrawComponent->points.clear();
+                    glowDrawComponent->points.emplace_back(0.0f, 0.0f);
+
+                    glowDrawObject->initialize();
+                    mygame::SetSelectedObjectId(glowDrawObject->GetId());
+                    mygame::editor::RecordObjectCreated(*glowDrawObject);
+                    glowDrawing = true;
+                    glowLastPointX = worldX;
+                    glowLastPointY = worldY;
+                }
+            }
+
+            if (glowDrawing && glowDrawObject && glowDrawComponent && mouseDown && insideViewport && !wantCapture)
+            {
+                const float dx = worldX - glowLastPointX;
+                const float dy = worldY - glowLastPointY;
+                const float distSq = dx * dx + dy * dy;
+                const float minDist = glowBrush.pointSpacing;
+                if (distSq >= minDist * minDist)
+                {
+                    if (auto* tr = glowDrawObject->GetComponentType<Framework::TransformComponent>(
+                        Framework::ComponentTypeId::CT_TransformComponent))
+                    {
+                        glowDrawComponent->points.emplace_back(worldX - tr->x, worldY - tr->y);
+                    }
+                    glowLastPointX = worldX;
+                    glowLastPointY = worldY;
+                }
+            }
+
+            leftMouseDownPrev = mouseDown;
+            draggingSelection = false;
             return;
         }
 
@@ -894,7 +972,8 @@ namespace Framework {
             editorCameraPanning = false;
         }
 
-        const bool wantCaptureMouse = io.WantCaptureMouse;
+        const bool allowViewportInput = imguiViewportMouseInContent;
+        const bool wantCaptureMouse = io.WantCaptureMouse && !allowViewportInput;
         const bool middleDown = glfwGetMouseButton(native, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
 
         if (middleDown && insideViewport && !wantCaptureMouse)
@@ -971,6 +1050,20 @@ namespace Framework {
             extent = std::max(extent, scaledRadius);
         }
 
+        if (auto* glow = obj->GetComponentType<Framework::GlowComponent>(
+            Framework::ComponentTypeId::CT_GlowComponent))
+        {
+            const float scale = std::max(std::fabs(tr->scaleX), std::fabs(tr->scaleY));
+            float maxDist = 0.0f;
+            for (const auto& pt : glow->points)
+            {
+                const float lx = pt.x * tr->scaleX;
+                const float ly = pt.y * tr->scaleY;
+                maxDist = std::max(maxDist, std::sqrt(lx * lx + ly * ly));
+            }
+            extent = std::max(extent, maxDist + glow->outerRadius * scale);
+        }
+
         if (auto* rect = obj->GetComponentType<Framework::RenderComponent>(
             Framework::ComponentTypeId::CT_RenderComponent))
         {
@@ -1014,11 +1107,51 @@ namespace Framework {
 
             const float dx = worldX - tr->x;
             const float dy = worldY - tr->y;
-            const float distanceSq = dx * dx + dy * dy;
+            float distanceSq = dx * dx + dy * dy;
 
             bool contains = false;
 
-            if (auto* circle = obj->GetComponentType<Framework::CircleRenderComponent>(
+            if (auto* glow = obj->GetComponentType<Framework::GlowComponent>(
+                Framework::ComponentTypeId::CT_GlowComponent))
+            {
+                if (glow->visible && glow->opacity > 0.0f && glow->outerRadius > 0.0f)
+                {
+                    const float scale = std::max(std::fabs(tr->scaleX), std::fabs(tr->scaleY));
+                    const float radius = glow->outerRadius * scale;
+                    const float cosR = std::cos(tr->rot);
+                    const float sinR = std::sin(tr->rot);
+                    float closestSq = std::numeric_limits<float>::max();
+
+                    if (glow->points.empty())
+                    {
+                        contains = (distanceSq <= radius * radius);
+                        closestSq = distanceSq;
+                    }
+                    else
+                    {
+                        for (const auto& pt : glow->points)
+                        {
+                            const float lx = pt.x * tr->scaleX;
+                            const float ly = pt.y * tr->scaleY;
+                            const float rx = cosR * lx - sinR * ly;
+                            const float ry = sinR * lx + cosR * ly;
+                            const float pdx = worldX - (tr->x + rx);
+                            const float pdy = worldY - (tr->y + ry);
+                            const float pointDistSq = (pdx * pdx + pdy * pdy);
+                            closestSq = std::min(closestSq, pointDistSq);
+                            if (pointDistSq <= radius * radius)
+                            {
+                                contains = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (contains)
+                        distanceSq = closestSq;
+                }
+            }
+            else if (auto* circle = obj->GetComponentType<Framework::CircleRenderComponent>(
                 Framework::ComponentTypeId::CT_CircleRenderComponent))
             {
                 const float radius = circle->radius * std::max(std::fabs(tr->scaleX), std::fabs(tr->scaleY));
@@ -1112,6 +1245,48 @@ namespace Framework {
             glViewport(gameViewport.x, gameViewport.y, gameViewport.width, gameViewport.height);
             return;
         }
+#if SOFASPUDS_ENABLE_EDITOR
+        if (imguiViewportValid)
+        {
+            int desiredWidth = std::max(1, imguiViewportRect.width);
+            int desiredHeight = std::max(1, imguiViewportRect.height);
+            desiredWidth = std::clamp(desiredWidth, 1, fullWidth);
+            desiredHeight = std::clamp(desiredHeight, 1, fullHeight);
+
+            const int xOffset = std::clamp(imguiViewportRect.x, 0, std::max(0, fullWidth - desiredWidth));
+            int yOffset = fullHeight - (imguiViewportRect.y + desiredHeight);
+            yOffset = std::clamp(yOffset, 0, std::max(0, fullHeight - desiredHeight));
+
+            if (gameViewport.width != desiredWidth ||
+                gameViewport.height != desiredHeight ||
+                gameViewport.y != yOffset ||
+                gameViewport.x != xOffset)
+            {
+                gameViewport.x = xOffset;
+                gameViewport.y = yOffset;
+                gameViewport.width = desiredWidth;
+                gameViewport.height = desiredHeight;
+
+                screenW = gameViewport.width;
+                screenH = gameViewport.height;
+
+                if (textReadyTitle) textTitle.setViewport(screenW, screenH);
+                if (textReadyHint)  textHint.setViewport(screenW, screenH);
+            }
+
+            if (gameViewport.width > 0 && gameViewport.height > 0)
+            {
+                camera.SetViewportSize(gameViewport.width, gameViewport.height);
+                editorCamera.SetViewportSize(gameViewport.width, gameViewport.height);
+            }
+            camera.SetViewHeight(cameraViewHeight);
+            editorCamera.SetViewHeight(editorCameraViewHeight);
+
+            if (gameViewport.width > 0 && gameViewport.height > 0)
+                glViewport(gameViewport.x, gameViewport.y, gameViewport.width, gameViewport.height);
+            return;
+        }
+#endif
 
         const float minSplit = 0.3f;
         const float maxSplit = 0.7f;
@@ -1198,45 +1373,95 @@ namespace Framework {
 #if SOFASPUDS_ENABLE_EDITOR
     void RenderSystem::DrawDockspace()
     {
-        if (!showEditor)
-            return;
+        if (!showEditor) return;
 
         ImGuiIO& io = ImGui::GetIO();
-        if (!(io.ConfigFlags & ImGuiConfigFlags_DockingEnable))
-            return;
+        if (!(io.ConfigFlags & ImGuiConfigFlags_DockingEnable)) return;
 
         const ImGuiViewport* viewport = ImGui::GetMainViewport();
 
-        // Make the dock host cover the entire work area
         ImGui::SetNextWindowPos(viewport->WorkPos, ImGuiCond_Always);
         ImGui::SetNextWindowSize(viewport->WorkSize, ImGuiCond_Always);
         ImGui::SetNextWindowViewport(viewport->ID);
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0, 0, 0, 0));
+
+        // IMPORTANT: this is the dock-node background color
+        ImGui::PushStyleColor(ImGuiCol_DockingEmptyBg, ImVec4(0, 0, 0, 0));
 
         ImGuiWindowFlags flags =
-            ImGuiWindowFlags_NoTitleBar |
-            ImGuiWindowFlags_NoCollapse |
-            ImGuiWindowFlags_NoResize |
-            ImGuiWindowFlags_NoMove |
-            ImGuiWindowFlags_NoBringToFrontOnFocus |
-            ImGuiWindowFlags_NoNavFocus |
+            ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+            ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+            ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus |
             ImGuiWindowFlags_NoBackground;
 
         ImGui::Begin("EditorDockHost", nullptr, flags);
 
         ImGuiID dockspaceId = ImGui::GetID("EditorDockspace");
-        ImGuiDockNodeFlags dockFlags =
-            ImGuiDockNodeFlags_PassthruCentralNode |        // game shows through
-            ImGuiDockNodeFlags_NoDockingInCentralNode;      // nothing docks over the center
+        ImGuiDockNodeFlags dockFlags = ImGuiDockNodeFlags_PassthruCentralNode;
 
-        ImGui::DockSpace(dockspaceId, ImVec2(0.0f, 0.0f), dockFlags);
+        ImGui::DockSpace(dockspaceId, ImVec2(0, 0), dockFlags);
 
         ImGui::End();
 
+        ImGui::PopStyleColor(2);
         ImGui::PopStyleVar(2);
     }
+
+    /*************************************************************************************
+  \brief  ImGui window that defines the game viewport bounds.
+  \details Uses the window content region to map an OpenGL viewport and allows docking/moving.
+*************************************************************************************/
+    void RenderSystem::DrawGameViewportWindow()
+    {
+        if (!showEditor) { imguiViewportValid = false; imguiViewportMouseInContent = false; return; }
+
+        imguiViewportMouseInContent = false;
+
+        ImGui::SetNextWindowBgAlpha(0.0f);
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0, 0, 0, 0));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+
+        ImGuiWindowFlags flags =
+            ImGuiWindowFlags_NoScrollbar |
+            ImGuiWindowFlags_NoScrollWithMouse |
+            ImGuiWindowFlags_NoBackground;
+
+        if (ImGui::Begin("Game Viewport", nullptr, flags))
+        {
+            const ImGuiViewport* vp = ImGui::GetMainViewport();
+
+            const ImVec2 contentMin = ImGui::GetWindowContentRegionMin();
+            const ImVec2 contentMax = ImGui::GetWindowContentRegionMax();
+            const ImVec2 windowPos = ImGui::GetWindowPos();
+
+            const ImVec2 contentPosAbs = ImVec2(windowPos.x + contentMin.x, windowPos.y + contentMin.y);
+            const ImVec2 contentSize = ImVec2(contentMax.x - contentMin.x, contentMax.y - contentMin.y);
+
+            // Convert to coords relative to the main viewport's origin (framebuffer space).
+            const ImVec2 contentPosRel = ImVec2(contentPosAbs.x - vp->Pos.x,
+                contentPosAbs.y - vp->Pos.y);
+
+            imguiViewportRect.x = (int)std::lround(contentPosRel.x);
+            imguiViewportRect.y = (int)std::lround(contentPosRel.y);
+            imguiViewportRect.width = (int)std::lround(contentSize.x);
+            imguiViewportRect.height = (int)std::lround(contentSize.y);
+
+            imguiViewportValid = imguiViewportRect.width > 0 && imguiViewportRect.height > 0;
+
+            const ImVec2 mousePosAbs = ImGui::GetMousePos();
+            imguiViewportMouseInContent =
+                (mousePosAbs.x >= contentPosAbs.x && mousePosAbs.x <= contentPosAbs.x + contentSize.x &&
+                    mousePosAbs.y >= contentPosAbs.y && mousePosAbs.y <= contentPosAbs.y + contentSize.y);
+        }
+        ImGui::End();
+
+        ImGui::PopStyleVar();
+        ImGui::PopStyleColor();
+    }
+
 
     /*************************************************************************************
       \brief  Small always-on-top helper for toggles and camera settings.
@@ -1250,11 +1475,11 @@ namespace Framework {
         pos.x += 12.0f;
         pos.y += 12.0f;
 
-        ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
+        ImGui::SetNextWindowPos(pos, ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowBgAlpha(0.35f);
 
         ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize |
-            ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav;
+            ImGuiWindowFlags_NoNav;
         if (!showEditor)
         {
 
@@ -1305,24 +1530,47 @@ namespace Framework {
             // ---- everything below this only shows when editor is ON ----
 
             bool fullWidth = gameViewportFullWidth;
-            if (ImGui::Checkbox("Game Full Width", &fullWidth))
-                gameViewportFullWidth = fullWidth;
-            if (!gameViewportFullWidth)
+            if (!imguiViewportValid)
             {
+                if (ImGui::Checkbox("Game Full Width", &fullWidth))
+                    gameViewportFullWidth = fullWidth;
+                if (!gameViewportFullWidth)
+                {
+                    float splitPercent = editorSplitRatio * 100.0f;
+                    if (ImGui::SliderFloat("Game Width", &splitPercent, 30.0f, 70.0f, "%.0f%%", ImGuiSliderFlags_AlwaysClamp))
+                        editorSplitRatio = splitPercent / 100.0f;
+                }
+            }
+            else
+            {
+                ImGui::BeginDisabled();
+                ImGui::Checkbox("Game Full Width", &fullWidth);
                 float splitPercent = editorSplitRatio * 100.0f;
-                if (ImGui::SliderFloat("Game Width", &splitPercent, 30.0f, 70.0f, "%.0f%%", ImGuiSliderFlags_AlwaysClamp))
-                    editorSplitRatio = splitPercent / 100.0f;
+                ImGui::SliderFloat("Game Width", &splitPercent, 30.0f, 70.0f, "%.0f%%", ImGuiSliderFlags_AlwaysClamp);
+                ImGui::EndDisabled();
+                ImGui::TextDisabled("Viewport size is controlled by the dockable window.");
             }
 
             bool fullHeight = gameViewportFullHeight;
-            if (ImGui::Checkbox("Game Full Height", &fullHeight))
-                gameViewportFullHeight = fullHeight;
+            if (!imguiViewportValid)
+            {
+                if (ImGui::Checkbox("Game Full Height", &fullHeight))
+                    gameViewportFullHeight = fullHeight;
 
-            if (!gameViewportFullHeight) {
+                if (!gameViewportFullHeight) {
+                    float hPercent = heightRatio * 100.0f;
+                    if (ImGui::SliderFloat("Game Height", &hPercent, 30.0f, 100.0f, "%.0f%%", ImGuiSliderFlags_AlwaysClamp))
+                        heightRatio = hPercent / 100.0f;
+                    ImGui::TextDisabled("Viewport is centered vertically");
+                }
+            }
+            else
+            {
+                ImGui::BeginDisabled();
+                ImGui::Checkbox("Game Full Height", &fullHeight);
                 float hPercent = heightRatio * 100.0f;
-                if (ImGui::SliderFloat("Game Height", &hPercent, 30.0f, 100.0f, "%.0f%%", ImGuiSliderFlags_AlwaysClamp))
-                    heightRatio = hPercent / 100.0f;
-                ImGui::TextDisabled("Viewport is centered vertically");
+                ImGui::SliderFloat("Game Height", &hPercent, 30.0f, 100.0f, "%.0f%%", ImGuiSliderFlags_AlwaysClamp);
+                ImGui::EndDisabled();
             }
 
             ImGui::Separator();
@@ -1379,6 +1627,7 @@ namespace Framework {
                     gCameraFollowLocked = false;
                     gfx::Graphics::resetViewProjection();
                 }
+
                 else
                 {
                     camera.SetViewHeight(cameraViewHeight);
@@ -1389,6 +1638,25 @@ namespace Framework {
             {
                 ImGui::TextDisabled("Camera disabled: legacy static framing.");
             }
+
+            ImGui::Separator();
+            ImGui::TextUnformatted("Glow Draw");
+            ImGui::Checkbox("Enable Glow Draw", &glowDrawMode);
+
+            if (!glowDrawMode)
+                ImGui::BeginDisabled();
+
+            ImGui::ColorEdit3("Glow Color", glowBrush.color);
+            ImGui::DragFloat("Glow Opacity", &glowBrush.opacity, 0.01f, 0.0f, 1.0f, "%.2f");
+            ImGui::DragFloat("Glow Brightness", &glowBrush.brightness, 0.05f, 0.0f, 10.0f, "%.2f");
+            ImGui::DragFloat("Glow Inner Radius", &glowBrush.innerRadius, 0.005f, 0.0f, 1000.0f, "%.3f");
+            ImGui::DragFloat("Glow Outer Radius", &glowBrush.outerRadius, 0.005f, 0.0f, 1000.0f, "%.3f");
+            ImGui::DragFloat("Glow Falloff", &glowBrush.falloffExponent, 0.05f, 0.01f, 8.0f, "%.2f");
+            ImGui::DragFloat("Glow Point Spacing", &glowBrush.pointSpacing, 0.005f, 0.001f, 1.0f, "%.3f");
+            ImGui::TextDisabled("Left-drag in the viewport to draw a glow stroke.");
+
+            if (!glowDrawMode)
+                ImGui::EndDisabled();
         }
         ImGui::End();
     }
@@ -1588,7 +1856,25 @@ namespace Framework {
     {
         TryGuard::Run([&] {
             HandleShortcuts();
+#if SOFASPUDS_ENABLE_EDITOR
+            if (showEditor)
+            {
+                DrawDockspace();
+                DrawGameViewportWindow();
+            }
+            else
+            {
+                imguiViewportValid = false;
+                imguiViewportMouseInContent = false;
+            }
+#endif
             UpdateGameViewport();
+            // Clear only the game viewport area (opaque)
+            glEnable(GL_SCISSOR_TEST);
+            glScissor(gameViewport.x, gameViewport.y, gameViewport.width, gameViewport.height);
+            glClearColor(0.f, 0.f, 0.f, 1.f);          // IMPORTANT: alpha = 1
+            glClear(GL_COLOR_BUFFER_BIT);
+            glDisable(GL_SCISSOR_TEST);
 
             if (!FACTORY)
             {
@@ -1863,6 +2149,47 @@ namespace Framework {
                     auto* animComp = obj->GetComponentType<Framework::SpriteAnimationComponent>(
                         Framework::ComponentTypeId::CT_SpriteAnimationComponent);
 
+                    if (auto* glow = obj->GetComponentType<Framework::GlowComponent>(
+                        Framework::ComponentTypeId::CT_GlowComponent))
+                    {
+                        if (glow->visible && glow->opacity > 0.0f && glow->brightness > 0.0f)
+                        {
+                            const float scale = std::max(std::fabs(tr->scaleX), std::fabs(tr->scaleY));
+                            const float inner = glow->innerRadius * scale;
+                            const float outer = glow->outerRadius * scale;
+
+                            if (outer > 0.0f)
+                            {
+                                flushSpriteBatch();
+
+                                const float cosR = std::cos(tr->rot);
+                                const float sinR = std::sin(tr->rot);
+
+                                if (glow->points.empty())
+                                {
+                                    gfx::Graphics::renderGlow(tr->x, tr->y,
+                                        inner, outer,
+                                        glow->brightness, glow->falloffExponent,
+                                        glow->r, glow->g, glow->b, glow->opacity);
+                                }
+                                else
+                                {
+                                    for (const auto& pt : glow->points)
+                                    {
+                                        const float lx = pt.x * tr->scaleX;
+                                        const float ly = pt.y * tr->scaleY;
+                                        const float rx = cosR * lx - sinR * ly;
+                                        const float ry = sinR * lx + cosR * ly;
+                                        gfx::Graphics::renderGlow(tr->x + rx, tr->y + ry,
+                                            inner, outer,
+                                            glow->brightness, glow->falloffExponent,
+                                            glow->r, glow->g, glow->b, glow->opacity);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     if (auto* sp = obj->GetComponentType<Framework::SpriteComponent>(
                         Framework::ComponentTypeId::CT_SpriteComponent))
                     {
@@ -2031,6 +2358,21 @@ namespace Framework {
                                 const float d = std::max(0.1f, scaledRadius * 2.f);
                                 drawOutline(tr->x, tr->y, 0.f, d, d, isSelected);
                             }
+                            else if (auto* glow = obj->GetComponentType<Framework::GlowComponent>(
+                                Framework::ComponentTypeId::CT_GlowComponent))
+                            {
+                                const float scale = std::max(std::fabs(tr->scaleX), std::fabs(tr->scaleY));
+                                float maxDist = 0.0f;
+                                for (const auto& pt : glow->points)
+                                {
+                                    const float lx = pt.x * tr->scaleX;
+                                    const float ly = pt.y * tr->scaleY;
+                                    maxDist = std::max(maxDist, std::sqrt(lx * lx + ly * ly));
+                                }
+                                const float radius = (maxDist + glow->outerRadius * scale);
+                                const float d = std::max(0.1f, radius * 2.f);
+                                drawOutline(tr->x, tr->y, 0.f, d, d, isSelected);
+                            }
                         }
                     }
 
@@ -2098,6 +2440,26 @@ namespace Framework {
             // Switch back to screen-space VP (identity) for UI text so it ignores camera.
             gfx::Graphics::resetViewProjection();
 
+            // Displays objective
+            std::string enemyText = "Didnt work";
+            if (logic.enemiesAlive > 0)
+            {
+                enemyText = "Objective: Kill all enemies (" + std::to_string(logic.enemiesAlive) + " enemies remaining)";
+            }
+            else
+            {
+                enemyText = "Objective: Go to the gate";
+            }
+            
+
+            textHint.RenderText(
+                enemyText,
+                650.0f,
+                1100.0f,
+                0.75f,
+                glm::vec3(1.0f, 0.2f, 0.2f)
+            );
+
             if (textReadyTitle)
             {
                 /*textTitle.RenderText(
@@ -2143,7 +2505,7 @@ namespace Framework {
 
             t0 = clock::now();
 #if SOFASPUDS_ENABLE_EDITOR
-            DrawDockspace();
+
             DrawViewportControls();
             if (showEditor)
             {

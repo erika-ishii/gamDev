@@ -166,7 +166,7 @@ namespace Framework
         float width, float height,
         float damage,
         float duration,
-        HitBoxComponent::Team team)
+        HitBoxComponent::Team team, float soundDelay)
     {
         if (!attacker)
             return;
@@ -180,6 +180,7 @@ namespace Framework
         newhitbox->duration = duration;
         newhitbox->owner = attacker;
         newhitbox->team = team;
+        newhitbox->soundDelay = soundDelay;
 
         // Decide team based on attacker, so we avoid friendly fire.
         if (attacker->GetComponentType<PlayerComponent>(ComponentTypeId::CT_PlayerComponent))
@@ -205,7 +206,7 @@ namespace Framework
 
         ActiveHitBox active;
         active.hitbox = std::move(newhitbox);
-        active.owner = attacker;
+        active.ownerId = attacker->GetId();
         active.timer = duration;
 
         activeHitBoxes.push_back(std::move(active));
@@ -277,7 +278,7 @@ namespace Framework
 
         ActiveHitBox projectile;
         projectile.hitbox = std::move(newhitbox);
-        projectile.owner = attacker;
+        projectile.ownerId = attacker->GetId();
         projectile.timer = duration;
         projectile.velX = dirX * speed;
         projectile.velY = dirY * speed;
@@ -308,8 +309,8 @@ namespace Framework
         for (auto it = activeHitBoxes.begin(); it != activeHitBoxes.end();)
         {
             it->timer -= dt;
-            auto* attacker = it->owner;
             auto* HB = it->hitbox.get();
+            auto* attacker = FACTORY->GetObjectWithId(it->ownerId);
 
             if (!attacker || !HB || !HB->active)
             {
@@ -437,15 +438,18 @@ namespace Framework
             // Play air swing or ineffective sound if no enemy hit
             if (!HB->soundTriggered && HB->team == HitBoxComponent::Team::Player)
             {
-                if (auto* audio = attacker->GetComponentType<AudioComponent>(ComponentTypeId::CT_AudioComponent))
+                HB->soundDelay -= dt;
+                if (HB->soundDelay <= 0.0f)
                 {
-                    if (hitEnemy)
-                        audio->TriggerSound("Slash");
-                    if (ineffectiveHit)
-                        audio->TriggerSound("Ineffective"); // Blocked or no effect
-                    if (!hitAnything)
-                        audio->TriggerSound("Punch");       // Missed swing
-
+                    if (auto* audio = attacker->GetComponentType<AudioComponent>(ComponentTypeId::CT_AudioComponent))
+                    {
+                        if (hitEnemy)
+                            audio->TriggerSound("Slash");
+                        if (ineffectiveHit)
+                            audio->TriggerSound("Ineffective"); // Blocked or no effect
+                        if (!hitAnything)
+                            audio->TriggerSound("Punch");       // Missed swing
+                    }
                 }
                 HB->soundTriggered = true;
             }

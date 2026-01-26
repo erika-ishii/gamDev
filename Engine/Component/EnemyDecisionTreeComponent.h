@@ -68,6 +68,7 @@ namespace Framework {
         float chaseSpeed = 0.0f;             ///< Current speed while chasing the player.
         float chaseTimer = 0.0f;             ///< Accumulated time spent in chase mode.
         float maxChaseDuration = 3.0f;       ///< Maximum allowed chase time before reset.
+        float retreatTimer = 0.0f;           ///< Retreat Timer
         bool hasSeenPlayer = false;          ///< Tracks whether the enemy has detected the player.
         Facing facing = Facing::RIGHT;
 

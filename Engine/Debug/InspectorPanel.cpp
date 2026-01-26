@@ -14,6 +14,7 @@
 #include "Component/TransformComponent.h"
 #include "Component/RenderComponent.h"
 #include "Component/CircleRenderComponent.h"
+#include "Component/GlowComponent.h"
 #include "Component/SpriteComponent.h"
 #include "Component/HitBoxComponent.h"
 #include "Component/HitBoxComponent.h"
@@ -426,6 +427,56 @@ namespace
     }
 
     /*************************************************************************************
+      \brief Draws ImGui controls for GlowComponent.
+
+      Exposes:
+      - Color, opacity, and brightness.
+      - Inner/outer radius and falloff exponent.
+      - Visibility toggle and point count.
+    *************************************************************************************/
+    void DrawGlowSection(Framework::GOC& owner, GlowComponent& glow)
+    {
+        if (!ImGui::CollapsingHeader("Glow", ImGuiTreeNodeFlags_DefaultOpen))
+            return;
+
+        mygame::editor::TransformSnapshot before{};
+        bool captured = false;
+        auto capture = [&]()
+            {
+                if (!captured)
+                {
+                    before = mygame::editor::CaptureTransformSnapshot(owner);
+                    captured = true;
+                }
+            };
+
+        float color[3] = { glow.r, glow.g, glow.b };
+        if (ImGui::ColorEdit3("Color", color))
+        {
+            glow.r = color[0];
+            glow.g = color[1];
+            glow.b = color[2];
+        }
+
+        ImGui::DragFloat("Opacity", &glow.opacity, 0.01f, 0.0f, 1.0f, "%.2f");
+        ImGui::DragFloat("Brightness", &glow.brightness, 0.05f, 0.0f, 10.0f, "%.2f");
+
+        if (ImGui::DragFloat("Inner Radius", &glow.innerRadius, 0.005f, 0.0f, 1000.0f, "%.3f"))
+            capture();
+        if (ImGui::DragFloat("Outer Radius", &glow.outerRadius, 0.005f, 0.0f, 1000.0f, "%.3f"))
+            capture();
+        ImGui::DragFloat("Falloff Exponent", &glow.falloffExponent, 0.05f, 0.01f, 8.0f, "%.2f");
+        ImGui::Checkbox("Visible", &glow.visible);
+
+        ImGui::Text("Points: %zu", glow.points.size());
+        if (ImGui::Button("Clear Points"))
+            glow.points.clear();
+
+        if (captured)
+            mygame::editor::RecordTransformChange(owner, before);
+    }
+
+    /*************************************************************************************
       \brief Draws ImGui controls for SpriteComponent.
 
       Exposes:
@@ -564,6 +615,9 @@ namespace mygame
 
         if (auto* circle = object->GetComponentAs<CircleRenderComponent>(ComponentTypeId::CT_CircleRenderComponent))
             DrawCircleRenderSection(*object, *circle);
+
+        if (auto* glow = object->GetComponentAs<GlowComponent>(ComponentTypeId::CT_GlowComponent))
+            DrawGlowSection(*object, *glow);
 
         if (auto* sprite = object->GetComponentAs<SpriteComponent>(ComponentTypeId::CT_SpriteComponent))
             DrawSpriteSection(*sprite);

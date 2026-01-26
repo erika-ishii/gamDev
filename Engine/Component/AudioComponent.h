@@ -65,6 +65,8 @@ namespace Framework
         //Footsteps
         std::vector<std::string> footstepClips;
         std::string currentFootstep;
+        //Footstep timer
+        float footstepTimer = 0.0f;
         bool isFootstepPlaying = false;
         //Slashes Sound
         std::vector<std::string> slashClips;//Slashing Enemy
@@ -77,6 +79,7 @@ namespace Framework
         std::vector<std::string> hurtClips;
         std::vector<std::string> deathClips;
 
+        
         float volume{ 1.0f }; 
         std::string entityType;
         

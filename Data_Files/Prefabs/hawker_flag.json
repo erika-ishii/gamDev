@@ -1,0 +1,23 @@
+{
+  "GameObject": {
+    "name": "Hawker_Flag",
+    "Components": {
+      "TransformComponent": { "x": 0.0, "y": 0.0, "rot": 0.0 },
+      "RenderComponent": { "w": 0.3, "h": 0.3, "r": 1.0, "g": 1.0, "b": 1.0, "a": 1.0 },
+      "SpriteComponent": { "texture_key": "flagf0" },
+      "SpriteAnimationComponent": {
+        "fps": 6.0,
+        "loop": 1,
+        "play": 1,
+        "frames": [
+          { "texture_key": "flagf0", "path": "../../assets/Textures/Environment/lvl 1_Hawker/Flag/flagf0.png" },
+          { "texture_key": "flagf1", "path": "../../assets/Textures/Environment/lvl 1_Hawker/Flag/flagf1.png" },
+          { "texture_key": "flagf2", "path": "../../assets/Textures/Environment/lvl 1_Hawker/Flag/flagf2.png" },
+          { "texture_key": "flagf3", "path": "../../assets/Textures/Environment/lvl 1_Hawker/Flag/flagf3.png" },
+          { "texture_key": "flagf4", "path": "../../assets/Textures/Environment/lvl 1_Hawker/Flag/flagf4.png" },
+          { "texture_key": "flagf5", "path": "../../assets/Textures/Environment/lvl 1_Hawker/Flag/flagf5.png" }
+        ]
+      }
+    }
+  }
+}

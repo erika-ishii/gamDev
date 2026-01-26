@@ -35,7 +35,7 @@ namespace Framework
             {idx = static_cast<int>(i);break;}
         }
 
-        if (idx >= 0 && idx != anim->ActiveAnimationIndex())
+        if (idx >= 0 && idx != anim->ActiveAnimationIndex()||forceRestart)
         {anim->SetActiveAnimation(idx);}
     }
 

@@ -42,6 +42,7 @@
 #include "Component/TransformComponent.h"
 #include "Component/RenderComponent.h"
 #include "Component/CircleRenderComponent.h"
+#include "Component/GlowComponent.h"
 #include "Component/SpriteComponent.h"
 #include "Component/SpriteAnimationComponent.h"
 
@@ -345,6 +346,25 @@ namespace Framework {
         case ComponentTypeId::CT_CircleRenderComponent: {
             auto const& cc = static_cast<CircleRenderComponent const&>(component);
             return json{ {"radius", cc.radius}, {"r", cc.r}, {"g", cc.g}, {"b", cc.b}, {"a", cc.a} };
+        }
+        case ComponentTypeId::CT_GlowComponent: {
+            auto const& glow = static_cast<GlowComponent const&>(component);
+            json points = json::array();
+            for (auto const& p : glow.points) {
+                points.push_back({ {"x", p.x}, {"y", p.y} });
+            }
+            return json{
+                {"r", glow.r},
+                {"g", glow.g},
+                {"b", glow.b},
+                {"opacity", glow.opacity},
+                {"brightness", glow.brightness},
+                {"inner_radius", glow.innerRadius},
+                {"outer_radius", glow.outerRadius},
+                {"falloff_exponent", glow.falloffExponent},
+                {"visible", glow.visible},
+                {"points", points}
+            };
         }
         case ComponentTypeId::CT_SpriteComponent: {
             auto const& sp = static_cast<SpriteComponent const&>(component);
@@ -851,6 +871,34 @@ namespace Framework {
             readFloat("g", cc.g);
             readFloat("b", cc.b);
             readFloat("a", cc.a);
+            break;
+        }
+        case ComponentTypeId::CT_GlowComponent:
+        {
+            auto& glow = static_cast<GlowComponent&>(component);
+            readFloat("r", glow.r);
+            readFloat("g", glow.g);
+            readFloat("b", glow.b);
+            readFloat("opacity", glow.opacity);
+            readFloat("brightness", glow.brightness);
+            readFloat("inner_radius", glow.innerRadius);
+            readFloat("outer_radius", glow.outerRadius);
+            readFloat("falloff_exponent", glow.falloffExponent);
+            readBool("visible", glow.visible);
+
+            glow.points.clear();
+            if (auto it = data.find("points"); it != data.end() && it->is_array())
+            {
+                glow.points.reserve(it->size());
+                for (auto const& p : *it)
+                {
+                    float px = 0.0f;
+                    float py = 0.0f;
+                    if (p.contains("x")) px = p["x"].get<float>();
+                    if (p.contains("y")) py = p["y"].get<float>();
+                    glow.points.emplace_back(px, py);
+                }
+            }
             break;
         }
         case ComponentTypeId::CT_SpriteComponent:

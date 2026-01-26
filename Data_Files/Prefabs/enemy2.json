@@ -1,0 +1,112 @@
+{
+  "GameObject": {
+    "Components": {
+      "TransformComponent": {
+        "rot": 0.0,
+        "x": -0.07999958097934723,
+        "y": -0.20000000298023224
+      },
+      "RenderComponent": {
+        "a": 1.0,
+        "b": 1.0,
+        "g": 1.0,
+        "h": 0.30000001192092896,
+        "layer": 0,
+        "r": 1.0,
+        "visible": true,
+        "w": 0.30000001192092896
+      },
+      "SpriteComponent": {
+        "texture_key": "water_idle"
+      },
+      "SpriteAnimationComponent": {
+        "activeAnimation": 0,
+        "animations": [
+          {
+            "config": {
+              "columns": 9,
+              "endFrame": 8,
+              "fps": 10.0,
+              "loop": true,
+              "rows": 1,
+              "startFrame": 0,
+              "totalFrames": 9
+            },
+            "currentFrame": 0,
+            "name": "idle",
+            "spriteSheetPath": "../../assets/Textures/Character/Water Enemy_Sprite/Idle_Sprite.png",
+            "textureKey": "water_idle"
+          },
+          {
+            "config": {
+              "columns": 11,
+              "endFrame": 10,
+              "fps": 12.0,
+              "loop": false,
+              "rows": 1,
+              "startFrame": 0,
+              "totalFrames": 11
+            },
+            "currentFrame": 0,
+            "name": "slashattack",
+            "spriteSheetPath": "../../assets/Textures/Character/Water Enemy_Sprite/Slash Attack_Sprite.png",
+            "textureKey": "water_slashattack"
+          },
+          {
+            "config": {
+              "columns": 9,
+              "endFrame": 8,
+              "fps": 10.0,
+              "loop": false,
+              "rows": 1,
+              "startFrame": 0,
+              "totalFrames": 9
+            },
+            "currentFrame": 0,
+            "name": "knockback",
+            "spriteSheetPath": "../../assets/Textures/Character/Water Enemy_Sprite/Knockback_Sprite.png",
+            "textureKey": "water_knockback"
+          },
+          {
+            "config": {
+              "columns": 11,
+              "endFrame": 10,
+              "fps": 8.0,
+              "loop": false,
+              "rows": 1,
+              "startFrame": 0,
+              "totalFrames": 11
+            },
+            "currentFrame": 0,
+            "name": "death",
+            "spriteSheetPath": "../../assets/Textures/Character/Water Enemy_Sprite/Death_Sprite.png",
+            "textureKey": "water_death"
+          }
+        ],
+        "fps": 6.0,
+        "frames": [],
+        "loop": true,
+        "play": true
+      },
+      "RigidBodyComponent": {
+        "height": 0.23999999463558197,
+        "velocity_x": -0.20000000298023224,
+        "velocity_y": 0.0,
+        "width": 0.12999999523162842
+      },
+      "EnemyComponent": {},
+      "EnemyAttackComponent": {
+        "attack_speed": 1.2000000476837158,
+        "damage": 1
+      },
+      "EnemyHealthComponent": {
+        "enemyHealth": 2,
+        "enemyMaxhealth": 2
+      },
+      "EnemyDecisionTreeComponent": {},
+      "EnemyTypeComponent": {
+        "type": "physical"
+      }
+    }
+  }
+}

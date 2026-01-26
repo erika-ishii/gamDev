@@ -606,7 +606,19 @@ namespace mygame {
     static GOC* gSelectedObject = nullptr;
     /// Mirrors the prefab to clear in the dropdown.
     static std::string gSelectedPrefabToClear = gSelectedPrefab;
+    /// Search filter for prefab list.
+    static char gPrefabFilterBuffer[128] = "";
 
+    static bool PrefabMatchesFilter(const std::string& name, std::string_view filter) {
+        if (filter.empty()) {
+            return true;
+        }
+        return std::search(name.begin(), name.end(), filter.begin(), filter.end(),
+            [](unsigned char a, unsigned char b) {
+                return static_cast<unsigned char>(std::tolower(a)) ==
+                    static_cast<unsigned char>(std::tolower(b));
+            }) != name.end();
+    }
     /*************************************************************************************
       \brief  Draw the Spawn panel UI and perform actions (spawn/clear/save/load).
       \note   Must be called every frame while the tools UI is visible.
@@ -625,11 +637,19 @@ namespace mygame {
             }
         }
 
-        // === Prefab Dropdown ===
+        // === Prefab Search + Dropdown ===
         {
             const char* preview = gSelectedPrefab.c_str();
+            ImGui::InputTextWithHint("Prefab Search", "Type to filter...", gPrefabFilterBuffer,
+                IM_ARRAYSIZE(gPrefabFilterBuffer));
             if (ImGui::BeginCombo("Prefab", preview)) {
+                std::string_view filter(gPrefabFilterBuffer);
+                bool anyShown = false;
                 for (auto const& kv : master_copies) {
+                    if (!PrefabMatchesFilter(kv.first, filter)) {
+                        continue;
+                    }
+                    anyShown = true;
                     bool sel = (kv.first == gSelectedPrefab);
                     if (ImGui::Selectable(kv.first.c_str(), sel)) { // Select prefab
                         if (gSelectedPrefab != kv.first) {
@@ -638,6 +658,9 @@ namespace mygame {
                         }
                     }
                     if (sel) ImGui::SetItemDefaultFocus();        // Keep focus on selected prefab
+                }
+                if (!anyShown) {
+                    ImGui::TextDisabled("No prefabs match \"%s\".", gPrefabFilterBuffer);
                 }
                 ImGui::EndCombo();
             }

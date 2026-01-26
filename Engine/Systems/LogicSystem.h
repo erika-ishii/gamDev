@@ -19,6 +19,7 @@
 #include "Component/TransformComponent.h"
 #include "Component/RenderComponent.h"
 #include "Component/CircleRenderComponent.h"
+#include "Component/GlowComponent.h"
 #include "Component/SpriteComponent.h"
 #include "Component/SpriteAnimationComponent.h"
 #include "Component/PlayerComponent.h"
@@ -119,6 +120,7 @@ namespace Framework {
         /*! \brief System name for diagnostics/profiling. */
         std::string GetName() override { return "LogicSystem"; }
 
+        int                                  enemiesAlive{ 0 };
     private:
 
         std::filesystem::path resolveData(std::string_view name) const;
@@ -184,7 +186,7 @@ namespace Framework {
         bool                                 pendingLevelTransition{ false };
         std::unique_ptr<CrashLogger>         crashLogger;
 
-        int                                  enemiesAlive{ 0 }; 
+        
     };
 
 } // namespace Framework

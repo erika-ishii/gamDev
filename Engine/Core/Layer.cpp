@@ -99,6 +99,7 @@ namespace Framework {
 
         int ParseSublayer(std::string_view value)
         {
+
             value = TrimView(value);
             if (value.empty())
                 return 0;
@@ -139,17 +140,18 @@ namespace Framework {
         }
     }
 
-    LayerKey ParseLayerName(std::string_view name)
+    LayerKey ParseLayerName(const std::string& name)
     {
-        name = TrimView(name);
-        if (name.empty())
+
+        std::string_view nameView = TrimView(name);
+        if (nameView.empty())
             return kDefaultLayer;
 
-        const auto split = name.find(':');
-        const std::string_view groupPart = TrimView(name.substr(0, split));
+        const auto split = nameView.find(':');
+        const std::string_view groupPart = TrimView(nameView.substr(0, split));
         const std::string_view sublayerPart = (split == std::string_view::npos)
             ? std::string_view{}
-        : name.substr(split + 1);
+        : nameView.substr(split + 1);
 
         bool ok = false;
         LayerGroup group = ParseLayerGroup(groupPart, ok);
@@ -165,7 +167,7 @@ namespace Framework {
         return std::string{ LayerGroupName(key.group) } + ":" + std::to_string(std::clamp(key.sublayer, 0, kMaxLayerSublayer));
     }
 
-    std::string NormalizeLayerName(std::string_view name)
+    std::string NormalizeLayerName(const std::string& name)
     {
         return LayerNameFromKey(ParseLayerName(name));
     }
@@ -303,7 +305,7 @@ namespace Framework {
      * \brief Find an existing layer or create a new one if not found.
      * \return Reference to the ensured layer.
      */
-    Layer& LayerManager::EnsureLayer(std::string_view layerName)
+    Layer& LayerManager::EnsureLayer(const std::string& layerName)
     {
         LayerKey key = ParseLayerName(layerName);
         auto it = LayersByKey.find(key);
@@ -319,7 +321,7 @@ namespace Framework {
      * \brief Find a layer by name (read-only).
      * \return nullptr if the layer does not exist.
      */
-    const Layer* LayerManager::FindLayer(std::string_view layerName) const
+    const Layer* LayerManager::FindLayer(const std::string& layerName) const
     {
         LayerKey key = ParseLayerName(layerName);
         auto it = LayersByKey.find(key);
@@ -330,7 +332,7 @@ namespace Framework {
      * \brief Find a layer by name (mutable).
      * \return nullptr if the layer does not exist.
      */
-    Layer* LayerManager::FindLayer(std::string_view layerName)
+    Layer* LayerManager::FindLayer(const std::string& layerName)
     {
         LayerKey key = ParseLayerName(layerName);
         auto it = LayersByKey.find(key);
@@ -344,7 +346,7 @@ namespace Framework {
      *  - Otherwise, remove from old layer and add to the new one.
      *  - Empty layers are automatically pruned.
      */
-    void LayerManager::AssignToLayer(GOCId id, std::string_view layerName)
+    void LayerManager::AssignToLayer(GOCId id, const std::string& layerName)
     {
         LayerKey key = ParseLayerName(layerName);
 
@@ -370,7 +372,7 @@ namespace Framework {
      *  - No error if layer or object mapping doesn't exist.
      *  - If a layer becomes empty, it is erased from the map to keep things tidy.
      */
-    void LayerManager::RemoveFromLayer(GOCId id, std::string_view layerName)
+    void LayerManager::RemoveFromLayer(GOCId id, const std::string& layerName)
     {
         LayerKey key = ParseLayerName(layerName);
 
@@ -452,7 +454,7 @@ namespace Framework {
         return names;
     }
 
-    bool LayerManager::IsLayerEnabled(std::string_view layerName) const
+    bool LayerManager::IsLayerEnabled(const std::string& layerName) const
     {
         return visibility.IsLayerEnabled(ParseLayerName(layerName));
     }

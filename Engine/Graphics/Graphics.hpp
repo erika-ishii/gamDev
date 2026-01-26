@@ -94,6 +94,9 @@ namespace gfx {
          */
         static void renderCircle(float posX, float posY, float radius,
             float r, float g, float b, float a);
+        static void renderGlow(float posX, float posY, float innerRadius, float outerRadius,
+            float brightness, float falloffExponent,
+            float r, float g, float b, float a);
 
 
         // Draw a UI rect in pixel coordinates (origin bottom-left)
@@ -173,6 +176,7 @@ namespace gfx {
         static unsigned int spriteShader;
         static unsigned int spriteInstanceVBO;
         static unsigned int spriteInstanceShader;
+        static unsigned int glowShader;
     };
 
 } // namespace gfx

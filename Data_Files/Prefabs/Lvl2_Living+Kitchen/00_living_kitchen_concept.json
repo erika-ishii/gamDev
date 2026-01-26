@@ -1,0 +1,25 @@
+{
+  "GameObject": {
+    "name": "00_Living_Kitchen_Concept",
+    "Components": {
+      "TransformComponent": {
+        "x": 0.0,
+        "y": 0.0,
+        "rot": 0.0
+      },
+      "SpriteComponent": {
+        "texture_key": "00_living_kitchen_concept"
+      },
+      "RenderComponent": {
+        "w": 0.3,
+        "h": 0.4,
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0,
+        "a": 1.0,
+        "texture_key": "00_living_kitchen_concept",
+        "texture_path": "Textures/Environment/lvl 2_ Living + Kitchen/00_Living+Kitchen_concept.png"
+      }
+    }
+  }
+}

@@ -90,7 +90,7 @@ namespace Framework {
 
             if (audio->entityType == "player")
             {
-                HandlePlayerFootsteps(goc);
+                HandlePlayerFootsteps(goc, dt);
             }
 
             // other audio logic (enemy sounds, attacks, etc.)
@@ -103,15 +103,12 @@ namespace Framework {
         if (clips.empty()) return "";
         return clips[rand() % clips.size()];
     }
-
-    void AudioSystem::HandlePlayerFootsteps(GOC* player)
+    void AudioSystem::HandlePlayerFootsteps(GOC* player, float dt)
     {
         if (!player) return;
-
         auto* audio = player->GetComponentType<AudioComponent>(ComponentTypeId::CT_AudioComponent);
         auto* rb = player->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);
         auto* health = player->GetComponentType<PlayerHealthComponent>(ComponentTypeId::CT_PlayerHealthComponent);
-
         if (!audio || !rb) return;
 
         // Stop if dead
@@ -122,6 +119,7 @@ namespace Framework {
                 audio->Stop(audio->currentFootstep);
                 audio->isFootstepPlaying = false;
             }
+            audio->footstepTimer = 0.0f;
             return;
         }
 
@@ -136,8 +134,16 @@ namespace Framework {
                 audio->Stop(audio->currentFootstep);
                 audio->isFootstepPlaying = false;
             }
+            audio->footstepTimer = 0.0f;
             return;
         }
+
+        // Update footstep timer
+        audio->footstepTimer -= dt; // or however you access delta time
+
+        // Wait for timer to expire
+        if (audio->footstepTimer > 0.0f)
+            return;
 
         // Wait for previous step to finish
         if (audio->isFootstepPlaying)
@@ -154,6 +160,9 @@ namespace Framework {
         {
             audio->Play(audio->currentFootstep);
             audio->isFootstepPlaying = true;
+
+            // Reset timer for next footstep (adjust this value to match your animation)
+            audio->footstepTimer = 0.5f; // 500ms delay - tune this to match animation
         }
     }
 
