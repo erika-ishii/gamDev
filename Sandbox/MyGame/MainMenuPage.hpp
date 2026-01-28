@@ -38,6 +38,7 @@ namespace mygame {
     *************************************************************************************/
     class MainMenuPage {
     public:
+        static constexpr float kExitTransitionDuration = 0.65f;
         /*************************************************************************
           \brief  Initialize screen size, resolve textures, and build GUI buttons.
           \param  screenW  Swapchain/window width in pixels.
@@ -140,6 +141,10 @@ namespace mygame {
         bool showHowToPopup = false;
         bool showOptionsPopup = false;
         bool showExitPopup = false;
+        bool showExitTransition = false;
+        float exitTransitionTimer = 0.0f;
+        std::chrono::steady_clock::time_point lastExitTransitionTick{};
+        bool exitTransitionTimerInitialized = false;
         bool audioMuted = false;
         float masterVolumeDefault = 0.7f;
    

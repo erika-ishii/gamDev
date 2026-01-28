@@ -6,14 +6,14 @@
  \brief     Declares GameObjectFactory, the central system for creating, looking up,
             and destroying GameObjectComposition (GOC) entities. It supports loading
             prefabs from JSON, managing component creators, and ensuring **safe object
-            lifetime via std::unique_ptr ownership**.
+            lifetime via pooled GameObjectHandle ownership**.
 
  \details   Ownership & lifetime model:
             - All live GOCs are owned by the factory in a map of
-              id → std::unique_ptr<GOC> (GameObjectIdMap).
+              id → GameObjectHandle (GameObjectIdMap).
             - Public methods return **non-owning** GOC* for convenience; callers must
               **not delete** these pointers.
-            - IdGameObject takes std::unique_ptr<GOC> and transfers ownership into the map.
+            - IdGameObject takes GameObjectHandle and transfers ownership into the map.
             - Destroy(GOC*) marks the object’s ID for deferred deletion; actual destruction
               occurs in Update()/Shutdown() when the map entry is erased (unique_ptr resets).
             - CreateTemplate builds a GOC and **releases** ownership to the caller (not ID’d
@@ -48,13 +48,14 @@
 #include "Composition/Component.h"
 #include "Composition/ComponentCreator.h"
 #include "Composition/Composition.h"
+#include "Memory/GameObjectPool.h"
 #include "Serialization/JsonSerialization.h"
 #include "Core/Layer.h"
 #include <optional>
 
 // Factory responsibilities (summary)
 // - Create GOCs and assign unique IDs
-// - Store ownership in id→std::unique_ptr<GOC>
+// - Store ownership in id→GameObjectHandle
 // - Return non-owning pointers for lookups
 // - Defer deletion to end-of-frame via Update()/Shutdown()
 // - Load objects from data files (single and level JSON)
@@ -66,7 +67,7 @@ namespace Framework {
       \brief Central system responsible for managing all GameObjectComposition (GOC) objects.
 
       Ownership semantics:
-      - GameObjectFactory owns all registered GOCs (id→std::unique_ptr<GOC>).
+      - GameObjectFactory owns all registered GOCs (id→GameObjectHandle).
       - Accessors return raw GOC* as non-owning views; do not delete them.
       - Deferred deletion is keyed by ID and executed on Update/Shutdown.
 
@@ -121,7 +122,7 @@ namespace Framework {
         /// Assigns a unique ID (or reuses a requested one) and **transfers ownership**
         /// of the GOC into the factory’s id map. Returns a **non-owning** pointer to
         /// the registered object.
-        GOC* IdGameObject(std::unique_ptr<GOC> gameObject,
+        GOC* IdGameObject(GameObjectHandle gameObject,
             std::optional<GOCId> fixedId = std::nullopt);
 
 
@@ -163,10 +164,10 @@ namespace Framework {
         unsigned LastGameObjectId = 0; ///< Counter for assigning unique GOC IDs.
 
         using ComponentMapType = std::map<std::string, std::unique_ptr<ComponentCreator>>;
-        using GameObjectIdMapType = std::map<unsigned, std::unique_ptr<GOC>>;
+        using GameObjectIdMapType = std::map<unsigned, GameObjectHandle>;
 
         ComponentMapType     ComponentMap;     ///< Map: component name → owning ComponentCreator
-        GameObjectIdMapType  GameObjectIdMap;  ///< Map: GOC ID → owning pointer (unique_ptr<GOC>)
+        GameObjectIdMapType  GameObjectIdMap;  ///< Map: GOC ID → owning handle (GameObjectHandle)
         std::set<GOCId>      ObjectsToBeDeleted; ///< Set of GOC IDs scheduled for deferred deletion
         std::vector<GOC*>     LastLevelCache;      ///< Snapshot of last saved/loaded level objects (non-owning)
         std::string           LastLevelNameCache;  ///< Cached level name (if provided)

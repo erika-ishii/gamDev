@@ -33,6 +33,7 @@
 #include "Debug/Selection.h"
 #include "Debug/Spawn.h"
 #include "Systems/VfxHelpers.h"
+#include "Memory/GameObjectPool.h"
 #include "Resource_Asset_Manager/Resource_Manager.h"
 
 #include <cctype>
@@ -985,6 +986,14 @@ namespace Framework {
                 factory->Destroy(obj.get());
         }
         factory->Update(0.0f);
+
+        {
+            const unsigned pagesFreed = Framework::GameObjectPool::Storage().Allocator().FreeEmptyPages();
+            if (pagesFreed > 0) {
+                std::cout << "[Allocator] FreeEmptyPages trimmed " << pagesFreed
+                    << " empty pages after level unload.\n";
+            }
+        }
 
         levelObjects = factory->CreateLevel(levelPath.string());
 

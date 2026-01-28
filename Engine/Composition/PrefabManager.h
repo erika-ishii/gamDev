@@ -13,27 +13,29 @@
             exposes convenience functions for lifecycle management and instancing.
 
  \copyright
-            All content © 2025 DigiPen Institute of Technology Singapore.
+            All content (c) 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 #pragma once
 #include <unordered_map>
 #include "Composition.h"
+#include "Memory/GameObjectPool.h"
 #include <memory>
 namespace Framework {
 
     /*****************************************************************************************
-      \var master_copies
-      \brief Global registry mapping prefab names (string) to their master GOC instances.
+      ar master_copies
+      rief Global registry mapping prefab names (string) to their master GOC instances.
 
       Each prefab is stored as a pointer to a GameObjectComposition (created via factory).
       Prefabs act as immutable templates: users should not modify them directly but instead
       use ClonePrefab() to generate instances.
     *****************************************************************************************/
-    extern std::unordered_map<std::string, std::unique_ptr<GOC>> master_copies;
+    extern std::unordered_map<std::string, GameObjectHandle> master_copies;
 
     /*****************************************************************************************
       \brief Loads prefabs from JSON files and registers them in the prefab map.
+      
       \note  Typically called once during game initialization.
     *****************************************************************************************/
     void LoadPrefabs();
@@ -41,6 +43,7 @@ namespace Framework {
     // Delete all masters and clear the map
     /*****************************************************************************************
       \brief Unloads all prefabs, deleting master copies and clearing the map.
+      
       \note  Prefabs must be reloaded by calling LoadPrefabs() again before use.
     *****************************************************************************************/
     void UnloadPrefabs();
@@ -48,7 +51,8 @@ namespace Framework {
     /*****************************************************************************************
       \brief Clones a prefab by name.
       \param name  The string key of the prefab (e.g., "Player", "Circle").
-      \return Pointer to a new GOC instance if prefab exists, nullptr otherwise.
+      
+     \return Pointer to a new GOC instance if prefab exists, nullptr otherwise.
 
       Example usage:
       \code

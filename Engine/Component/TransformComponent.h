@@ -15,6 +15,7 @@
 
 #pragma once
 #include "Composition/Component.h"
+#include "Memory/ComponentPool.h"
 #include <iostream>
 
 namespace Framework {
@@ -70,17 +71,14 @@ namespace Framework {
           \return A unique_ptr containing a copy of the component.
           \note  Copies x, y, and rot values into the new instance.
         *************************************************************************************/
-        std::unique_ptr<GameComponent> Clone() const override {
-            // Create new CircleRenderComponent on heap
-            // Wrap inside unique_ptr so it is automatically clean up if something goes wrong
-            auto copy = std::make_unique<TransformComponent>();
-            //copy the values 
+        ComponentHandle Clone() const override {
+            // Clone into the component pool to avoid heap allocations at runtime.
+            auto copy = ComponentPool<TransformComponent>::CreateTyped();
             copy->x = x;
             copy->y = y;
             copy->rot = rot;
             copy->scaleX = scaleX;
             copy->scaleY = scaleY;
-            //Transfer ownership to whoever call clone()
             return copy;
         }
     };

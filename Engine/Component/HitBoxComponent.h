@@ -8,8 +8,8 @@
             represents a temporary collision region that can damage other entities.
 
  \details
-            The HitBoxComponent acts as a data-driven representation of an attack’s
-            active region. It defines the hitbox’s dimensions, position offset, duration,
+            The HitBoxComponent acts as a data-driven representation of an attackÂ’s
+            active region. It defines the hitboxÂ’s dimensions, position offset, duration,
             and damage value. During gameplay, it can be activated or deactivated by
             systems such as combat or animation logic.
 
@@ -25,6 +25,7 @@
 *********************************************************************************************/
 #pragma once
 #include "Composition/Component.h"
+#include "Memory/ComponentPool.h"
 #include "Serialization/Serialization.h"
 #include "Common/ComponentTypeID.h"
 #include "Common/System.h"
@@ -93,9 +94,9 @@ namespace Framework
           \return A unique_ptr holding a cloned HitBoxComponent instance.
           \details Copies size, duration, and active state data.
         *************************************************************************************/
-        std::unique_ptr<GameComponent> Clone() const override
+        ComponentHandle Clone() const override
         {
-            auto copy = std::make_unique<HitBoxComponent>();
+            auto copy = ComponentPool<HitBoxComponent>::CreateTyped();
             copy->width = width;
             copy->height = height;
             copy->duration = duration;

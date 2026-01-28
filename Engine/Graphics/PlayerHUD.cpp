@@ -88,9 +88,9 @@ namespace Framework
      \brief Clone this HUD component when duplicating a prefab or GameObjectComposition.
      \return A new PlayerHUDComponent instance with copied bottle + health display state.
     *****************************************************************************************/
-    std::unique_ptr<GameComponent> PlayerHUDComponent::Clone() const
+    ComponentHandle PlayerHUDComponent::Clone() const
     {
-        auto copy = std::make_unique<PlayerHUDComponent>();
+        auto copy = ComponentPool<PlayerHUDComponent>::CreateTyped();
         copy->displayedHealth = displayedHealth;
         copy->bottles = bottles;
         return copy;

@@ -25,6 +25,7 @@
 *********************************************************************************************/
 #pragma once
 #include "Composition/Component.h"
+#include "Memory/ComponentPool.h"
 #include "Serialization/Serialization.h"
 #include <iostream>
 #include <algorithm>
@@ -78,9 +79,9 @@ namespace Framework
           \details
               Copies both current and maximum health values to the new component.
         *************************************************************************************/
-        std::unique_ptr<GameComponent> Clone() const override
+        ComponentHandle Clone() const override
         {
-            auto copy = std::make_unique<EnemyHealthComponent>();
+            auto copy = ComponentPool<EnemyHealthComponent>::CreateTyped();
             copy->enemyHealth = enemyHealth;
             copy->enemyMaxhealth = enemyMaxhealth;
             return copy;

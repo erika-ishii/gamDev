@@ -9,7 +9,7 @@
             and integration with the GameObjectFactory for creation and destruction.
 
  \copyright
-            All content © 2025 DigiPen Institute of Technology Singapore.
+            All content (c) 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 
@@ -25,7 +25,7 @@
 namespace Framework {
     //Default destructor: vector<unique_ptr<...>> automatically release own component
     /*************************************************************************************
-      \brief Default destructor. Relies on std::vector<std::unique_ptr<GameComponent>>
+      \brief Default destructor. Relies on std::vector<ComponentHandle>
              to automatically clean up owned components.
     *************************************************************************************/
     GameObjectComposition::~GameObjectComposition() = default;
@@ -33,6 +33,7 @@ namespace Framework {
     /*************************************************************************************
     \brief Updates the logical layer assignment for this game object.
     \param layer Desired layer name. Empty strings fall back to "Default".
+    
     \note  Notifies the factory so that layer membership lists stay in sync.
   *************************************************************************************/
     void GameObjectComposition::SetLayerName(const std::string& layer)
@@ -60,12 +61,13 @@ namespace Framework {
         }
     }
 
-    //GetComponent is member function of GameObjectComposition 
+    //GetComponent is member function of GameObjectComposition
     //Its Job is to find a component attached to a game object by its ComponentTypeId and return it
     /*************************************************************************************
       \brief Retrieves a component by its ComponentTypeId.
       \param typeId The type identifier of the component to find.
-      \return Raw pointer to the component if found, otherwise nullptr.
+      
+return Raw pointer to the component if found, otherwise nullptr.
     *************************************************************************************/
     GameComponent* GameObjectComposition::GetComponent(ComponentTypeId typeId)
     {
@@ -80,7 +82,8 @@ namespace Framework {
     /*************************************************************************************
       \brief Const-qualified version of GetComponent.
       \param typeId The type identifier of the component to find.
-      \return Const raw pointer to the component if found, otherwise nullptr.
+      
+return Const raw pointer to the component if found, otherwise nullptr.
     *************************************************************************************/
     GameComponent const* GameObjectComposition::GetComponent(ComponentTypeId typeId) const
     {
@@ -93,7 +96,7 @@ namespace Framework {
     }
 
     /*************************************************************************************
-      \brief Calls initialize() on all attached components.
+      rief Calls initialize() on all attached components.
     *************************************************************************************/
     void GameObjectComposition::initialize() {
         for (auto& up : Components) {   // call Initialize all component
@@ -111,8 +114,10 @@ namespace Framework {
 
     /*************************************************************************************
       \brief Creates a deep copy of this GameObjectComposition, including all components.
-      \return Pointer to the newly cloned GameObjectComposition.
-      \note   The clone is registered with the factory and assigned a new unique ID.
+      
+return Pointer to the newly cloned GameObjectComposition.
+      
+ote   The clone is registered with the factory and assigned a new unique ID.
     *************************************************************************************/
     GameObjectComposition* GameObjectComposition::Clone() const {
         // Fresh object with a new ID and registered in the factory map
@@ -128,7 +133,7 @@ namespace Framework {
         for (auto const& up : Components) {
             if (!up) continue;
 
-            auto newComp = up->Clone();           // unique_ptr<GameComponent>
+            auto newComp = up->Clone();           // ComponentHandle
             newComp->set_owner(clone);            // rewire owner
             newComp->set_type(up->GetTypeId());   // preserve type id
             clone->Components.emplace_back(std::move(newComp));
@@ -145,20 +150,20 @@ namespace Framework {
       \param typeId The type identifier of the component.
       \param comp   Unique pointer to the component to add. Ownership is transferred.
       \details
-        - Sets the component’s owner back-pointer to this GameObjectComposition.
+        - Sets the component's owner back-pointer to this GameObjectComposition.
         - Stores the ComponentTypeId in the component.
         - Transfers ownership into the Components vector.
     *************************************************************************************/
-    void GameObjectComposition::AddComponent(ComponentTypeId typeId, std::unique_ptr<GameComponent> comp)
+    void GameObjectComposition::AddComponent(ComponentTypeId typeId, ComponentHandle comp)
     {
         if (!comp) return;   //ignore null
         // call the protected setter inside GameComponent to store a back-poingter to owning GameObjectComposition
-        // This allow component to call GetOwner()->GetComponent<Transform>() 
+        // This allow component to call GetOwner()->GetComponent<Transform>()
         comp->set_owner(this);
-        //Store the componentTypeId (e.g CT_Transform) 
+        //Store the componentTypeId (e.g CT_Transform)
         // if (comp->GetTypeId() == CT_Transform)
         comp->set_type(typeId);
-        //Component is a std::vector<std::unique_ptr<GameComponent>>
+        //Component is a std::vector<ComponentHandle>
         //std::move transfer ownership from caller into the vector so GameObjectComposition own it component exclusively
         //emplace_back effienctly construct or move object at the end of the vector
         Components.emplace_back(std::move(comp));

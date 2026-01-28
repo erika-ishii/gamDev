@@ -15,6 +15,7 @@
 #pragma once
 
 #include "Composition/Component.h"
+#include "Memory/ComponentPool.h"
 #include "Serialization/Serialization.h"
 
 namespace Framework {
@@ -64,10 +65,10 @@ namespace Framework {
           \return A unique_ptr containing a copy of the component.
           \note  Copies all values (radius, r, g, b, a) into the new instance.
         *************************************************************************************/
-        std::unique_ptr<GameComponent> Clone() const override {
+        ComponentHandle Clone() const override {
             // Create new CircleRenderComponent on heap
             // Wrap inside unique_ptr so it is automatically clean up if something goes wrong
-            auto copy = std::make_unique<CircleRenderComponent>();
+            auto copy = ComponentPool<CircleRenderComponent>::CreateTyped();
             // copy the values 
             copy->radius = radius;
             copy->r = r;

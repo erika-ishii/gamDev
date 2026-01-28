@@ -8,13 +8,14 @@
             resource loading through the Resource_Manager system.
 
  \copyright
-            All content © 2025 DigiPen Institute of Technology Singapore.
+            All content Â© 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 
 #pragma once
 #include <filesystem>
 #include "Composition/Component.h"
+#include "Memory/ComponentPool.h"
 #include "Serialization/Serialization.h"
 #include "Resource_Asset_Manager/Resource_Manager.h"
 #include "Component/RenderComponent.h"
@@ -98,8 +99,8 @@ namespace Framework {
           \return A unique_ptr to the cloned SpriteComponent.
           \note  Copies the texture_key, texture_id, and path values into the new instance.
         *************************************************************************************/
-        std::unique_ptr<GameComponent> Clone() const override {
-            auto copy = std::make_unique<SpriteComponent>();
+        ComponentHandle Clone() const override {
+            auto copy = ComponentPool<SpriteComponent>::CreateTyped();
             copy->texture_key = texture_key;
             copy->texture_id = texture_id;
             copy->path = path;

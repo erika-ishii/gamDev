@@ -2,10 +2,10 @@
  \file      PlayerHUD.h
  \par       SofaSpuds
  \author    elvisshengjie.lim (elvisshengjie.lim@digipen.edu) - Primary Author, 100%
- \brief     Declares the PlayerHUDComponent which renders the player’s health HUD including:
+ \brief     Declares the PlayerHUDComponent which renders the playerÂ’s health HUD including:
             the health splash background, facial expression icon, and the animated bottle bar.
  \details   Responsibilities:
-            - Maps PlayerHealthComponent values (0–100%) into a 0–5 bottle display.
+            - Maps PlayerHealthComponent values (0Â–100%) into a 0Â–5 bottle display.
             - Handles bottle break animations when player health decreases.
             - Restores bottles when health increases.
             - Loads and stores all HUD textures through Resource_Manager.
@@ -13,12 +13,13 @@
             - Supports cloning so the HUD works correctly with prefabs and the editor.
             Used by HealthSystem::draw() to render the HUD each frame for the player.
  \copyright
-            All content © 2025 DigiPen Institute of Technology Singapore.
+            All content Â© 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 #pragma once
 
 #include "Composition/Component.h"
+#include "Memory/ComponentPool.h"
 #include "Graphics/Graphics.hpp"
 #include <array>
 
@@ -28,11 +29,11 @@ namespace Framework
 
     /*****************************************************************************************
      \class PlayerHUDComponent
-     \brief Component that manages all UI elements related to the player’s health display.
+     \brief Component that manages all UI elements related to the playerÂ’s health display.
      \details
-        - Displays a background “health splash” texture.
+        - Displays a background Â“health splashÂ” texture.
         - Selects a happy or upset face depending on the remaining health.
-        - Displays 0–5 bottles representing fractional health.
+        - Displays 0Â–5 bottles representing fractional health.
         - Plays break-animation frames when bottles disappear.
         - Works entirely in screen-space (UI) coordinates.
     *****************************************************************************************/
@@ -58,7 +59,7 @@ namespace Framework
         /*************************************************************************************
          \brief Clone this HUD component when duplicating a prefab or GameObject.
         **************************************************************************************/
-        std::unique_ptr<GameComponent> Clone() const override;
+        ComponentHandle Clone() const override;
 
         /*************************************************************************************
          \brief Update HUD state (bottle break animations, health transitions).

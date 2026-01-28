@@ -10,6 +10,9 @@
 #if SOFASPUDS_ENABLE_EDITOR
 #include "imgui.h"
 #endif
+#include "Memory/GameObjectPool.h"
+#include "Memory/ObjectAllocator.h"
+#include <iostream>
 #include <algorithm>   // std::max
 #include <cstddef>     // size_t
 #include <numeric>
@@ -69,6 +72,8 @@ namespace {
     static float sAvgFps = 0.0f;
     static int   sSamplesForAvg = 60;     // average over ~60 most recent samples (clamped by buffer size)
 
+    static unsigned sLastAllocatorValidationIssues = 0;
+
     inline float pushFpsSampleAndReturn(float dtSec) {
         sLastDtSec = dtSec;
         const float fpsNow = (dtSec > 1e-6f) ? (1.0f / dtSec) : 0.f;
@@ -84,6 +89,10 @@ namespace {
         sAvgFps = sum / count;
 
         return fpsNow;
+    }
+    void allocatorValidationCallback(const void* block, unsigned int blockIndex) {
+        std::cout << "[Allocator] Corruption detected at block #" << blockIndex
+            << " (" << block << ")\n";
     }
 } // anonymous namespace
 
@@ -176,6 +185,32 @@ void Framework::DrawPerformanceWindow() {
             ? (entry.milliseconds / totalSystemMs) * 100.0 : 0.0;
         ImGui::Text("%s: %.3f ms (%.1f%% of systems)",
             entry.name.c_str(), entry.milliseconds, pctOfSystems);
+    }
+
+    {
+        const auto& allocator = Framework::GameObjectPool::Storage().Allocator();
+        const OAStats stats = allocator.GetStats();
+        const OAConfig config = allocator.GetConfig();
+
+        ImGui::SeparatorText("Allocator (GameObjectPool)");
+        ImGui::Text("Pages in use: %u | Objects in use: %u | Free objects: %u",
+            stats.PagesInUse_, stats.ObjectsInUse_, stats.FreeObjects_);
+        ImGui::Text("Allocations: %u | Frees: %u | Most objects: %u",
+            stats.Allocations_, stats.Deallocations_, stats.MostObjects_);
+        ImGui::TextDisabled("Allocator mode: %s (UseCPPMemManager=%s)",
+            config.UseCPPMemManager_ ? "System new/delete" : "Custom pooled pages",
+            config.UseCPPMemManager_ ? "true" : "false");
+        ImGui::TextDisabled("Blocks are freed back to the pool; bytes remain for reuse.");
+        if (ImGui::Button("Validate Pages")) {
+            sLastAllocatorValidationIssues = allocator.ValidatePages(&allocatorValidationCallback);
+        }
+        if (sLastAllocatorValidationIssues > 0) {
+            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f),
+                "Validation issues: %u (see console)", sLastAllocatorValidationIssues);
+        }
+        else {
+            ImGui::Text("Validation issues: %u", sLastAllocatorValidationIssues);
+        }
     }
 
 

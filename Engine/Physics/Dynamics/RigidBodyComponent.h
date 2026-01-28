@@ -8,12 +8,13 @@
 			for both Rectangle and Circle
 
  \copyright
-			All content © 2025 DigiPen Institute of Technology Singapore.
+			All content Â© 2025 DigiPen Institute of Technology Singapore.
 			All rights reserved.
 *********************************************************************************************/
 
 #pragma once
 #include "Composition/Component.h"
+#include "Memory/ComponentPool.h"
 #include "Common/ComponentTypeID.h"
 #include "Serialization/Serialization.h"
 
@@ -52,11 +53,11 @@ namespace Framework
 		\brief Copies, or clones, the value from the .json file to a copy that will be returned
 		\return A copy of with all the values from the .json file
 		*****************************************************************************************/
-		std::unique_ptr<GameComponent>Clone() const override 
+		ComponentHandle Clone() const override 
 		{
 			// Create new CircleRenderComponent on heap
 			// Wrap inside unique_ptr so it is automatically clean up if something goes wrong
-			auto copy = std::make_unique<RigidBodyComponent>();
+			auto copy = ComponentPool<RigidBodyComponent>::CreateTyped();
 			//copy the values 
 			copy->velX = velX;
 			copy->velY = velY;

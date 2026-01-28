@@ -12,7 +12,7 @@
             - Manages attack intervals using an internal timer and attack speed variable.
             - Spawns and updates hitboxes to detect collisions with player entities.
             - Supports serialization of attack and hitbox parameters for configurable tuning.
-            - Utilizes TransformComponent data to align attack position with the enemy’s
+            - Utilizes TransformComponent data to align attack position with the enemy
               current world coordinates.
 
             Designed for reuse across multiple enemy types, this component forms the core
@@ -27,6 +27,7 @@
 *********************************************************************************************/
 #pragma once
 #include "Composition/Component.h"
+#include "Memory/ComponentPool.h"
 #include "Serialization/Serialization.h"
 #include "Component/HitBoxComponent.h"
 #include "Component/TransformComponent.h"
@@ -41,24 +42,24 @@ namespace Framework
 
       This component controls enemy attack timing and manages a hitbox used to deal
       damage to other entities. It works together with a TransformComponent to spawn
-      the hitbox at the enemy�s current location and uses internal timers to regulate
+      the hitbox at the enemyï¿½s current location and uses internal timers to regulate
       attack intervals and durations.
     *****************************************************************************************/
     class EnemyAttackComponent : public GameComponent
     {
     public:
-        int damage{ 1 };               ///< Damage dealt by this enemy�s attack.
+        int damage{ 1 };               ///< Damage dealt by this enemy attack.
         float attack_speed{ 3.0f };     ///< Cooldown time (seconds) between consecutive attacks.
         float attack_timer{ 0.0f };     ///< Tracks elapsed time since the last attack.
         float hitboxElapsed{ 0.0f };
-        std::unique_ptr<HitBoxComponent> hitbox; ///< Managed hitbox instance used for attacks.
+        ComponentHandleT<HitBoxComponent> hitbox; ///< Managed hitbox instance used for attacks.
 
         /*************************************************************************************
           \brief Default constructor. Initializes a new HitBoxComponent.
         *************************************************************************************/
         EnemyAttackComponent()
         {
-            hitbox = std::make_unique<HitBoxComponent>();
+            hitbox = ComponentPool<HitBoxComponent>::CreateTyped();
         }
 
         /*************************************************************************************
@@ -69,7 +70,7 @@ namespace Framework
         EnemyAttackComponent(int dmg, float spd)
             : damage(dmg), attack_speed(spd)
         {
-            hitbox = std::make_unique<HitBoxComponent>();
+            hitbox = ComponentPool<HitBoxComponent>::CreateTyped();
         }
 
         /*************************************************************************************
@@ -114,12 +115,12 @@ namespace Framework
           \brief Creates a deep copy of this component for prefab instancing.
           \return A unique_ptr holding the cloned EnemyAttackComponent.
         *************************************************************************************/
-        std::unique_ptr<GameComponent> Clone() const override
+        ComponentHandle Clone() const override
         {
-            auto copy = std::make_unique<EnemyAttackComponent>();
+            auto copy = ComponentPool<EnemyAttackComponent>::CreateTyped();
             copy->damage = damage;
             copy->attack_speed = attack_speed;
-            copy->hitbox = std::make_unique<HitBoxComponent>(*hitbox);
+            copy->hitbox = ComponentPool<HitBoxComponent>::CreateTyped(*hitbox);
             return copy;
         }
 
@@ -130,7 +131,7 @@ namespace Framework
           \details
             - Increments the internal attack timer by dt.
             - When the timer exceeds attack_speed, resets it and activates the hitbox.
-            - Sets the hitbox position based on the owner�s transform.
+            - Sets the hitbox position based on the owner transform.
             - Automatically deactivates the hitbox after its duration expires.
         *************************************************************************************/
         void Update(float dt, TransformComponent* tr)

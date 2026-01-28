@@ -1,4 +1,4 @@
-﻿/*********************************************************************************************
+/*********************************************************************************************
  \file      PrefabManager.cpp
  \par       SofaSpuds
  \author    elvisshengjie.lim (elvisshengjie.lim@digipen.edu) - Primary Author, 100%
@@ -14,7 +14,7 @@
             spawn new objects without reparsing JSON each time.
 
  \copyright
-            All content © 2025 DigiPen Institute of Technology Singapore.
+            All content (c) 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 
@@ -37,7 +37,7 @@
 namespace Framework
 {
     /// Stores the master prefab copies (name → GOC master copy).
-    std::unordered_map<std::string, std::unique_ptr<Framework::GOC>> master_copies;
+    std::unordered_map<std::string, GameObjectHandle> master_copies;
 
     namespace
     {
@@ -61,7 +61,6 @@ namespace Framework
                     return false;
 
                 auto& go = j["GameObject"];
-;
 
                 if (!go.contains("Components") || !go["Components"].is_object())
                     return false;
@@ -84,7 +83,7 @@ namespace Framework
             if (!templateGoc)
                 return;
 
-            std::unique_ptr<GOC> owned(templateGoc);
+            GameObjectHandle owned(templateGoc);
 
             // Prefer the "name" inside JSON (Factory likely sets it on the GOC),
             // fallback to filename stem.
@@ -139,7 +138,7 @@ namespace Framework
     /*************************************************************************************
       \brief Unloads all prefabs and clears the master_copies map.
       \details
-        - master_copies stores std::unique_ptr<GOC>, so clearing destroys the masters.
+        - master_copies stores GameObjectHandle, so clearing destroys the masters.
     *************************************************************************************/
     void UnloadPrefabs()
     {

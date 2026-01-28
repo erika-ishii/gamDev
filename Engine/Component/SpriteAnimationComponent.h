@@ -1,4 +1,4 @@
-﻿/*********************************************************************************************
+/*********************************************************************************************
  \file      SpriteAnimationComponent.h
  \par       SofaSpuds
  \author     Ho Jun (h.jun@digipen.edu) - Primary Author, 100% - Primary Author, 60%
@@ -24,6 +24,7 @@
 #pragma once
 
 #include "Composition/Component.h"
+#include "Memory/ComponentPool.h"
 #include "Serialization/Serialization.h"
 #include "Resource_Asset_Manager/Resource_Manager.h"
 #include "Core/PathUtils.h"
@@ -226,8 +227,8 @@ namespace Framework {
           Copies both legacy frame-array animation data and sprite-sheet animations, as
           well as current playback state (currentFrame/accumulator/activeAnimation).
         *************************************************************************************/
-        std::unique_ptr<GameComponent> Clone() const override {
-            auto copy = std::make_unique<SpriteAnimationComponent>();
+        ComponentHandle Clone() const override {
+            auto copy = ComponentPool<SpriteAnimationComponent>::CreateTyped();
             copy->fps = fps;
             copy->loop = loop;
             copy->play = play;
@@ -243,7 +244,7 @@ namespace Framework {
           \brief Handle incoming messages sent to this component.
 
           \note Currently unused (no-op). Can be extended later for event-driven animation
-                changes (e.g., "OnAttackStart" → switch to attack animation).
+                changes (e.g., "OnAttackStart" switch to attack animation).
         *************************************************************************************/
         void SendMessage(Message&) override {}
 

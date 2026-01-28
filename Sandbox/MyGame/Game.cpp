@@ -21,9 +21,12 @@
 #include "Debug/CrashLogger.hpp"
 #include "Graphics/Graphics.hpp"
 #include "Debug/Perf.h"
+#include "Memory/GameObjectPool.h"
+#include "Memory/ObjectAllocator.h"
 #include <algorithm>
 #include <GLFW/glfw3.h>
 #include <chrono>
+#include <iostream>
 #include <MainMenuPage.hpp>
 #include <PauseMenuPage.hpp>
 #include <DefeatScreenPage.hpp>
@@ -82,6 +85,10 @@ namespace mygame {
 
         constexpr int START_KEY = GLFW_KEY_ENTER; // Keyboard stand-in for a controller Start button.
         constexpr int PAUSE_KEY = GLFW_KEY_ESCAPE;
+        void allocatorDumpCallback(const void* block, unsigned int blockIndex)
+        {
+            std::cout << "[Allocator] Leak: block #" << blockIndex << " at " << block << "\n";
+        }
     }
 
     // Transition timing helpers (file-local).
@@ -411,6 +418,8 @@ namespace mygame {
         // Only call ShutdownAll(), do NOT manually delete gEnemySystem etc.
         gSystems.ShutdownAll();
 
+        const unsigned leaks = Framework::GameObjectPool::Storage().Allocator().DumpMemoryInUse(&allocatorDumpCallback);
+        std::cout << "[Allocator] DumpMemoryInUse found " << leaks << " live blocks at shutdown.\n";
         // Null out global pointers so you don’t accidentally access them later
         gEnemySystem = nullptr;
         gAiSystem = nullptr;

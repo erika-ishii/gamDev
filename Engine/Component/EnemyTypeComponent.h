@@ -24,6 +24,7 @@
 *********************************************************************************************/
 #pragma once
 #include "Composition/Component.h"
+#include "Memory/ComponentPool.h"
 #include "Serialization/Serialization.h"
 #include <string>
 
@@ -95,9 +96,9 @@ namespace Framework
           \return A unique_ptr holding the cloned EnemyTypeComponent instance.
           \details Copies the current EnemyType value to the new instance.
         *************************************************************************************/
-        std::unique_ptr<GameComponent> Clone() const override
+        ComponentHandle Clone() const override
         {
-            auto copy = std::make_unique<EnemyTypeComponent>();
+            auto copy = ComponentPool<EnemyTypeComponent>::CreateTyped();
             copy->Etype = Etype;
             return copy;
         }

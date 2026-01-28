@@ -2,7 +2,7 @@
  \file      ZoomTriggerComponent.h
  \par       SofaSpuds
  \author    elvisshengjie.lim (elvisshengjie.lim@digipen.edu) - Primary Author, 100%
- \brief     Declares the ZoomTriggerComponent, a gameplay trigger used to modify the camera’s
+ \brief     Declares the ZoomTriggerComponent, a gameplay trigger used to modify the cameraÂ’s
             zoom level when the player enters a designated region.
  \details   Responsibilities:
             - Stores a target zoom value used by systems (e.g., PhysicSystem or CameraSystem)
@@ -12,11 +12,12 @@
             - Implements polymorphic Clone() for prefab instancing and copying in the editor.
             - Used by zoom trigger objects placed in the level to drive camera transitions.
  \copyright
-            All content © 2025 DigiPen Institute of Technology Singapore.
+            All content Â© 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 #pragma once
 #include "Composition/Component.h"
+#include "Memory/ComponentPool.h"
 #include "Serialization/Serialization.h"
 
 namespace Framework {
@@ -53,9 +54,9 @@ namespace Framework {
         // ---------------------------
         // Polymorphic clone support
         // ---------------------------
-        std::unique_ptr<GameComponent> Clone() const override
+        ComponentHandle Clone() const override
         {
-            return std::make_unique<ZoomTriggerComponent>(*this);
+            return ComponentPool<ZoomTriggerComponent>::Create(*this);
         }
     };
 

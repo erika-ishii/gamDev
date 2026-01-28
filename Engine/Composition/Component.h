@@ -1,7 +1,7 @@
 /*********************************************************************************************
- \file      Component.h
+ ile      Component.h
  \par       SofaSpuds
- \author    elvisshengjie.lim ( elvisshengjie.lim@digipen.edu) - Primary Author, 100%
+ uthor    elvisshengjie.lim ( elvisshengjie.lim@digipen.edu) - Primary Author, 100%
 
  \brief     Declares the GameComponent base class, the core building block of the
             component system (ECS-like). Each GameComponent represents an independent
@@ -10,7 +10,7 @@
             ownership access, and deep-copy functionality for prefab instancing.
 
  \copyright
-            All content © 2025 DigiPen Institute of Technology Singapore.
+            All content (c) 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 #pragma once
@@ -32,6 +32,24 @@
 namespace Framework
 {
     class GameObjectComposition;
+    class GameComponent;
+
+    struct ComponentDeleter {
+        using DestroyFn = void (*)(GameComponent*, void*);
+        DestroyFn Destroy = nullptr;
+        void* Context = nullptr;
+
+        void operator()(GameComponent* component) const
+        {
+            if (Destroy)
+                Destroy(component, Context);
+        }
+    };
+
+    using ComponentHandle = std::unique_ptr<GameComponent, ComponentDeleter>;
+
+    template <typename T>
+    using ComponentHandleT = std::unique_ptr<T, ComponentDeleter>;
 
     /*****************************************************************************************
       \class GameComponent
@@ -59,7 +77,8 @@ namespace Framework
         //called once when component is attached, Derived component override this to set themselves up
         /*************************************************************************************
           \brief Called when the component is attached to its owner.
-          \note  Default implementation does nothing. Derived components override this.
+          
+ote  Default implementation does nothing. Derived components override this.
         *************************************************************************************/
         virtual void initialize() {}
 
@@ -67,47 +86,50 @@ namespace Framework
         /*************************************************************************************
           \brief Handles messages sent to this component.
           \param m  Reference to the Message object.
-          \note  Default implementation ignores the message (no-op).
+          
+ote  Default implementation ignores the message (no-op).
         *************************************************************************************/
         virtual void SendMessage(Message& m) { (void)m; } // optional to override
 
         // polymorphic deep-copy
         /*************************************************************************************
-          \brief Creates a polymorphic deep copy of this component.
-          \return A unique_ptr holding the cloned component instance.
-          \note  Pure virtual — must be implemented by derived components.
+          brief Creates a polymorphic deep copy of this component.
+          eturn A unique_ptr holding the cloned component instance.
+          
+ote  Pure virtual - must be implemented by derived components.
         *************************************************************************************/
-        virtual std::unique_ptr<GameComponent> Clone() const = 0;
+        virtual ComponentHandle Clone() const = 0;
 
         //Ownership access
         //Lets component get their owning GameObject( aka composition)
         // Example: PhysicsComponent might call GetOwner()->GetComponent<Transform>() to move it object
         /*************************************************************************************
-          \brief Returns a pointer to the owning GameObjectComposition.
-          \return A non-const pointer to the owner.
+          brief Returns a pointer to the owning GameObjectComposition.
+          eturn A non-const pointer to the owner.
         *************************************************************************************/
         GameObjectComposition* GetOwner() { return owner; }
 
         //read only
         /*************************************************************************************
-          \brief Returns a const pointer to the owning GameObjectComposition.
-          \return A const-qualified pointer to the owner.
+          brief Returns a const pointer to the owning GameObjectComposition.
+          eturn A const-qualified pointer to the owner.
         *************************************************************************************/
         GameObjectComposition const* GetOwner() const { return owner; }
 
         //return typeid
         // example :if (comp->GetTypeId() == ComponentTypeId::CT_Transform) { ... }
         /*************************************************************************************
-          \brief Returns the type identifier of this component.
-          \return ComponentTypeId enum representing the component type.
+          brief Returns the type identifier of this component.
+          eturn ComponentTypeId enum representing the component type.
         *************************************************************************************/
         ComponentTypeId GetTypeId() const { return type_id; }
 
         ///Component Serialization Interface see Serialization.h for details.
         /*************************************************************************************
-          \brief Serializes component data from the provided serializer.
+          brief Serializes component data from the provided serializer.
           \param str  Serializer reference.
-          \note  Default implementation does nothing; override as needed in derived components.
+          
+ote  Default implementation does nothing; override as needed in derived components.
         *************************************************************************************/
         virtual void Serialize(ISerializer& ) {};
 
@@ -118,13 +140,13 @@ namespace Framework
         //                      comp->set_owner(this);
         //                      comp_>set_type(ComponentTypeId::CT_Transform);
         /*************************************************************************************
-          \brief Sets the owner of this component. Called internally when attaching to a GOC.
+          brief Sets the owner of this component. Called internally when attaching to a GOC.
           \param goc  Pointer to the owning GameObjectComposition.
         *************************************************************************************/
         void set_owner(GameObjectComposition* goc) { owner = goc; }
 
         /*************************************************************************************
-          \brief Sets the type of this component.
+          rief Sets the type of this component.
           \param id  ComponentTypeId representing the type.
         *************************************************************************************/
         void set_type(ComponentTypeId id) { type_id = id; }
@@ -132,7 +154,7 @@ namespace Framework
         friend class GameObjectComposition;
 
     private:
-        //back-pointer to the game object 
+        //back-pointer to the game object
         GameObjectComposition* owner = nullptr; ///< Pointer to the owning GameObjectComposition
         //store component type
         ComponentTypeId       type_id = ComponentTypeId::CT_None; ///< Enum identifying the component type

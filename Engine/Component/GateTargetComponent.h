@@ -10,7 +10,7 @@
             transition target when the player contacts an unlocked gate.
 
  \copyright
-            All content © 2025 DigiPen Institute of Technology Singapore.
+            All content Â© 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 #pragma once
@@ -18,6 +18,7 @@
 #include <string>
 
 #include "Composition/Component.h"
+#include "Memory/ComponentPool.h"
 #include "Serialization/Serialization.h"
 
 namespace Framework {
@@ -35,9 +36,9 @@ namespace Framework {
             }
         }
 
-        std::unique_ptr<GameComponent> Clone() const override
+        ComponentHandle Clone() const override
         {
-            return std::make_unique<GateTargetComponent>(*this);
+            return ComponentPool<GateTargetComponent>::Create(*this);
         }
     };
 

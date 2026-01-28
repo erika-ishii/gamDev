@@ -26,6 +26,7 @@
 *********************************************************************************************/
 #pragma once
 #include "Composition/Component.h"
+#include "Memory/ComponentPool.h"
 #include "Serialization/Serialization.h"
 #include "Audio/SoundManager.h"
 #include <memory>
@@ -199,7 +200,7 @@ namespace Framework
                 sounds[atk] = { atk, false };
                 attackClips.push_back(atk);
 
-                // Shared GhostHurt1–8
+                // Shared GhostHurtÂ–8
                 for (int i = 1; i <= 8; i++)
                 {
                     std::string id = "GhostHurt" + std::to_string(i);
@@ -207,7 +208,7 @@ namespace Framework
                     hurtClips.push_back(id);
                 }
 
-                // Water ghost death — only 1 clip
+                // Water ghost death Â— only 1 clip
                 sounds["WaterGhostExplosion"] = { "WaterGhostExplosion", false };
                 deathClips.push_back("WaterGhostExplosion");
             }
@@ -329,9 +330,9 @@ namespace Framework
 
           \return A unique_ptr containing a fully copied AudioComponent instance.
         *************************************************************************************/
-        std::unique_ptr<GameComponent> Clone() const override
+        ComponentHandle Clone() const override
         {
-            auto copy = std::make_unique<AudioComponent>();
+            auto copy = ComponentPool<AudioComponent>::CreateTyped();
             copy->entityType = entityType;
             copy->sounds = sounds;
             copy->volume = volume;

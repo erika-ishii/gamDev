@@ -85,7 +85,6 @@ namespace Framework
          *****************************************************************************************/
         void PlayAnimationIfAvailable(GOC* goc, std::string_view name, bool forceRestart = false)
         {
-            (void)forceRestart;
             if (!goc)
                 return;
 
@@ -94,7 +93,7 @@ namespace Framework
                 return;
 
             const int idx = FindAnimationIndex(anim, name);
-            if (idx >= 0 && idx != anim->ActiveAnimationIndex())
+            if (idx >= 0 && (idx != anim->ActiveAnimationIndex() || forceRestart))
             {
                 anim->SetActiveAnimation(idx);
             }
@@ -115,6 +114,28 @@ namespace Framework
                 }
             }
             return 0.2f;
+        }
+
+        float GetAnimationDuration(SpriteAnimationComponent* anim, std::string_view name)
+        {
+            if (!anim)
+                return 0.0f;
+
+            const int idx = FindAnimationIndex(anim, name);
+            if (idx < 0 || idx >= static_cast<int>(anim->animations.size()))
+                return 0.0f;
+
+            const auto& sheet = anim->animations[static_cast<std::size_t>(idx)];
+            const int total = std::max(1, sheet.config.totalFrames);
+            const int start = std::clamp(sheet.config.startFrame, 0, total - 1);
+            const int end = (sheet.config.endFrame >= 0)
+                ? std::clamp(sheet.config.endFrame, start, total - 1)
+                : (total - 1);
+            const int frameCount = end - start + 1;
+            if (sheet.config.fps <= 0.0f)
+                return 0.0f;
+
+            return static_cast<float>(frameCount) / sheet.config.fps;
         }
     }
 
@@ -417,7 +438,60 @@ namespace Framework
                 // Determine facing direction based on player position
                 ai->facing = (dx < 0.0f) ? Facing::LEFT : Facing::RIGHT;
 
-                if (attack->attack_timer >= attack->attack_speed &&
+                auto* anim = enemy->GetComponentType<SpriteAnimationComponent>(
+                    ComponentTypeId::CT_SpriteAnimationComponent);
+
+                if (isRanged && ai->rangedAttackActive)
+                {
+                    ai->rangedAttackTimer += dt;
+                    float duration = ai->rangedAttackDuration;
+                    if (duration <= 0.0f)
+                    {
+                        duration = GetAnimationDuration(anim, "rangeattack");
+                        if (duration <= 0.0f)
+                            duration = 0.2f;
+                    }
+
+                    if (!ai->rangedProjectileFired && ai->rangedAttackTimer >= duration)
+                    {
+                        float norm = (distance > 0.001f) ? distance : 1.0f;
+                        float dirX = dx / norm;
+                        float dirY = dy / norm;
+
+                        float spawnX = tr->x;
+                        float spawnY = tr->y;
+
+                        logic->hitBoxSystem->SpawnProjectile(
+                            enemy,
+                            spawnX, spawnY,
+                            dirX, dirY,
+                            0.2f,       // Projectile speed 
+                            0.3f, 0.15f, // Size
+                            static_cast<float>(attack->damage),
+                            3.0f,        // Duration
+                            HitBoxComponent::Team::Enemy
+                        );
+                        if (audio)
+                        {
+                            audio->TriggerSound("EnemyAttack");
+                        }
+                        attack->attack_timer = 0.0f;
+                        ai->rangedProjectileFired = true;
+                        ai->retreatTimer = retreatDurationAfterShot;
+                    }
+
+                    if (ai->rangedAttackTimer >= duration)
+                    {
+                        PlayAnimationIfAvailable(enemy, "idle");
+                        ai->rangedAttackActive = false;
+                        ai->rangedAttackTimer = 0.0f;
+                        ai->rangedAttackDuration = 0.0f;
+                        ai->rangedProjectileFired = false;
+                    }
+                }
+
+                if (!ai->rangedAttackActive &&
+                    attack->attack_timer >= attack->attack_speed &&
                     ai->retreatTimer <= 0.0f)
                 {
                     // Check range before attacking. Ranged enemies should only fire when much closer.
@@ -435,31 +509,12 @@ namespace Framework
 
                             if (isRanged)
                             {
-                                // --- Ranged Attack: Spawn Projectile ---
-                                float norm = (distance > 0.001f) ? distance : 1.0f;
-                                float dirX = dx / norm;
-                                float dirY = dy / norm;
-
-                                // Spawn offset
-                                float spawnX = tr->x;
-                                float spawnY = tr->y;
-
-                                logic->hitBoxSystem->SpawnProjectile(
-                                    enemy,
-                                    spawnX, spawnY,
-                                    dirX, dirY,
-                                    0.2f,       // Projectile speed 
-                                    0.3f, 0.15f, // Size
-                                    static_cast<float>(attack->damage),
-                                    3.0f,        // Duration
-                                    HitBoxComponent::Team::Enemy
-                                );
-                                if (audio)
-                                {
-                                    audio->TriggerSound("EnemyAttack");
-                                }
+                                // --- Ranged Attack: Play animation, fire after it completes ---
+                                ai->rangedAttackActive = true;
+                                ai->rangedAttackTimer = 0.0f;
+                                ai->rangedProjectileFired = false;
+                                ai->rangedAttackDuration = GetAnimationDuration(anim, "rangeattack");
                                 PlayAnimationIfAvailable(enemy, "rangeattack", true);
-                                ai->retreatTimer = retreatDurationAfterShot;
                             }
                             else
                             {
@@ -510,7 +565,7 @@ namespace Framework
                         PlayAnimationIfAvailable(enemy, "idle");
                     }
                 }
-                else if (isRanged && attack->attack_timer > 0.5f)
+                else if (isRanged && !ai->rangedAttackActive && attack->attack_timer > 0.5f)
                 {
                     // Simple fallback for ranged to go back to idle after shooting
                     PlayAnimationIfAvailable(enemy, "idle");

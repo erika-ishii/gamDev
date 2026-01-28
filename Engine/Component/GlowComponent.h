@@ -16,6 +16,7 @@
 #pragma once
 
 #include "Composition/Component.h"
+#include "Memory/ComponentPool.h"
 #include "Serialization/Serialization.h"
 #include <glm/vec2.hpp>
 #include <vector>
@@ -76,8 +77,8 @@ namespace Framework {
             }
         }
 
-        std::unique_ptr<GameComponent> Clone() const override {
-            auto copy = std::make_unique<GlowComponent>();
+        ComponentHandle Clone() const override {
+            auto copy = ComponentPool<GlowComponent>::CreateTyped();
             copy->r = r;
             copy->g = g;
             copy->b = b;

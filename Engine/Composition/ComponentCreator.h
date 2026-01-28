@@ -6,15 +6,15 @@
  \brief     Declares the ComponentCreator system, which provides an abstract interface
             and templated implementation for dynamically creating game components at
             runtime. Components are constructed by creators and then **immediately
-            wrapped in std::unique_ptr by the caller (the factory)** to enforce
+            wrapped in ComponentHandle by the caller (the factory)** to enforce
             single‑owner semantics.
 
  \details   Ownership & lifetime model:
             - The factory stores creators as std::unique_ptr<ComponentCreator> in its
               registry (string → creator).
-            - ComponentCreator::Create() returns a **raw pointer** to a newly created
-              component. The caller (GameObjectFactory) **must** take ownership
-              by wrapping this pointer in std::unique_ptr<GameComponent> right away.
+            - ComponentCreator::Create() returns a **ComponentHandle** that owns the
+              newly created component. The handle's custom deleter returns memory
+              to the component pool instead of using delete.
             - This design allows the factory to manage component lifetimes uniformly
               without exposing ownership to clients of the component system.
 
@@ -31,10 +31,11 @@
 #include <memory>
 #include <string>
 #include "Component.h"
+#include "Memory/ComponentPool.h"
 
 // Responsibility: declare a uniform interface for creating components while letting
 // the factory own both creators (unique_ptr) and the components they produce (wrapped
-// into unique_ptr immediately after creation).
+// into ComponentHandle immediately after creation).
 
 namespace Framework {
 
@@ -64,11 +65,11 @@ namespace Framework {
 
         /*************************************************************************************
           \brief Creates a new instance of the component.
-          \return Raw pointer to the newly created GameComponent.
-          \note   The **caller takes ownership** and should immediately wrap the result in
-                  std::unique_ptr<GameComponent> to ensure exception‑safe, RAII management.
+          \return A ComponentHandle owning the newly created GameComponent.
+          \note   The creator returns a handle with a custom deleter so the object
+                  returns to the pool instead of using delete.
         *************************************************************************************/
-        virtual GameComponent* Create() = 0; // pure virtual
+        virtual ComponentHandle Create() = 0; // pure virtual
     };
 
     /*****************************************************************************************
@@ -91,10 +92,13 @@ namespace Framework {
 
         /*************************************************************************************
           \brief Creates a new instance of the component of type T.
-          \return Raw pointer to a new T instance.
-          \note   The caller (factory) must immediately wrap in std::unique_ptr.
+          \return ComponentHandle owning a new T instance.
         *************************************************************************************/
-        GameComponent* Create() override { return new T(); }
+        ComponentHandle Create() override
+        {
+            // Allocate raw storage from the pool and placement-new the component.
+            return ComponentPool<T>::Create();
+        }
     };
 }
 

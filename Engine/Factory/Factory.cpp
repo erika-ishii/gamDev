@@ -10,18 +10,18 @@
 
  \details   Ownership model (important):
             - The factory maintains ownership of all live GOCs via a map of
-              id → std::unique_ptr<GOC> (GameObjectIdMap).
+              id → GameObjectHandle (GameObjectIdMap).
             - Public methods that return a GOC* return a **non-owning** raw pointer
               for convenience. Callers must **not** delete these pointers.
-            - Prefab templates built by CreateTemplate are allocated with std::unique_ptr
-              and then **released** (ownership transferred) to the caller.
+            - Prefab templates built by CreateTemplate are allocated from the pool and
+              then **released** (ownership transferred) to the caller.
             - Deferred deletion is implemented by recording GOC IDs in a set
-              (ObjectsToBeDeleted) and erasing the corresponding unique_ptrs in Update/Shutdown.
-              Erasing from the map automatically destroys the GOC.
+              (ObjectsToBeDeleted) and erasing the corresponding handles in Update/Shutdown.
+              Erasing from the map automatically returns the GOC to the pool.
 
             Key behaviors:
             - Enforces a single global factory instance (FACTORY).
-            - Assigns unique IDs to GOCs and maintains an id→unique_ptr<GOC> map.
+            - Assigns unique IDs to GOCs and maintains an id→GameObjectHandle map.
             - Supports BuildFromCurrentJsonObject for data-driven construction from an
               already-positioned JSON serializer.
             - Defers destruction via an ObjectsToBeDeleted set to avoid mid-frame invalidation.
@@ -62,7 +62,7 @@
 
 // Summary of responsibilities:
 // - Create empty game objects (GOCs)
-// - Assign each a unique integer ID and keep an ownership table (id -> std::unique_ptr<GOC>)
+// - Assign each a unique integer ID and keep an ownership table (id -> GameObjectHandle)
 // - Provide lookups that return non-owning GOC* for read/modify access
 // - Let you mark GOCs for deferred deletion; the actual destruction happens in Update/Shutdown
 // - Hold a registry of component creators (string name -> unique_ptr<ComponentCreator>) so
@@ -110,10 +110,10 @@ namespace Framework {
     /*************************************************************************************
       \brief Creates an empty GOC (no components), assigns a unique ID, and registers it.
       \return Non-owning raw pointer to the new GOC (owned by the factory’s id map).
-      \note   Ownership is transferred into the id map as a std::unique_ptr.
+      \note   Ownership is transferred into the id map as a GameObjectHandle.
     *************************************************************************************/
     GOC* GameObjectFactory::CreateEmptyComposition() {
-        auto goc = std::make_unique<GOC>();
+        auto goc = GameObjectPool::Create();
         return IdGameObject(std::move(goc));
     }
 
@@ -121,7 +121,7 @@ namespace Framework {
       \brief Creates a prefab template GOC from a JSON file **without** assigning an ID.
       \param filename Path to JSON describing a single GameObject.
       \return Raw pointer to the newly built GOC template; **caller takes ownership**.
-      \note   Intended for PrefabManager. The template is created with unique_ptr and then
+      \note   Intended for PrefabManager. The template is created with pooled storage and then
               released (goc.release()), so it is **not** tracked in the factory’s id map.
     *************************************************************************************/
     GOC* GameObjectFactory::CreateTemplate(const std::string& filename)
@@ -130,7 +130,7 @@ namespace Framework {
         if (!s.Open(filename) || !s.IsGood()) return nullptr;
         if (!s.EnterObject("GameObject")) return nullptr;
 
-        auto goc = std::make_unique<GOC>();
+        auto goc = GameObjectPool::Create();
 
         if (s.HasKey("name")) {
             std::string name; s.ReadString("name", name);
@@ -147,7 +147,7 @@ namespace Framework {
                 if (!s.HasKey(compName)) continue;
                 if (!s.EnterObject(compName)) continue;
 
-                std::unique_ptr<GameComponent> comp(creator->Create());
+                auto comp = creator->Create();
                 if (comp) {
                     StreamRead(s, *comp);
                     goc->AddComponent(creator->TypeId, std::move(comp));
@@ -171,11 +171,11 @@ namespace Framework {
       \details
         - Reads "name" if present.
         - Iterates all registered ComponentCreators and builds any present components.
-        - Assigns a unique ID and registers the object in the id map as unique_ptr.
+        - Assigns a unique ID and registers the object in the id map as GameObjectHandle.
     *************************************************************************************/
     GOC* GameObjectFactory::BuildFromCurrentJsonObject(ISerializer& stream)
     {
-        auto goc = std::make_unique<GOC>();
+        auto goc = GameObjectPool::Create();
         if (stream.HasKey("name")) {
             std::string name;
             stream.ReadString("name", name);
@@ -200,8 +200,8 @@ namespace Framework {
                 if (!stream.EnterObject(compName))
                     continue;
 
-                // Create as unique_ptr so any failure auto-cleans
-                std::unique_ptr<GameComponent> comp(creator->Create());
+                // Create as ComponentHandle so any failure auto-cleans
+                auto comp = creator->Create();
                 if (!comp) {
                     // couldn't create; leave JSON object and continue
                     stream.ExitObject();
@@ -623,9 +623,9 @@ namespace Framework {
       \return Non-owning pointer to the now-registered GOC.
       \details
         - Increments the running ID counter when no fixedId is used.
-        - Moves the unique_ptr into GameObjectIdMap, which now owns the object.
+        - Moves the GameObjectHandle into GameObjectIdMap, which now owns the object.
     *************************************************************************************/
-    GOC* GameObjectFactory::IdGameObject(std::unique_ptr<GOC> gameObject,
+    GOC* GameObjectFactory::IdGameObject(GameObjectHandle gameObject,
         std::optional<GOCId> fixedId) {
         if (!gameObject)
             return nullptr;
@@ -710,7 +710,7 @@ namespace Framework {
       \param dt Delta time (unused here).
       \details
         - Iterates the deletion set, finds each ID in the map, and erases it.
-        - Erasing the map entry releases and destroys the owned GOC (unique_ptr resets).
+        - Erasing the map entry releases and destroys the owned GOC (handle resets).
         - Clears the deletion set after processing.
         - Prevents iterator invalidation / crashes during update loops.
     *************************************************************************************/
@@ -1100,7 +1100,7 @@ namespace Framework {
             return nullptr;
 
         // 1. Build a brand–new GOC from the snapshot
-        auto goc = std::make_unique<GOC>();
+        auto goc = GameObjectPool::Create();
 
         // Name
         if (auto it = data.find("name"); it != data.end() && it->is_string())
@@ -1132,7 +1132,7 @@ namespace Framework {
                 if (!creator)
                     continue;
 
-                std::unique_ptr<GameComponent> comp(creator->Create());
+                auto comp = creator->Create();
                 if (!comp)
                     continue;
 

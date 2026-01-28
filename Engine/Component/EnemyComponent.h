@@ -20,6 +20,7 @@
 *********************************************************************************************/
 #pragma once
 #include "Composition/Component.h"
+#include "Memory/ComponentPool.h"
 #include "Serialization/Serialization.h"
 
 namespace Framework
@@ -48,7 +49,7 @@ namespace Framework
         void SendMessage(Message& m) override { (void)m; }
 
         /*************************************************************************************
-          \brief Serializes this component�s data.
+          \brief Serializes this component data.
           \param s  Reference to the serializer.
           \note  No data to serialize at present.
         *************************************************************************************/
@@ -58,9 +59,9 @@ namespace Framework
           \brief Creates a deep copy of this component.
           \return A unique_ptr holding the cloned EnemyComponent instance.
         *************************************************************************************/
-        std::unique_ptr<GameComponent> Clone() const override
+        ComponentHandle Clone() const override
         {
-            return std::make_unique<EnemyComponent>();
+            return ComponentPool<EnemyComponent>::Create();
         }
     };
 }

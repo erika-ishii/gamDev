@@ -9,7 +9,7 @@
             and integration with the factory system.
 
  \copyright
-            All content © 2025 DigiPen Institute of Technology Singapore.
+            All content (c) 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 #pragma once
@@ -19,6 +19,7 @@
 #include "Component.h"
 #include "Common/MessageCom.h"
 #include <string>
+#include "Memory/ComponentPool.h"
 
 
 
@@ -27,10 +28,10 @@ namespace Framework {
 
     /*****************************************************************************************
       \class GameObjectComposition
-      \brief Represents an entity in the ECS system.
+      rief Represents an entity in the ECS system.
 
       A GameObjectComposition (GOC) is a collection of components that together define
-      an object’s behavior and data. Provides functions for:
+      an objects behavior and data. Provides functions for:
         - Naming and identification
         - Adding and retrieving components
         - Broadcasting messages to components
@@ -53,7 +54,8 @@ namespace Framework {
 
         /*************************************************************************************
           \brief Retrieves the name of this game object.
-          \return A const reference to the object name string.
+          
+/       \return A const reference to the object name string.
         *************************************************************************************/
         const std::string& GetObjectName() const { return ObjectName; }
 
@@ -65,7 +67,8 @@ namespace Framework {
 
         /*************************************************************************************
           \brief Retrieves the logical layer name that this object belongs to.
-          \return Layer name string (defaults to "Default").
+          
+        \return Layer name string (defaults to "Default").
         *************************************************************************************/
         const std::string& GetLayerName() const { return LayerName; }
 
@@ -81,7 +84,8 @@ namespace Framework {
         /*************************************************************************************
           \brief Retrieves the first component with the given type ID.
           \param typeId  The ComponentTypeId to search for.
-          \return Pointer to the component if found, nullptr otherwise.
+          
+        \return Pointer to the component if found, nullptr otherwise.
         *************************************************************************************/
         GameComponent* GetComponent(ComponentTypeId typeId);
 
@@ -89,13 +93,15 @@ namespace Framework {
         /*************************************************************************************
           \brief Const-qualified overload of GetComponent.
           \param typeId  The ComponentTypeId to search for.
-          \return Const pointer to the component if found, nullptr otherwise.
+          
+eturn Const pointer to the component if found, nullptr otherwise.
         *************************************************************************************/
         GameComponent const* GetComponent(ComponentTypeId typeId) const;
 
         //Clone GameObject
         /*************************************************************************************
           \brief Creates a deep clone of this game object and all its components.
+          
           \return Pointer to the newly cloned GameObjectComposition.
         *************************************************************************************/
         GameObjectComposition* Clone() const;
@@ -103,8 +109,9 @@ namespace Framework {
         //Find the first component with the give type ID and return it
         /*************************************************************************************
           \brief Retrieves a component casted to a specific type.
-          \tparam T       The expected component type.
+          	param T       The expected component type.
           \param typeId   The ComponentTypeId to search for.
+          
           \return Pointer to the component as type T, nullptr if not found.
         *************************************************************************************/
         template <typename T>
@@ -120,9 +127,10 @@ namespace Framework {
         ///Type safe way of accessing components.
         /*************************************************************************************
           \brief Type-safe way of retrieving components using templated access.
-          \tparam T       The expected component type.
+          	param T       The expected component type.
           \param typeId   The ComponentTypeId to search for.
-          \return Pointer to the component as type T, nullptr if not found.
+          
+            \return Pointer to the component as type T, nullptr if not found.
         *************************************************************************************/
         template<typename T>
         T* GetComponentType(ComponentTypeId typeId);
@@ -148,7 +156,7 @@ namespace Framework {
           \param typeId  ComponentTypeId of the component.
           \param comp    Unique pointer to the component (ownership transferred).
         *************************************************************************************/
-        void AddComponent(ComponentTypeId typeId, std::unique_ptr<GameComponent> comp);
+        void AddComponent(ComponentTypeId typeId, ComponentHandle comp);
 
         //construct add component of type T
         //A function parameter pack is a function parameter that accepts zero or more function arguments ...
@@ -160,24 +168,26 @@ namespace Framework {
         //         later   t->SetPosition(15.0f,25.0f);
         /*************************************************************************************
           \brief Constructs and adds a new component of type T.
-          \tparam T    The component type to construct.
-          \tparam Args Constructor argument pack for T.
+          	param T    The component type to construct.
+          	param Args Constructor argument pack for T.
           \param typeId  The ComponentTypeId to assign.
-          \return Raw pointer to the newly constructed component (non-owning).
+          
+         \return Raw pointer to the newly constructed component (non-owning).
         *************************************************************************************/
         template <typename T, typename... Args>
         T* EmplaceComponent(ComponentTypeId typeId, Args&&... args) {
-            auto up = std::make_unique<T>(std::forward<Args>(args)...);
-            T* raw = up.get();
+            auto handle = ComponentPool<T>::Create(std::forward<Args>(args)...);
+            T* raw = static_cast<T*>(handle.get());
             raw->set_owner(this);
             raw->set_type(typeId);
-            Components.emplace_back(std::move(up));
+            Components.emplace_back(std::move(handle));
             return raw;
         }
 
         /*************************************************************************************
           \brief Retrieves the unique ID of this GOC.
-          \return Unsigned int representing the object ID.
+          
+        \return Unsigned int representing the object ID.
         *************************************************************************************/
         GOCId GetId() const { return ObjectId; }
 
@@ -191,13 +201,13 @@ namespace Framework {
         // use unique pointer as The composition exclusively owns its components when the GameObjectComposition
         //is destroy every unique_ptr is delete its component
         //unique pointer are move-only so a component instance cant be owned by 2 game object
-        using UptrComp = std::unique_ptr<GameComponent>;
-        std::vector<UptrComp> Components; //owned 
+        using UptrComp = ComponentHandle;
+        std::vector<UptrComp> Components; //owned
         GOCId ObjectId = 0;
         std::string ObjectName;
         std::string LayerName{ "Gameplay:0" };
 
-  
+
     };
 
     using GOC = GameObjectComposition;

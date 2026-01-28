@@ -3,13 +3,13 @@
  \par       SofaSpuds
  \author    jianwei.c (jianwei.c@digipen.edu)- Primary Author, 100%
 
- \brief     Declares the PlayerHealthComponent class, which stores and manages the player’s
+ \brief     Declares the PlayerHealthComponent class, which stores and manages the player
             current and maximum health values. This component provides basic functionality
             to apply damage, heal the player, and serialize health-related data.
 
  \details
             The PlayerHealthComponent serves as a fundamental gameplay data holder, tracking
-            the player’s vitality throughout the game. It can be queried or modified by
+            the playerâs vitality throughout the game. It can be queried or modified by
             systems such as:
             - Combat (to apply or calculate damage)
             - Healing (to restore lost health)
@@ -27,6 +27,7 @@
 *********************************************************************************************/
 #pragma once
 #include "Composition/Component.h"
+#include "Memory/ComponentPool.h"
 #include "Serialization/Serialization.h"
 #include "Component/AudioComponent.h"
 #include <iostream>
@@ -87,9 +88,9 @@ namespace Framework
           \return A unique_ptr holding the cloned PlayerHealthComponent instance.
           \details Copies both current and maximum health values to the new component.
         *************************************************************************************/
-        std::unique_ptr<GameComponent> Clone() const override
+        ComponentHandle Clone() const override
         {
-            auto copy = std::make_unique<PlayerHealthComponent>();
+            auto copy = ComponentPool<PlayerHealthComponent>::CreateTyped();
             copy->playerHealth = playerHealth;
             copy->playerMaxhealth = playerMaxhealth;
             copy->isInvulnerable = isInvulnerable;

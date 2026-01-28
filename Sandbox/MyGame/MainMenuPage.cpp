@@ -452,6 +452,26 @@ void MainMenuPage::Update(Framework::InputSystem* input)
     else {
         iconTimerInitialized = false;
     }
+    if (showExitTransition) {
+        if (!exitTransitionTimerInitialized) {
+            lastExitTransitionTick = now;
+            exitTransitionTimerInitialized = true;
+        }
+        else {
+            const std::chrono::duration<float> delta = now - lastExitTransitionTick;
+            exitTransitionTimer = std::max(0.0f, exitTransitionTimer - delta.count());
+            lastExitTransitionTick = now;
+            if (exitTransitionTimer <= 0.0f) {
+                showExitTransition = false;
+                showExitPopup = true;
+                exitTransitionTimerInitialized = false;
+                BuildGui();
+            }
+        }
+    }
+    else {
+        exitTransitionTimerInitialized = false;
+    }
     gui.Update(input);
 }
 
@@ -483,7 +503,14 @@ void MainMenuPage::Draw(Framework::RenderSystem* render)
         };
 
     // Popup Overlay
-    if (showExitPopup && render)
+    if (showExitTransition && render)
+    {
+        const float progress = std::clamp(1.0f - (exitTransitionTimer / kExitTransitionDuration), 0.0f, 1.0f);
+        const float overlayAlpha = 0.15f + (0.5f * progress);
+        gfx::Graphics::renderRectangleUI(0.f, 0.f, static_cast<float>(sw), static_cast<float>(sh),
+            0.f, 0.f, 0.f, overlayAlpha, sw, sh);
+    }
+    else if (showExitPopup && render)
     {
         const float overlayAlpha = 0.65f;
         gfx::Graphics::renderRectangleUI(0.f, 0.f, (float)sw, (float)sh, 0.f, 0.f, 0.f, overlayAlpha, sw, sh);
@@ -906,6 +933,10 @@ void MainMenuPage::BuildGui(float x, float bottomY, float w, float h, float spac
 
         return;
     }
+    if (showExitTransition)
+    {
+        return;
+    }
 
     if (showOptionsPopup) {
         if (closePopupTex) {
@@ -954,7 +985,9 @@ void MainMenuPage::BuildGui(float x, float bottomY, float w, float h, float spac
             BuildGui();
             };
         else if (btnDef.action == "exit")    callback = [this]() {
-            showExitPopup = true;
+            showExitTransition = true;
+            exitTransitionTimer = kExitTransitionDuration;
+            showExitPopup = false;
             showHowToPopup = false;
             showOptionsPopup = false;
             BuildGui();

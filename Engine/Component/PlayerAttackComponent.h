@@ -3,7 +3,7 @@
  \par       SofaSpuds
  \author    jianwei.c (jianwei.c@digipen.edu)- Primary Author, 100%
 
- \brief     Declares the PlayerAttackComponent class, which defines the player�s attack
+ \brief     Declares the PlayerAttackComponent class, which defines the playerï¿½s attack
             properties such as base damage and attack speed. This component serves as
             a data container used by gameplay systems to determine player attack strength
             and rate of fire.
@@ -26,6 +26,7 @@
 *********************************************************************************************/
 #pragma once
 #include "Composition/Component.h"
+#include "Memory/ComponentPool.h"
 #include "Serialization/Serialization.h"
 #include "Component/HitBoxComponent.h"
 #include "Component/TransformComponent.h"
@@ -39,20 +40,20 @@ namespace Framework
       \brief Component that defines player attack parameters such as damage and speed.
 
       This component acts as a lightweight data holder for combat attributes, allowing
-      systems to reference and modify the player�s offensive stats during gameplay.
+      systems to reference and modify the player offensive stats during gameplay.
     *****************************************************************************************/
     class PlayerAttackComponent : public GameComponent
     {
     public:
         int damage{ 1 };             ///< Base attack damage of the player.
         float attack_speed{ 1.2f };   ///< Time interval or multiplier controlling attack rate.
-        std::unique_ptr<HitBoxComponent> hitbox;
+        ComponentHandleT<HitBoxComponent> hitbox;
 
         /*************************************************************************************
           \brief Default constructor initializes attack values to their defaults.
         *************************************************************************************/
         PlayerAttackComponent() {
-            if (!hitbox) hitbox = std::make_unique<HitBoxComponent>();
+            if (!hitbox) hitbox = ComponentPool<HitBoxComponent>::CreateTyped();
         }
 
         /*************************************************************************************
@@ -67,8 +68,8 @@ namespace Framework
           \details Prints a message confirming that this GameObject has a PlayerAttackComponent.
         *************************************************************************************/
         void initialize() override {
-            if (!hitbox) hitbox = std::make_unique<HitBoxComponent>();
-            // reasonable defaults if JSON doesn’t specify
+            if (!hitbox) hitbox = ComponentPool<HitBoxComponent>::CreateTyped();
+            // reasonable defaults if JSON doesnât specify
             hitbox->width = hitbox->width == 0.f ? 0.5f : hitbox->width;
             hitbox->height = hitbox->height == 0.f ? 0.5f : hitbox->height;
             hitbox->active = false;
@@ -99,9 +100,9 @@ namespace Framework
           \details
               Copies both damage and attack_speed values into the new instance.
         *************************************************************************************/
-        std::unique_ptr<GameComponent> Clone() const override
+        ComponentHandle Clone() const override
         {
-            auto copy = std::make_unique<PlayerAttackComponent>();
+            auto copy = ComponentPool<PlayerAttackComponent>::CreateTyped();
             copy->damage = damage;
             copy->attack_speed = attack_speed;
             return copy;
@@ -114,7 +115,7 @@ namespace Framework
         void PerformAttack(TransformComponent* playerTr)
         {
             if (!playerTr) return;
-            if (!hitbox) hitbox = std::make_unique<HitBoxComponent>();
+            if (!hitbox) hitbox = ComponentPool<HitBoxComponent>::CreateTyped();
 
             hitbox->spawnX = playerTr->x;
             hitbox->spawnY = playerTr->y;

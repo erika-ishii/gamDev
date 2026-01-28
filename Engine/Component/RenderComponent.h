@@ -22,6 +22,7 @@
 #include <string_view>
 
 #include "Composition/Component.h"
+#include "Memory/ComponentPool.h"
 #include "Serialization/Serialization.h"
 #include "Resource_Asset_Manager/Resource_Manager.h"
 #include "Core/PathUtils.h"
@@ -201,8 +202,8 @@ namespace Framework {
         /*************************************************************************************
           \brief Creates a clone of this RenderComponent.
         *************************************************************************************/
-        std::unique_ptr<GameComponent> Clone() const override {
-            auto copy = std::make_unique<RenderComponent>();
+        ComponentHandle Clone() const override {
+            auto copy = ComponentPool<RenderComponent>::CreateTyped();
             copy->w = w;
             copy->h = h;
             copy->r = r;
