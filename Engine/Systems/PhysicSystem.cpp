@@ -66,6 +66,9 @@ namespace Framework {
 
         auto& objects = FACTORY->Objects();
 
+        // Build the uniform grid
+        m_grid.Clear();
+
         // --- Kinematic step with AABB collisions against walls on the same layer ----------
         auto& layers = FACTORY->Layers();
         for (auto& [id, obj] : objects)
@@ -87,6 +90,9 @@ namespace Framework {
             auto* tr = obj->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
             if (!rb || !tr)
                 continue;
+
+            AABB box(tr->x, tr->y, rb->width, rb->height);
+            m_grid.Insert(id, box);
             // ------------------------------
             // START OF KNOCKBACK APPLICATION 
             // ------------------------------
@@ -115,8 +121,24 @@ namespace Framework {
 
 
             // Sweep all objects on the same layer, checking only “rect?walls
-            for (auto& [otherId, otherObj] : objects)
-            {
+            
+            // Replaced with a model.
+            // Explanation: The old code USED TO check every other object in the world,
+            // now, the logic will only check the objects that are near.
+            std::vector<GOCId> candidates;
+
+            // Query grid using the object's current bounds
+            AABB selfBox(tr->x, tr->y, rb->width, rb->height);
+            m_grid.Query(selfBox, candidates);
+
+            for (GOCId otherId : candidates) 
+            { 
+                auto it = objects.find(otherId);
+                if (it == objects.end())
+                    continue;
+
+                auto& otherObj = it->second;
+
                 if (!otherObj || otherObj == obj)
                     continue;
                 const LayerKey otherLayer = layers.LayerKeyFor(otherObj->GetId());

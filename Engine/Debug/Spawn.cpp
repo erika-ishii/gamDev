@@ -343,6 +343,10 @@ namespace mygame {
                 rc->visible = s.visible;
             }
 
+            if (s.overridePrefabBlendMode) {
+                rc->blendMode = s.blendMode;
+            }
+
             // Rectangle-only texture override when prefab has no SpriteComponent
             if (!sRectangleTexKey.empty() && !spriteComp) {
                 rc->texture_key = sRectangleTexKey;
@@ -723,6 +727,8 @@ namespace mygame {
                 gS.w = rc->w; gS.h = rc->h;
                 gS.visible = rc->visible;
                 gS.overridePrefabVisible = false;
+                gS.blendMode = rc->blendMode;
+                gS.overridePrefabBlendMode = false;
             }
             if (auto* atm = master->GetComponentType<PlayerAttackComponent>(ComponentTypeId::CT_PlayerAttackComponent)) {
                 gS.attackDamagep = atm->damage;
@@ -815,6 +821,20 @@ namespace mygame {
             if (!gS.overridePrefabVisible) ImGui::BeginDisabled();
             ImGui::Checkbox("Visible", &gS.visible);
             if (!gS.overridePrefabVisible) ImGui::EndDisabled();
+
+            ImGui::SeparatorText("Blend Mode");
+            if (ImGui::Checkbox("Override prefab blend mode", &gS.overridePrefabBlendMode)) {
+                if (!gS.overridePrefabBlendMode && masterRender) {
+                    gS.blendMode = masterRender->blendMode;
+                }
+            }
+            if (!gS.overridePrefabBlendMode) ImGui::BeginDisabled();
+            int blendModeIndex = static_cast<int>(gS.blendMode);
+            if (ImGui::Combo("Blend Mode", &blendModeIndex, Framework::kBlendModeLabels.data(),
+                static_cast<int>(Framework::kBlendModeLabels.size()))) {
+                gS.blendMode = static_cast<Framework::BlendMode>(blendModeIndex);
+            }
+            if (!gS.overridePrefabBlendMode) ImGui::EndDisabled();
 
             if (!hasSprite) {
                 ImGui::SeparatorText("Texture");

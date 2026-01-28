@@ -334,6 +334,7 @@ namespace Framework {
                {"g", rc.g},
                {"b", rc.b},
                {"a", rc.a},
+               {"blend_mode", BlendModeToString(rc.blendMode)},
                {"visible", rc.visible},
                {"layer", rc.layer}
             };

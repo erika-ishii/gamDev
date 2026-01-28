@@ -64,6 +64,10 @@ namespace gfx {
     unsigned int Graphics::spriteInstanceVBO = 0;
     unsigned int Graphics::spriteInstanceShader = 0;
     unsigned int Graphics::glowShader = 0;
+    static GLint sLoc_Sprite_uUseSolidColor = -1;
+    static GLint sLoc_Sprite_uSolidColor = -1;
+    static GLint sLoc_Inst_uUseSolidColor = -1;
+    static GLint sLoc_Inst_uSolidColor = -1;
 
     /// \brief Circle tessellation segments (triangle fan).
     static int segments = 50;
@@ -557,6 +561,7 @@ namespace gfx {
         glUniform2f(glGetUniformLocation(spriteShader, "uUVOffset"), 0.0f, 0.0f);
         glUniform2f(glGetUniformLocation(spriteShader, "uUVScale"), 1.0f, 1.0f);
 
+
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, tex);
         glUniform1i(glGetUniformLocation(spriteShader, "uTex"), 0);
@@ -739,8 +744,26 @@ namespace gfx {
             "out vec4 FragColor;\n"
             "uniform sampler2D uTex;\n"
             "uniform vec4 uTint;\n"
-            "void main(){ FragColor = texture(uTex, vUV) * uTint; }\n";
+            "uniform int  uUseSolidColor;\n"
+            "uniform vec4 uSolidColor;\n"
+            "void main(){\n"
+            "  vec4 t = texture(uTex, vUV);\n"
+            "  if (t.a <= 0.001) discard;\n"
+            "  vec4 c;\n"
+            "  if (uUseSolidColor != 0) {\n"
+            "    float a = uSolidColor.a * t.a;\n"
+            "    c = vec4(uSolidColor.rgb, a);\n"
+            "  } else {\n"
+            "    c = t * uTint;\n"
+            "  }\n"
+            "  if (c.a <= 0.001) discard;\n"
+            "  c.rgb *= c.a;\n"
+            "  FragColor = c;\n"
+            "}\n";
+
         spriteShader = createShaderProgram(vs, fs);
+        sLoc_Sprite_uUseSolidColor = glGetUniformLocation(spriteShader, "uUseSolidColor");
+        sLoc_Sprite_uSolidColor = glGetUniformLocation(spriteShader, "uSolidColor");
 
         // Per-instance buffer (mat4 + tint + uv)
         if (!spriteInstanceVBO)
@@ -791,9 +814,26 @@ namespace gfx {
             "in vec4 vTint;\n"
             "out vec4 FragColor;\n"
             "uniform sampler2D uTex;\n"
-            "void main(){ FragColor = texture(uTex, vUV) * vTint; }\n";
-        spriteInstanceShader = createShaderProgram(instVs, instFs);
+            "uniform int  uUseSolidColor;\n"
+            "uniform vec4 uSolidColor;\n"
+            "void main(){\n"
+            "  vec4 t = texture(uTex, vUV);\n"
+            "  if (t.a <= 0.001) discard;\n"
+            "  vec4 c;\n"
+            "  if (uUseSolidColor != 0) {\n"
+            "    float a = uSolidColor.a * t.a;\n"
+            "    c = vec4(uSolidColor.rgb, a);\n"
+            "  } else {\n"
+            "    c = t * vTint;\n"
+            "  }\n"
+            "  if (c.a <= 0.001) discard;\n"
+            "  c.rgb *= c.a;\n"
+            "  FragColor = c;\n"
+            "}\n";
 
+        spriteInstanceShader = createShaderProgram(instVs, instFs);
+        sLoc_Inst_uUseSolidColor = glGetUniformLocation(spriteInstanceShader, "uUseSolidColor");
+        sLoc_Inst_uSolidColor = glGetUniformLocation(spriteInstanceShader, "uSolidColor");
         glBindVertexArray(0);
         GL_THROW_IF_ERROR("initSpritePipeline");
     }
@@ -945,5 +985,32 @@ namespace gfx {
             }
         }
     }
+
+    void Graphics::EnableSolidColor(bool enable, float r, float g, float b, float a)
+    {
+        GLint prev = 0;
+        glGetIntegerv(GL_CURRENT_PROGRAM, &prev);
+
+        if (spriteShader)
+        {
+            glUseProgram(spriteShader);
+            if (sLoc_Sprite_uUseSolidColor >= 0)
+                glUniform1i(sLoc_Sprite_uUseSolidColor, enable ? 1 : 0);
+            if (sLoc_Sprite_uSolidColor >= 0)
+                glUniform4f(sLoc_Sprite_uSolidColor, r, g, b, a);
+        }
+
+        if (spriteInstanceShader)
+        {
+            glUseProgram(spriteInstanceShader);
+            if (sLoc_Inst_uUseSolidColor >= 0)
+                glUniform1i(sLoc_Inst_uUseSolidColor, enable ? 1 : 0);
+            if (sLoc_Inst_uSolidColor >= 0)
+                glUniform4f(sLoc_Inst_uSolidColor, r, g, b, a);
+        }
+
+        glUseProgram(prev); // IMPORTANT: restore whatever was bound
+    }
+
 
 } // namespace gfx

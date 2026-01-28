@@ -4,11 +4,11 @@
  \author    erika.ishii (erika.ishii@digipen.edu) - Main Author, 100%
  \brief     FreeType-backed OpenGL text rendering: shader setup, glyph caching, and draw calls.
  \details   Builds a small shader pair (vertex/fragment) with a pixel-space orthographic
-            projection, loads ASCII glyphs (0–127) via FreeType into single-channel (GL_RED)
+            projection, loads ASCII glyphs (0?27) via FreeType into single-channel (GL_RED)
             textures with metrics (size, bearing, advance), and renders strings as textured
             quads updated through a dynamic VBO. Provides viewport updates and resource cleanup.
  \copyright
-            All content ©2025 DigiPen Institute of Technology Singapore.
+            All content ?025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 
@@ -194,7 +194,7 @@ namespace gfx {
 
     /*************************************************************************************
       \brief  Render a string at a pixel position using cached ASCII glyphs.
-      \param  text   ASCII string (0–127 cached).
+      \param  text   ASCII string (0?27 cached).
       \param  x,y    Baseline origin in pixels.
       \param  scale  Uniform scale factor for glyph quads.
       \param  color  RGB tint; alpha comes from glyph texture (red channel).
@@ -202,6 +202,8 @@ namespace gfx {
     *************************************************************************************/
     void TextRenderer::RenderText(std::string text, float x, float y, float scale, glm::vec3 color) {
         if (!shaderID || Characters.empty()) return; // nothing to render
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glUseProgram(shaderID);
         glUniform3f(glGetUniformLocation(shaderID, "textColor"), color.x, color.y, color.z);
         glActiveTexture(GL_TEXTURE0);

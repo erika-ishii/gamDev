@@ -19,6 +19,7 @@
 #include "Composition/Component.h"
 #include "Serialization/Serialization.h"
 #include "Composition/Composition.h"
+#include "Systems/UniformGrid.h"
 
 namespace Framework {
 
@@ -59,6 +60,7 @@ namespace Framework {
 
     private:
         LogicSystem& logic;  //!< Access to scene objects/components.
+        UniformGrid m_grid; 
     };
 
 } // namespace Framework

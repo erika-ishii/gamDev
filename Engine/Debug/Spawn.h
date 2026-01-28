@@ -13,13 +13,15 @@
 
 
  \copyright
-            All content © 2025 DigiPen Institute of Technology Singapore.
+#include "Component/RenderComponent.h"
+            All content Â© 2025 DigiPen Institute of Technology Singapore.
             All rights reserved.
 *********************************************************************************************/
 #pragma once
 
 #include <filesystem>
 #include <string>
+#include "Component/RenderComponent.h" 
 
 // Minimal, prefab-agnostic spawn UI for ImGui.
 // Usage:
@@ -96,6 +98,8 @@ namespace mygame {
         bool overridePlayerHealth{ false };
         bool  overridePrefabVisible = false;  // if true, use SpawnSettings::visible
         bool  visible = true;   // desired visibility state
+        bool  overridePrefabBlendMode = false;
+        Framework::BlendMode blendMode = Framework::BlendMode::Alpha;
     };
 
     /*****************************************************************************************
@@ -103,7 +107,7 @@ namespace mygame {
 
       This function displays controls for configuring SpawnSettings and spawns objects
       when the user interacts with the UI. Should be called once per frame within
-      ImGui’s frame lifecycle.
+      ImGuiâ€™s frame lifecycle.
 
       Example usage:
       \code

@@ -381,6 +381,13 @@ namespace
         // Visibility flag
         ImGui::Checkbox("Visible", &render.visible);
 
+        int blendModeIndex = static_cast<int>(render.blendMode);
+        if (ImGui::Combo("Blend Mode", &blendModeIndex, Framework::kBlendModeLabels.data(),
+            static_cast<int>(Framework::kBlendModeLabels.size())))
+        {
+            render.blendMode = static_cast<Framework::BlendMode>(blendModeIndex);
+        }
+
         if (captured)
             mygame::editor::RecordTransformChange(owner, before);
     }

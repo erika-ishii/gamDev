@@ -159,6 +159,8 @@ namespace gfx {
          */
         static void testCrash(int which);
 
+        static void EnableSolidColor(bool enable, float r, float g, float b, float a);
+
     private:
         /// Build sprite quad VAO/EBO/VBO and sprite shader (supports sub-UV).
         static void initSpritePipeline();

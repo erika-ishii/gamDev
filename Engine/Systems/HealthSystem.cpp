@@ -25,6 +25,7 @@
 #include "Factory/Factory.h"
 #include "Component/SpriteAnimationComponent.h"
 #include "RenderSystem.h"
+#include "Systems/ParticleSystem.h"
 #include <algorithm>
 #include <cctype>
 #include <iostream>
@@ -262,6 +263,15 @@ namespace Framework
                             if (timer <= 0.0f)
                             {
                                 PlayAnimationIfAvailable(goc, deathAnimName);
+
+                                if (auto* tr = goc->GetComponentType<TransformComponent>(
+                                    ComponentTypeId::CT_TransformComponent))
+                                {
+                                    if (auto* particleSystem = ParticleSystem::Instance())
+                                    {
+                                        particleSystem->SpawnEnemyDeathParticles({ tr->x, tr->y });
+                                    }
+                                }
                                 if (audio)
                                 {
                                     if (audio->entityType == "enemy_fire")

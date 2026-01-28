@@ -16,6 +16,7 @@
 #include "Systems/EnemySystem.h"
 #include "Systems/AiSystem.h"
 #include "Systems/HealthSystem.h"
+#include "Systems/ParticleSystem.h"
 #include "Audio/SoundManager.h"
 #include "Debug/CrashLogger.hpp"
 #include "Graphics/Graphics.hpp"
@@ -68,6 +69,7 @@ namespace mygame {
         Framework::EnemySystem* gEnemySystem = nullptr;
         Framework::AiSystem* gAiSystem = nullptr;
         Framework::HealthSystem* gHealthSystem = nullptr;
+        Framework::ParticleSystem* gParticleSystem = nullptr;
 
         enum class GameState { MAIN_MENU, TRANSITIONING, PLAYING, PAUSED, DEFEAT, EXIT };
         GameState currentState = GameState::MAIN_MENU;
@@ -95,7 +97,7 @@ namespace mygame {
         gAudioSystem = gSystems.RegisterSystem<Framework::AudioSystem>(win);
         gRenderSystem = gSystems.RegisterSystem<Framework::RenderSystem>(win, *gLogicSystem);
         gHealthSystem = gSystems.RegisterSystem<Framework::HealthSystem>(win);
-
+        gParticleSystem = gSystems.RegisterSystem<Framework::ParticleSystem>();
 
         //(void)gPhysicsSystem;
         //(void)gAudioSystem;

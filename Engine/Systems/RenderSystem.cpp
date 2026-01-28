@@ -108,6 +108,44 @@ namespace Framework {
             return out;
         }
 
+        inline bool BlendMinMaxSupported()
+        {
+            return GLAD_GL_VERSION_1_4 != 0;
+        }
+
+        inline BlendMode ResolveBlendMode(BlendMode mode)
+        {
+            static bool warnedLighten = false;
+            static bool warnedDarken = false;
+
+            if (mode == BlendMode::SolidColor)
+                return BlendMode::Alpha;
+
+            if (mode == BlendMode::Lighten && !BlendMinMaxSupported())
+            {
+                if (!warnedLighten)
+                {
+                    std::cerr << "[RenderSystem] GL_MAX blend equation unsupported; falling back to Alpha.";
+
+                    warnedLighten = true;
+                }
+                return BlendMode::Alpha;
+            }
+
+            if (mode == BlendMode::Darken && !BlendMinMaxSupported())
+            {
+                if (!warnedDarken)
+                {
+                    std::cerr << "[RenderSystem] GL_MIN blend equation unsupported; falling back to Alpha.";
+
+                    warnedDarken = true;
+                }
+                return BlendMode::Alpha;
+            }
+
+            return mode;
+        }
+
         // Camera follow drag-lock state lives only in this translation unit.
         // We lock camera follow while dragging the Player so screen->world mapping stays stable.
         bool        gCameraFollowLocked = false;
@@ -1875,7 +1913,9 @@ namespace Framework {
             glClearColor(0.f, 0.f, 0.f, 1.f);          // IMPORTANT: alpha = 1
             glClear(GL_COLOR_BUFFER_BIT);
             glDisable(GL_SCISSOR_TEST);
-
+            glEnable(GL_BLEND);
+            glBlendEquation(GL_FUNC_ADD);
+            glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
             if (!FACTORY)
             {
                 std::cerr << "[RenderSystem] FACTORY is null; skipping draw to avoid crash.\n";
@@ -2036,6 +2076,70 @@ namespace Framework {
 
             if (FACTORY)
             {
+                BlendMode currentBlendMode = BlendMode::Alpha;
+                auto applyBlendMode = [&](BlendMode mode)
+                    {
+                        BlendMode resolved = ResolveBlendMode(mode);
+                        if (resolved == currentBlendMode)
+                            return;
+
+                        switch (resolved)
+                        {
+                        case BlendMode::None:
+                            glDisable(GL_BLEND);
+                            break;
+                        case BlendMode::Alpha:
+                            glEnable(GL_BLEND);
+                            glBlendEquation(GL_FUNC_ADD);
+                            glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                            break;
+                        case BlendMode::Add:
+                            glEnable(GL_BLEND);
+                            glBlendEquation(GL_FUNC_ADD);
+                            glBlendFunc(GL_ONE, GL_ONE);
+                            break;
+                        case BlendMode::Multiply:
+                            glEnable(GL_BLEND);
+                            glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+                            glBlendFuncSeparate(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA,
+                                GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                            break;
+                        case BlendMode::PremultipliedAlpha:
+                            glEnable(GL_BLEND);
+                            glBlendEquation(GL_FUNC_ADD);
+                            glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                            break;
+                        case BlendMode::Screen:
+                            glEnable(GL_BLEND);
+                            glBlendEquation(GL_FUNC_ADD);
+                            glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ONE); //
+                            break;
+                        case BlendMode::Subtract:
+                            glEnable(GL_BLEND);
+                            glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
+                            glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+                            break;
+                        case BlendMode::Lighten:
+                            glEnable(GL_BLEND);
+                            glBlendEquation(GL_MAX);
+                            glBlendFunc(GL_ONE, GL_ONE);
+                            break;
+                        case BlendMode::Darken:
+                            glEnable(GL_BLEND);
+                            glBlendEquation(GL_MIN);
+                            glBlendFunc(GL_ONE, GL_ONE);
+                            break;
+                        case BlendMode::SolidColor:
+                            glEnable(GL_BLEND);
+                            glBlendEquation(GL_FUNC_ADD);
+                            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                            break;
+                        }
+                        currentBlendMode = resolved;
+                    };
+
+                applyBlendMode(BlendMode::Alpha);
+
                 struct SpriteBatch
                 {
                     unsigned texture = 0;
@@ -2062,6 +2166,8 @@ namespace Framework {
                         const auto& activeHits = logic.hitBoxSystem->GetActiveHitBoxes();
                         if (activeHits.empty())
                             return;
+
+                        applyBlendMode(BlendMode::Alpha);
 
                         for (const auto& activeHit : activeHits)
                         {
@@ -2161,6 +2267,7 @@ namespace Framework {
                             if (outer > 0.0f)
                             {
                                 flushSpriteBatch();
+                                applyBlendMode(BlendMode::Alpha);
 
                                 const float cosR = std::cos(tr->rot);
                                 const float sinR = std::sin(tr->rot);
@@ -2195,6 +2302,7 @@ namespace Framework {
                     {
                         float sx = 1.f, sy = 1.f;
                         float r = 1.f, g = 1.f, b = 1.f, a = 1.f;
+                        BlendMode blendMode = BlendMode::Alpha;
 
                         // If a RenderComponent is present, use its size/tint AND visibility
                         if (auto* rc = obj->GetComponentType<Framework::RenderComponent>(
@@ -2210,7 +2318,10 @@ namespace Framework {
                             g = rc->g;
                             b = rc->b;
                             a = rc->a;
+                            blendMode = rc->blendMode;
                         }
+
+                        const bool useSolidColor = (blendMode == BlendMode::SolidColor);
 
                         unsigned tex = sp->texture_id;
                         glm::vec4 uvRect(0.0f, 0.0f, 1.0f, 1.0f);
@@ -2229,13 +2340,6 @@ namespace Framework {
                             sp->texture_id = tex;
                         }
 
-                        if (!tex)
-                            continue;
-                        if (!spriteBatch.instances.empty() && spriteBatch.texture != tex)
-                            flushSpriteBatch();
-
-                        if (spriteBatch.instances.empty())
-                            spriteBatch.texture = tex;
 
                         gfx::Graphics::SpriteInstance instance;
                         glm::mat4 model(1.0f);
@@ -2245,6 +2349,45 @@ namespace Framework {
                         instance.model = model;
                         instance.tint = glm::vec4(r, g, b, a);
                         instance.uv = uvRect;
+
+                        if (useSolidColor)
+                        {
+                            // stay in sprite pipeline
+                            flushSpriteBatch();
+
+                            // Solid color should usually still alpha-blend like UI/sprites
+                            applyBlendMode(BlendMode::Alpha);
+
+                            // Make sure we have *some* texture bound (shader will ignore it, but your draw call needs a valid tex)
+                            if (!tex)
+                                tex = idleTex ? idleTex : playerTex; // or any known valid texture
+
+                            // Draw ONE instance using instanced path, but tell shader to ignore texture
+                            gfx::Graphics::EnableSolidColor(true, r, g, b, a);  // you add this helper (below)
+                            gfx::Graphics::renderSpriteBatchInstanced(tex, &instance, 1);
+                            gfx::Graphics::EnableSolidColor(false, 1, 1, 1, 1);
+
+                            continue;
+                        }
+
+                        if (!tex)
+                            continue;
+
+
+                        if (blendMode != BlendMode::Alpha)
+                        {
+                            flushSpriteBatch();
+                            applyBlendMode(blendMode);
+                            gfx::Graphics::renderSpriteBatchInstanced(tex, &instance, 1);
+                            continue;
+                        }
+
+                        applyBlendMode(BlendMode::Alpha);
+                        if (!spriteBatch.instances.empty() && spriteBatch.texture != tex)
+                            flushSpriteBatch();
+
+                        if (spriteBatch.instances.empty())
+                            spriteBatch.texture = tex;
 
                         spriteBatch.instances.push_back(instance);
                         continue;
@@ -2261,6 +2404,9 @@ namespace Framework {
                         if (!obj->GetComponentType<Framework::SpriteComponent>(
                             Framework::ComponentTypeId::CT_SpriteComponent))
                         {
+                            const BlendMode blendMode = rc->blendMode;
+                            applyBlendMode(blendMode);
+
                             unsigned rectTex = rc->texture_id;
                             if (!rectTex && !rc->texture_key.empty())
                             {
@@ -2269,7 +2415,13 @@ namespace Framework {
                             }
                             const float scaledW = rc->w * tr->scaleX;
                             const float scaledH = rc->h * tr->scaleY;
-                            if (rectTex)
+                            if (blendMode == BlendMode::SolidColor)
+                            {
+                                gfx::Graphics::renderRectangle(tr->x, tr->y, tr->rot,
+                                    scaledW, scaledH,
+                                    rc->r, rc->g, rc->b, rc->a);
+                            }
+                            else if (rectTex)
                             {
                                 gfx::Graphics::renderSprite(rectTex, tr->x, tr->y, tr->rot,
                                     scaledW, scaledH,
@@ -2290,6 +2442,7 @@ namespace Framework {
                     if (auto* cc = obj->GetComponentType<Framework::CircleRenderComponent>(
                         Framework::ComponentTypeId::CT_CircleRenderComponent))
                     {
+                        applyBlendMode(BlendMode::Alpha);
                         const float scaledRadius = cc->radius * std::max(std::fabs(tr->scaleX), std::fabs(tr->scaleY));
                         gfx::Graphics::renderCircle(tr->x, tr->y, scaledRadius, cc->r, cc->g, cc->b, cc->a);
                     }
@@ -2300,6 +2453,8 @@ namespace Framework {
                 {
                     renderProjectiles();
                 }
+
+                applyBlendMode(BlendMode::Alpha);
 
                 // Pass 4: Hover/Selection highlight outlines (editor)
                 // Drawn in world space, using same VP as the object passes above.
@@ -2454,8 +2609,8 @@ namespace Framework {
 
             textHint.RenderText(
                 enemyText,
-                650.0f,
-                1100.0f,
+                static_cast<float>(screenW) - (static_cast<float>(screenW)/3.f)*2.f,//650.0f,
+                static_cast<float>(screenH) - 64.0f,//1100.0f,
                 0.75f,
                 glm::vec3(1.0f, 0.2f, 0.2f)
             );
