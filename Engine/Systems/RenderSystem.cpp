@@ -600,6 +600,19 @@ namespace Framework {
 #if SOFASPUDS_ENABLE_EDITOR
         if (showEditor)
         {
+            auto destroyEditorObject = [&](Framework::GOCId targetId)
+                {
+                    if (!FACTORY || targetId == 0)
+                        return;
+                    if (auto* selected = FACTORY->GetObjectWithId(targetId))
+                    {
+                        mygame::editor::RecordObjectDeleted(*selected);
+                        FACTORY->Destroy(selected);
+                        if (!mygame::IsEditorSimulationRunning())
+                            FACTORY->Update(0.0f);
+                    }
+                };
+
             if (handleToggle(GLFW_KEY_T, translateKeyHeld) && !io.WantCaptureKeyboard)
                 editor::SetCurrentTransformMode(editor::EditorTransformMode::Translate);
             if (handleToggle(GLFW_KEY_R, rotateKeyHeld) && !io.WantCaptureKeyboard)
@@ -609,17 +622,10 @@ namespace Framework {
 
             if (mygame::HasSelectedObject())
             {
-                if (handleToggle(GLFW_KEY_DELETE, deleteKeyHeld) && !io.WantCaptureKeyboard)
+                if (handleToggle(GLFW_KEY_DELETE, deleteKeyHeld) && !io.WantTextInput)
                 {
                     Framework::GOCId selectedId = mygame::GetSelectedObjectId();
-                    if (FACTORY)
-                    {
-                        if (auto* selected = FACTORY->GetObjectWithId(selectedId))
-                        {
-                            mygame::editor::RecordObjectDeleted(*selected);
-                            FACTORY->Destroy(selected);
-                        }
-                    }
+                    destroyEditorObject(selectedId);
                     mygame::ClearSelection();
                 }
             }
@@ -698,6 +704,34 @@ namespace Framework {
         {
             draggingSelection = false;
             leftMouseDownPrev = mouseDown;
+            return;
+        }
+
+        if (eraserMode)
+        {
+            if (released)
+                lastEraserId = 0;
+
+            if (mouseDown && insideViewport && !wantCapture)
+            {
+                Framework::GOCId pickedId = TryPickObject(worldX, worldY);
+                if (pickedId != 0 && pickedId != lastEraserId)
+                {
+                    if (auto* target = FACTORY->GetObjectWithId(pickedId))
+                    {
+                        mygame::editor::RecordObjectDeleted(*target);
+                        FACTORY->Destroy(target);
+                        if (mygame::GetSelectedObjectId() == pickedId)
+                            mygame::ClearSelection();
+                        if (!mygame::IsEditorSimulationRunning())
+                            FACTORY->Update(0.0f);
+                    }
+                    lastEraserId = pickedId;
+                }
+            }
+
+            leftMouseDownPrev = mouseDown;
+            draggingSelection = false;
             return;
         }
 
@@ -1695,6 +1729,23 @@ namespace Framework {
 
             if (!glowDrawMode)
                 ImGui::EndDisabled();
+
+            ImGui::Separator();
+            ImGui::TextUnformatted("Eraser");
+            bool eraserEnabled = eraserMode;
+            if (ImGui::Checkbox("Enable Eraser", &eraserEnabled))
+            {
+                eraserMode = eraserEnabled;
+                lastEraserId = 0;
+                if (eraserMode)
+                {
+                    glowDrawMode = false;
+                    glowDrawing = false;
+                    glowDrawObject = nullptr;
+                    glowDrawComponent = nullptr;
+                }
+            }
+            ImGui::TextDisabled("Hold left mouse button in the viewport to delete objects.");
         }
         ImGui::End();
     }

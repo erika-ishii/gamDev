@@ -35,6 +35,7 @@
 #include "Core/PathUtils.h"
 #include "Selection.h"
 #include "Debug/UndoStack.h"
+#include "../../Sandbox/MyGame/Game.hpp"
 #include "imgui.h"
 
 // #include "Debug/Perf.h"
@@ -290,7 +291,11 @@ namespace mygame {
              // editor expectations (ID recycling, selection clearing, etc.). Fallback to
              // the object's own destroy in case the factory isn't available (defensive).
             if (Framework::FACTORY)
+            {
                 Framework::FACTORY->Destroy(obj);
+                if (!mygame::IsEditorSimulationRunning())
+                    Framework::FACTORY->Update(0.0f);
+            }
             else
                 obj->Destroy();
         }

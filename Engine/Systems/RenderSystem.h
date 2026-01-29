@@ -264,6 +264,10 @@ namespace Framework {
         float dragOffsetX = 0.0f;
         float dragOffsetY = 0.0f;
 
+        // --- Eraser tool (editor) --------------------------------------------------------
+        bool  eraserMode = false;
+        GOCId lastEraserId = 0;
+
         // --- Glow drawing tool (editor) --------------------------------------------------
         struct GlowBrushSettings
         {

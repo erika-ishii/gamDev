@@ -30,6 +30,7 @@
 #include "Composition/Composition.h"
 #include "Selection.h"
 #include "Debug/UndoStack.h"
+#include "../../Sandbox/MyGame/Game.hpp"
 
 #include <imgui.h>
 #include <array>
@@ -118,6 +119,8 @@ namespace
         {
             mygame::editor::RecordObjectDeleted(*target);
             Framework::FACTORY->Destroy(target);
+            if (!mygame::IsEditorSimulationRunning())
+                Framework::FACTORY->Update(0.0f);
         }
     }
 } // anonymous namespace
