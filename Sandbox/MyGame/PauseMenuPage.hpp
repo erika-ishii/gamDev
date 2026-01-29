@@ -10,6 +10,7 @@
 #include "Systems/InputSystem.h"
 #include "Systems/RenderSystem.h"
 #include <chrono>
+#include <array>
 #include <vector>
 namespace mygame {
 
@@ -51,6 +52,16 @@ namespace mygame {
         unsigned howToHeaderTex = 0;
         unsigned howToCloseTex = 0;
         unsigned optionsHeaderTex = 0;
+        unsigned optionsNoteTex = 0;
+        unsigned optionsCloseTex = 0;
+        unsigned optionsSliderTrackTex = 0;
+        unsigned optionsSliderFillTex = 0;
+        unsigned optionsSliderKnobTex = 0;
+        unsigned optionsResetTex = 0;
+        unsigned optionsMasterLabelTex = 0;
+        unsigned optionsBgmLabelTex = 0;
+        unsigned optionsSfxLabelTex = 0;
+        unsigned optionsBrightnessLabelTex = 0;
         unsigned exitPopupNoteTex = 0;
         unsigned exitPopupTitleTex = 0;
         unsigned exitPopupPromptTex = 0;
@@ -81,7 +92,9 @@ namespace mygame {
         bool showExitPopup = false;
         bool audioMuted = false;
         float masterVolumeDefault = 0.7f;
-
+        std::array<float, 4> optionsSliderValues{ {0.8f, 0.65f, 0.7f, 0.75f} };
+        bool optionsSliderDragging = false;
+        int optionsSliderDragIndex = -1;
         bool resumeLatched = false;
         bool mainMenuLatched = false;
         bool optionsLatched = false;
@@ -105,6 +118,11 @@ namespace mygame {
         Quad optionsHeader{ 0.f, 0.f, 0.f, 0.f };
         Quad optionsCloseBtn{ 0.f, 0.f, 0.f, 0.f };
         Quad muteToggleBtn{ 0.f, 0.f, 0.f, 0.f };
+        Quad optionsResetBtn{ 0.f, 0.f, 0.f, 0.f };
+        std::array<Quad, 4> optionsLabelRects{};
+        std::array<Quad, 4> optionsSliderRects{};
+        std::array<Quad, 4> optionsSliderFillRects{};
+        std::array<Quad, 4> optionsSliderKnobRects{};
         Quad exitPopup{ 0.f, 0.f, 0.f, 0.f };
         Quad exitCloseBtn{ 0.f, 0.f, 0.f, 0.f };
         Quad exitYesBtn{ 0.f, 0.f, 0.f, 0.f };

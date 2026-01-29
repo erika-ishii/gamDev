@@ -351,11 +351,15 @@ namespace mygame {
                     gRenderSystem->BeginMenuFrame();
                     mainMenu.Draw(gRenderSystem);   // bg + GUI buttons
                     gRenderSystem->EndMenuFrame();
+                    gRenderSystem->RenderBrightnessOverlay();
                 }
                 break;
 
             case GameState::PLAYING:
                 gSystems.DrawAll();
+                if (gRenderSystem) {
+                    gRenderSystem->RenderBrightnessOverlay();
+                }
                 break;
 
             case GameState::TRANSITIONING:
@@ -372,6 +376,7 @@ namespace mygame {
                         0.0f, 0.0f, 0.0f, normalized,
                         gRenderSystem->ScreenWidth(), gRenderSystem->ScreenHeight());
                     gRenderSystem->EndMenuFrame();
+                    gRenderSystem->RenderBrightnessOverlay();
                 }
                 break;
 
@@ -381,6 +386,7 @@ namespace mygame {
                     gRenderSystem->BeginMenuFrame();
                     pauseMenu.Draw(gRenderSystem);
                     gRenderSystem->EndMenuFrame();
+                    gRenderSystem->RenderBrightnessOverlay();
                 }
                 break;
 
@@ -391,6 +397,7 @@ namespace mygame {
                     gRenderSystem->BeginMenuFrame();
                     defeatScreen.Draw(gRenderSystem);
                     gRenderSystem->EndMenuFrame();
+                    gRenderSystem->RenderBrightnessOverlay();
                 }
                 break;
 

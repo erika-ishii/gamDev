@@ -22,6 +22,7 @@
 #include "Systems/InputSystem.h"
 #include "Audio/SoundManager.h"
 #include <chrono>
+#include <array>
 #include <vector>
 namespace mygame {
 
@@ -105,6 +106,16 @@ namespace mygame {
         unsigned exitBtnHoverTex = 0;  //Exit button hover texture.
         unsigned closePopupTex = 0;    //Popup close button texture.
         unsigned optionsHeaderTex = 0;
+        unsigned optionsNoteTex = 0;
+        unsigned optionsCloseTex = 0;
+        unsigned optionsSliderTrackTex = 0;
+        unsigned optionsSliderFillTex = 0;
+        unsigned optionsSliderKnobTex = 0;
+        unsigned optionsResetTex = 0;
+        unsigned optionsMasterLabelTex = 0;
+        unsigned optionsBgmLabelTex = 0;
+        unsigned optionsSfxLabelTex = 0;
+        unsigned optionsBrightnessLabelTex = 0;
         unsigned exitPopupNoteTex = 0;     //Exit confirmation note texture.
         unsigned exitPopupTitleTex = 0;    //Exit popup title texture.
         unsigned exitPopupPromptTex = 0;   //Exit popup prompt texture.
@@ -147,7 +158,10 @@ namespace mygame {
         bool exitTransitionTimerInitialized = false;
         bool audioMuted = false;
         float masterVolumeDefault = 0.7f;
-   
+        std::array<float, 4> optionsSliderValues{ {0.8f, 0.65f, 0.7f, 0.5f} };
+        bool optionsSliderDragging = false;
+        int optionsSliderDragIndex = -1;
+        bool optionsResetPressed = false;
 
         // --- GUI system ------------------------------------------------------------------
         GUISystem gui;                 //Immediate-mode GUI owner for menu buttons.
@@ -163,6 +177,11 @@ namespace mygame {
         RectF optionsHeader{ 0.f, 0.f, 220.f, 80.f };   //Options title art rectangle.
         RectF optionsCloseBtn{ 0.f, 0.f, 56.f, 56.f };  //Options popup close button rectangle.
         RectF muteToggleBtn{ 0.f, 0.f, 220.f, 58.f };   //Mute checkbox button rectangle.
+        RectF optionsResetBtn{ 0.f, 0.f, 0.f, 0.f };
+        std::array<RectF, 4> optionsLabelRects{};
+        std::array<RectF, 4> optionsSliderRects{};
+        std::array<RectF, 4> optionsSliderFillRects{};
+        std::array<RectF, 4> optionsSliderKnobRects{};
         RectF exitPopup{ 0.f, 0.f, 520.f, 320.f };     //Exit confirmation popup rectangle.
         RectF exitCloseBtn{ 0.f, 0.f, 56.f, 56.f };    //Exit popup close button rectangle.
         RectF exitYesBtn{ 0.f, 0.f, 160.f, 64.f };     //Exit popup YES button.

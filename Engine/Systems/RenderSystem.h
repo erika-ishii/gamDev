@@ -110,7 +110,12 @@ namespace Framework {
         void HandleMenuShortcuts();
         /// \brief Returns true if the editor UI is visible (for other systems to adapt).
         static bool IsEditorVisible();
-
+        /// \brief Set global brightness multiplier used for a fullscreen overlay.
+        static void SetGlobalBrightness(float brightness);
+        /// \brief Get global brightness multiplier.
+        static float GetGlobalBrightness();
+        /// \brief Render the brightness overlay to the back-buffer.
+        void RenderBrightnessOverlay();
         /// \brief Global accessor to the current RenderSystem instance.
         static RenderSystem* Get();
 
@@ -278,6 +283,8 @@ namespace Framework {
         GOC*          glowDrawObject = nullptr;
         GlowComponent* glowDrawComponent = nullptr;
         GlowBrushSettings glowBrush{};
+
+        float         globalBrightness = 1.0f;
 
         // --- Game camera -----------------------------------------------------------------
         gfx::Camera2D camera;                 //!< In-game camera.

@@ -28,7 +28,9 @@
 #include <json.hpp>
 #include <initializer_list>
 #include <string>
+#include <array>
 #include <vector>
+#include <GLFW/glfw3.h>
 #include "Common/CRTDebug.h"   
 
 #ifdef _DEBUG
@@ -323,7 +325,7 @@ void PauseMenuPage::Init(int screenW, int screenH)
         Framework::ResolveAssetPath("Textures/UI/Pause Menu/Resume.png").string());
     optionsTex = ResolveTexture({ "pause_options" },
         Framework::ResolveAssetPath("Textures/UI/Pause Menu/Options.png").string());
-    optionsHeaderTex = optionsTex;
+ 
     howToTex = ResolveTexture({ "pause_howto" },
         Framework::ResolveAssetPath("Textures/UI/Pause Menu/How To Play.png").string());
 
@@ -340,6 +342,28 @@ void PauseMenuPage::Init(int screenW, int screenH)
         Framework::ResolveAssetPath(popupConfig.header.path).string());
     howToCloseTex = ResolveTexture({ popupConfig.close.key },
         Framework::ResolveAssetPath(popupConfig.close.path).string());
+    optionsNoteTex = ResolveTexture({ "options_note" },
+        Framework::ResolveAssetPath("Textures/UI/Options Menu/Note.png").string());
+    optionsHeaderTex = ResolveTexture({ "options_header" },
+        Framework::ResolveAssetPath("Textures/UI/Options Menu/Options.png").string());
+    optionsCloseTex = ResolveTexture({ "options_close" },
+        Framework::ResolveAssetPath("Textures/UI/Options Menu/XButton.png").string());
+    optionsSliderTrackTex = ResolveTexture({ "options_slider_track" },
+        Framework::ResolveAssetPath("Textures/UI/Options Menu/Slider.png").string());
+    optionsSliderFillTex = ResolveTexture({ "options_slider_fill" },
+        Framework::ResolveAssetPath("Textures/UI/Options Menu/Slider Fill.png").string());
+    optionsSliderKnobTex = ResolveTexture({ "options_slider_knob" },
+        Framework::ResolveAssetPath("Textures/UI/Options Menu/Slider Button.png").string());
+    optionsResetTex = ResolveTexture({ "options_reset" },
+        Framework::ResolveAssetPath("Textures/UI/Options Menu/Reset.png").string());
+    optionsMasterLabelTex = ResolveTexture({ "options_master_label" },
+        Framework::ResolveAssetPath("Textures/UI/Options Menu/Master Volume.png").string());
+    optionsBgmLabelTex = ResolveTexture({ "options_bgm_label" },
+        Framework::ResolveAssetPath("Textures/UI/Options Menu/Bgm.png").string());
+    optionsSfxLabelTex = ResolveTexture({ "options_sfx_label" },
+        Framework::ResolveAssetPath("Textures/UI/Options Menu/Sfx.png").string());
+    optionsBrightnessLabelTex = ResolveTexture({ "options_brightness_label" },
+        Framework::ResolveAssetPath("Textures/UI/Options Menu/Brightness.png").string());
 
     // Load offsets
     howToHeaderOffsetX = popupConfig.headerOffsetX;
@@ -422,6 +446,59 @@ void PauseMenuPage::Update(Framework::InputSystem* input)
     else {
         iconTimerInitialized = false;
     }
+    if (showOptionsPopup) {
+        GLFWwindow* window = glfwGetCurrentContext();
+        if (window) {
+            double mxLogical = 0.0;
+            double myTopLogical = 0.0;
+            glfwGetCursorPos(window, &mxLogical, &myTopLogical);
+            int winW = 1, winH = 1;
+            glfwGetWindowSize(window, &winW, &winH);
+            int fbW = winW, fbH = winH;
+            glfwGetFramebufferSize(window, &fbW, &fbH);
+
+            const double scaleX = winW > 0 ? static_cast<double>(fbW) / static_cast<double>(winW) : 1.0;
+            const double scaleY = winH > 0 ? static_cast<double>(fbH) / static_cast<double>(winH) : 1.0;
+            const double mx = mxLogical * scaleX;
+            const double my = (static_cast<double>(winH) - myTopLogical) * scaleY;
+
+            const bool mouseDown = (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
+            if (!mouseDown) {
+                optionsSliderDragging = false;
+                optionsSliderDragIndex = -1;
+            }
+            else {
+                if (!optionsSliderDragging) {
+                    for (size_t i = 0; i < optionsSliderRects.size(); ++i) {
+                        const auto& rect = optionsSliderRects[i];
+                        const auto& knob = optionsSliderKnobRects[i];
+                        const bool onTrack = (mx >= rect.x && mx <= rect.x + rect.w && my >= rect.y && my <= rect.y + rect.h);
+                        const bool onKnob = (mx >= knob.x && mx <= knob.x + knob.w && my >= knob.y && my <= knob.y + knob.h);
+                        if (onTrack || onKnob) {
+                            optionsSliderDragging = true;
+                            optionsSliderDragIndex = static_cast<int>(i);
+                            break;
+                        }
+                    }
+                }
+
+                if (optionsSliderDragging && optionsSliderDragIndex >= 0) {
+                    const auto& rect = optionsSliderRects[optionsSliderDragIndex];
+                    const float newValue = std::clamp(static_cast<float>((mx - rect.x) / rect.w), 0.0f, 1.0f);
+                    optionsSliderValues[optionsSliderDragIndex] = newValue;
+                    if (optionsSliderDragIndex == 0) {
+                        audioMuted = (newValue <= 0.001f);
+                        SoundManager::getInstance().setMasterVolume(newValue);
+                    }
+                    layoutDirty = true;
+                }
+            }
+        }
+    }
+    else {
+        optionsSliderDragging = false;
+        optionsSliderDragIndex = -1;
+    }
     gui.Update(input);
 }
 
@@ -467,9 +544,9 @@ void PauseMenuPage::Draw(Framework::RenderSystem* render)
     }
     else if (showOptionsPopup && render)
     {
-        // OPTIONS POPUP: Background Only (No Header)
-        if (howToNoteTex) {
-            gfx::Graphics::renderSpriteUI(howToNoteTex, optionsPopup.x, optionsPopup.y,
+        // OPTIONS POPUP: Stylized parchment with slider art
+        if (optionsNoteTex) {
+            gfx::Graphics::renderSpriteUI(optionsNoteTex, optionsPopup.x, optionsPopup.y,
                 optionsPopup.w, optionsPopup.h,
                 1.f, 1.f, 1.f, 1.f,
                 sw, sh);
@@ -478,6 +555,60 @@ void PauseMenuPage::Draw(Framework::RenderSystem* render)
             gfx::Graphics::renderRectangleUI(optionsPopup.x, optionsPopup.y,
                 optionsPopup.w, optionsPopup.h,
                 0.1f, 0.08f, 0.05f, 0.95f,
+                sw, sh);
+        }
+        if (optionsHeaderTex) {
+            gfx::Graphics::renderSpriteUI(optionsHeaderTex, optionsHeader.x, optionsHeader.y,
+                optionsHeader.w, optionsHeader.h,
+                1.f, 1.f, 1.f, 1.f,
+                sw, sh);
+        }
+
+        const std::array<unsigned, 4> labelTextures = {
+            optionsMasterLabelTex,
+            optionsBgmLabelTex,
+            optionsSfxLabelTex,
+            optionsBrightnessLabelTex
+        };
+
+        for (size_t i = 0; i < optionsLabelRects.size(); ++i) {
+            if (labelTextures[i]) {
+                const auto& labelRect = optionsLabelRects[i];
+                gfx::Graphics::renderSpriteUI(labelTextures[i], labelRect.x, labelRect.y,
+                    labelRect.w, labelRect.h,
+                    1.f, 1.f, 1.f, 1.f,
+                    sw, sh);
+            }
+
+            if (optionsSliderTrackTex) {
+                const auto& sliderRect = optionsSliderRects[i];
+                gfx::Graphics::renderSpriteUI(optionsSliderTrackTex, sliderRect.x, sliderRect.y,
+                    sliderRect.w, sliderRect.h,
+                    1.f, 1.f, 1.f, 1.f,
+                    sw, sh);
+            }
+
+            if (optionsSliderFillTex) {
+                const auto& fillRect = optionsSliderFillRects[i];
+                gfx::Graphics::renderSpriteUI(optionsSliderFillTex, fillRect.x, fillRect.y,
+                    fillRect.w, fillRect.h,
+                    1.f, 1.f, 1.f, 1.f,
+                    sw, sh);
+            }
+
+            if (optionsSliderKnobTex) {
+                const auto& knobRect = optionsSliderKnobRects[i];
+                gfx::Graphics::renderSpriteUI(optionsSliderKnobTex, knobRect.x, knobRect.y,
+                    knobRect.w, knobRect.h,
+                    1.f, 1.f, 1.f, 1.f,
+                    sw, sh);
+            }
+        }
+
+        if (optionsResetTex) {
+            gfx::Graphics::renderSpriteUI(optionsResetTex, optionsResetBtn.x, optionsResetBtn.y,
+                optionsResetBtn.w, optionsResetBtn.h,
+                1.f, 1.f, 1.f, 1.f,
                 sw, sh);
         }
     }
@@ -881,18 +1012,82 @@ void PauseMenuPage::SyncLayout(int screenW, int screenH)
             return fallback;
         };
 
-    optionsPopup = { popupX, popupY, popupWf, popupHf };
-    optionsCloseBtn = howToCloseBtn;
-    const float optionsHeaderH = popupHf * 0.18f;
+    int optionsNoteW = 0, optionsNoteH = 0;
+    const bool hasOptionsNoteSize = optionsNoteTex && gfx::Graphics::getTextureSize(optionsNoteTex, optionsNoteW, optionsNoteH);
+    const float optionsAspect = (hasOptionsNoteSize && optionsNoteH > 0)
+        ? static_cast<float>(optionsNoteW) / static_cast<float>(optionsNoteH)
+        : defaultPopupAspect;
+
+    float optionsPopupW = static_cast<float>(sw) * 0.58f;
+    float optionsPopupH = optionsPopupW / optionsAspect;
+    const float maxOptionsPopupH = static_cast<float>(sh) * 0.82f;
+    if (optionsPopupH > maxOptionsPopupH) {
+        optionsPopupH = maxOptionsPopupH;
+        optionsPopupW = optionsPopupH * optionsAspect;
+    }
+
+    const float optionsPopupX = (static_cast<float>(sw) - optionsPopupW) * 0.58f;
+    const float optionsPopupY = (static_cast<float>(sh) - optionsPopupH) * 0.5f;
+
+    optionsPopup = { optionsPopupX, optionsPopupY, optionsPopupW, optionsPopupH };
+    const float optionsCloseSize = std::min(optionsPopupW, optionsPopupH) * 0.14f;
+    optionsCloseBtn = { optionsPopupX + optionsPopupW - optionsCloseSize * 0.85f,
+        optionsPopupY + optionsPopupH - optionsCloseSize * 0.75f,
+        optionsCloseSize,
+        optionsCloseSize };
+
+    const float optionsHeaderH = optionsPopupH * 0.18f;
     const float optionsHeaderW = optionsHeaderH * textureAspect(optionsHeaderTex, 2.7f);
-    optionsHeader = { popupX + (popupWf - optionsHeaderW) * 0.5f,
-        popupY + popupHf - optionsHeaderH - popupHf * 0.08f,
+    optionsHeader = { optionsPopupX + (optionsPopupW - optionsHeaderW) * 0.5f,
+        optionsPopupY + optionsPopupH - optionsHeaderH - optionsPopupH * 0.08f,
         optionsHeaderW, optionsHeaderH };
 
-    const float toggleH = popupHf * 0.14f;
-    const float toggleW = popupWf * 0.5f;
-    muteToggleBtn = { popupX + (popupWf - toggleW) * 0.5f,
-        popupY + popupHf * 0.32f,
+    const float contentTop = optionsHeader.y - optionsPopupH * 0.05f;
+    const float contentBottom = optionsPopupY + optionsPopupH * 0.2f;
+    const float availableHeight = std::max(0.1f, contentTop - contentBottom);
+    const float rowHeight = availableHeight / 4.0f;
+    const float labelHeightBase = rowHeight * 0.42f;
+    const float sliderHeight = rowHeight * 0.18f;
+    const float labelX = optionsPopupX + optionsPopupW * 0.18f;
+    const float sliderX = optionsPopupX + optionsPopupW * 0.18f;
+    const float sliderW = optionsPopupW * 0.64f;
+
+    const std::array<unsigned, 4> labelTextures = {
+        optionsMasterLabelTex,
+        optionsBgmLabelTex,
+        optionsSfxLabelTex,
+        optionsBrightnessLabelTex
+    };
+
+    for (size_t i = 0; i < optionsLabelRects.size(); ++i) {
+        const float rowBaseY = contentTop - rowHeight * (static_cast<float>(i) + 1.f);
+        const float labelH = labelHeightBase;
+        const float labelAspect = textureAspect(labelTextures[i], 2.6f);
+        const float labelW = labelH * labelAspect;
+        const float labelY = rowBaseY + rowHeight * 0.52f;
+        const float sliderY = rowBaseY + rowHeight * 0.18f;
+
+        optionsLabelRects[i] = { labelX, labelY, labelW, labelH };
+        optionsSliderRects[i] = { sliderX, sliderY, sliderW, sliderHeight };
+
+        const float knobSize = sliderHeight * 2.1f;
+        const float value = std::clamp(optionsSliderValues[i], 0.0f, 1.0f);
+        const float fillW = sliderW * value;
+        const float knobX = sliderX + fillW - knobSize * 0.5f;
+        optionsSliderFillRects[i] = { sliderX, sliderY, fillW, sliderHeight };
+        optionsSliderKnobRects[i] = { knobX, sliderY - (knobSize - sliderHeight) * 0.5f, knobSize, knobSize };
+    }
+
+    const float resetH = optionsPopupH * 0.14f;
+    const float resetW = resetH * textureAspect(optionsResetTex, 2.5f);
+    optionsResetBtn = { optionsPopupX + (optionsPopupW - resetW) * 0.5f,
+        optionsPopupY + optionsPopupH * 0.06f,
+        resetW, resetH };
+
+    const float toggleH = optionsPopupH * 0.14f;
+    const float toggleW = optionsPopupW * 0.5f;
+    muteToggleBtn = { optionsPopupX + (optionsPopupW - toggleW) * 0.5f,
+        optionsPopupY + optionsPopupH * 0.32f,
         toggleW, toggleH };
 
     int exitNoteW = 0, exitNoteH = 0;
@@ -985,10 +1180,10 @@ void PauseMenuPage::BuildGui()
     }
     else if (showOptionsPopup)
     {
-        if (howToCloseTex)
+        if (optionsCloseTex)
         {
             gui.AddButton(optionsCloseBtn.x, optionsCloseBtn.y, optionsCloseBtn.w, optionsCloseBtn.h, "",
-                howToCloseTex, howToCloseTex,
+                optionsCloseTex, optionsCloseTex,
                 [this]() {
                     showOptionsPopup = false;
                     layoutDirty = true;
@@ -996,14 +1191,17 @@ void PauseMenuPage::BuildGui()
                 }, true);
         }
 
-        const std::string muteLabel = (audioMuted ? "[X] " : "[ ] ") + std::string("Mute Audio");
-        gui.AddButton(muteToggleBtn.x, muteToggleBtn.y, muteToggleBtn.w, muteToggleBtn.h,
-            muteLabel,
-            [this]() {
-                audioMuted = !audioMuted;
-                SoundManager::getInstance().setMasterVolume(audioMuted ? 0.0f : masterVolumeDefault);
-                BuildGui();
-            });
+        if (optionsResetTex) {
+            gui.AddButton(optionsResetBtn.x, optionsResetBtn.y, optionsResetBtn.w, optionsResetBtn.h, "",
+                optionsResetTex, optionsResetTex,
+                [this]() {
+                    optionsSliderValues = { {0.8f, 0.65f, 0.7f, 0.75f} };
+                    audioMuted = false;
+                    SoundManager::getInstance().setMasterVolume(optionsSliderValues[0]);
+                    layoutDirty = true;
+                    BuildGui();
+                });
+        }
     }
     else if (showHowToPopup) {
         if (howToCloseTex) {

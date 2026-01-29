@@ -83,6 +83,7 @@ namespace Framework {
         case AnimState::Attack1:   return attackConfigs[0];
         case AnimState::Attack2:   return attackConfigs[1];
         case AnimState::Attack3:   return attackConfigs[2];
+        case AnimState::Throw:     return throwConfig;
         case AnimState::Knockback: return knockbackConfig;
         case AnimState::Death:     return deathConfig;
         }
@@ -94,7 +95,8 @@ namespace Framework {
     {
         return state == AnimState::Attack1 ||
             state == AnimState::Attack2 ||
-            state == AnimState::Attack3;
+            state == AnimState::Attack3 ||
+            state == AnimState::Throw;
     }
 
     void LogicSystem::SetAnimState(AnimState newState)
@@ -156,6 +158,12 @@ namespace Framework {
         ForceAttackState(comboStep);
     }
 
+    void LogicSystem::BeginThrowAttack()
+    {
+        SetAnimState(AnimState::Throw);
+        attackTimer = AttackDurationForState(AnimState::Throw);
+    }
+
     LogicSystem::AnimationInfo::Mode LogicSystem::ModeForState(AnimState state) const
     {
         switch (state)
@@ -164,6 +172,7 @@ namespace Framework {
         case AnimState::Attack1:   return AnimationInfo::Mode::Attack1;
         case AnimState::Attack2:   return AnimationInfo::Mode::Attack2;
         case AnimState::Attack3:   return AnimationInfo::Mode::Attack3;
+        case AnimState::Throw:     return AnimationInfo::Mode::Throw;
         case AnimState::Knockback: return AnimationInfo::Mode::Knockback;
         case AnimState::Death:     return AnimationInfo::Mode::Death;
         case AnimState::Idle:
@@ -179,6 +188,7 @@ namespace Framework {
         case AnimState::Attack1:   return "attack1";
         case AnimState::Attack2:   return "attack2";
         case AnimState::Attack3:   return "attack3";
+        case AnimState::Throw:     return "throw";
         case AnimState::Knockback: return "knockback";
         case AnimState::Death:     return "death";
         case AnimState::Idle:
@@ -878,6 +888,11 @@ namespace Framework {
                 attack->Update(dt, tr);
             }
 
+            if (throwCooldownTimer > 0.0f)
+            {
+                throwCooldownTimer = std::max(0.0f, throwCooldownTimer - dt);
+            }
+
             // Handle attack input: spawn through PlayerAttackComponent only (single source of truth).
             if (playerHealth && !playerHealth->isDead && input.IsMousePressed(GLFW_MOUSE_BUTTON_LEFT) && attack && tr && rc)
             {
@@ -910,8 +925,10 @@ namespace Framework {
             }
             else if (playerHealth && !playerHealth->isDead && input.IsMousePressed(GLFW_MOUSE_BUTTON_RIGHT) && attack && tr && rc)
             {
+                const bool canThrow = throwCooldownTimer <= 0.0f && !pendingThrow.active && !IsAttackState(animState);
+
                 // Only spawn if we have a valid direction (mouse in viewport & not exactly on player).
-                if (aimDirX != 0.0f || aimDirY != 0.0f)
+                if (canThrow && (aimDirX != 0.0f || aimDirY != 0.0f))
                 {
                     auto attackTr = *tr;
                     const float offset = 0.05f;
@@ -921,20 +938,39 @@ namespace Framework {
                     attackTr.x = tr->x + aimDirX * (halfW + offset);
                     attackTr.y = tr->y + aimDirY * (halfH + offset);
 
-                    hitBoxSystem->SpawnProjectile(player,
-                        attackTr.x, attackTr.y,
-                        aimDirX, aimDirY,
-                        0.3f,
-                        0.1f, 0.1f,
-                        1.0f, 5.f, HitBoxComponent::Team::Thrown);
+                    pendingThrow.active = true;
+                    pendingThrow.spawnX = attackTr.x;
+                    pendingThrow.spawnY = attackTr.y;
+                    pendingThrow.dirX = aimDirX;
+                    pendingThrow.dirY = aimDirY;
 
-                    std::cout << "Hurtbox spawned at (" << attackTr.x << ", " << attackTr.y << ")\n";
-                    audio->TriggerSound("GrappleShoot");
+                    BeginThrowAttack();
+                    throwCooldownTimer = std::max(throwCooldownTimer, AttackDurationForState(AnimState::Throw));
                 }
             }
 
             // Finally, advance the main character animation (idle/run/attack combo)
             UpdateAnimation(dt, wantRun);
+
+            if (pendingThrow.active && attackTimer <= 0.0f)
+            {
+                if (hitBoxSystem)
+                {
+                    hitBoxSystem->SpawnProjectile(player,
+                        pendingThrow.spawnX, pendingThrow.spawnY,
+                        pendingThrow.dirX, pendingThrow.dirY,
+                        0.3f,
+                        0.1f, 0.1f,
+                        1.0f, 5.f, HitBoxComponent::Team::Thrown);
+
+                    std::cout << "Hurtbox spawned at (" << pendingThrow.spawnX << ", " << pendingThrow.spawnY << ")\n";
+                }
+                if (audio)
+                {
+                    audio->TriggerSound("GrappleShoot");
+                }
+                pendingThrow.active = false;
+            }
 
             gateController.UpdateGateUnlockState();
             std::string targetLevel;

@@ -70,7 +70,7 @@ namespace Framework {
     public:
         /*! \brief Lightweight snapshot of current sprite animation state. */
         struct AnimationInfo {
-            enum class Mode { Idle, Run, Attack1, Attack2, Attack3, Knockback, Death };
+            enum class Mode { Idle, Run, Attack1, Attack2, Attack3, Throw, Knockback, Death };
 
             int  frame{ 0 };
             int  columns{ 1 };
@@ -126,7 +126,7 @@ namespace Framework {
         std::filesystem::path resolveData(std::string_view name) const;
 
         // Extended to support combo attacks.
-        enum class AnimState { Idle, Run, Attack1, Attack2, Attack3, Knockback, Death };
+        enum class AnimState { Idle, Run, Attack1, Attack2, Attack3, Throw, Knockback, Death };
 
         struct AnimConfig {
             int   cols;
@@ -140,6 +140,7 @@ namespace Framework {
         bool                 IsAttackState(AnimState state) const;
         void                 SetAnimState(AnimState newState);
         void                 BeginComboAttack();
+        void                 BeginThrowAttack();
         void                 ForceAttackState(int comboIndex);
         AnimState            AttackStateForIndex(int comboIndex) const;
         float                AttackDurationForState(AnimState state) const;
@@ -155,6 +156,15 @@ namespace Framework {
         void                 UpdateAnimation(float dt, bool wantRun);
         void                 RecountEnemies();
 
+        struct PendingThrow
+        {
+            bool  active{ false };
+            float spawnX{ 0.0f };
+            float spawnY{ 0.0f };
+            float dirX{ 0.0f };
+            float dirY{ 0.0f };
+        };
+
         gfx::Window* window;
         InputSystem& input;
 
@@ -169,6 +179,7 @@ namespace Framework {
         AnimConfig                           idleConfig{ 5,1,5,6.f };
         AnimConfig                           runConfig{ 8,1,8,10.f };
         AnimConfig                           attackConfigs[3]{ {13,1,13,12.f}, {8,1,8,12.f}, {9,1,9,12.f} };
+        AnimConfig                           throwConfig{ 14,1,14,12.f };
         AnimConfig                           knockbackConfig{ 4,1,4,5.f };
         AnimConfig                           deathConfig{ 8,1,8,8.f };
         int                                  frame{ 0 };
@@ -185,6 +196,9 @@ namespace Framework {
         bool                                 crashTestLatched{ false };
         bool                                 pendingLevelTransition{ false };
         std::unique_ptr<CrashLogger>         crashLogger;
+
+        PendingThrow                         pendingThrow{};
+        float                                throwCooldownTimer{ 0.0f };
 
         
     };
