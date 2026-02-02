@@ -21,7 +21,10 @@ namespace mygame {
         void Init(int screenW, int screenH);
         void Update(Framework::InputSystem* input);
         void Draw(Framework::RenderSystem* render);
-
+        float GetBgmVolume() const { return optionsSliderValues[1]; }
+        float GetSfxVolume() const { return optionsSliderValues[2]; }
+        const std::array<float, 4>& GetOptionsValues() const { return optionsSliderValues; }
+        void SetOptionsValues(const std::array<float, 4>& values);
         bool ConsumeResume();
         bool ConsumeMainMenu();
         bool ConsumeOptions();
@@ -92,7 +95,7 @@ namespace mygame {
         bool showExitPopup = false;
         bool audioMuted = false;
         float masterVolumeDefault = 0.7f;
-        std::array<float, 4> optionsSliderValues{ {0.8f, 0.65f, 0.7f, 0.75f} };
+        std::array<float, 4> optionsSliderValues{ {0.8f, 0.65f, 0.7f, 0.5f} };
         bool optionsSliderDragging = false;
         int optionsSliderDragIndex = -1;
         bool resumeLatched = false;
@@ -101,6 +104,7 @@ namespace mygame {
         bool howToLatched = false;
         bool quitRequestedLatched = false;
         bool exitConfirmedLatched = false;
+        bool optionsResetPressed = false;
 
         GUISystem gui;
 

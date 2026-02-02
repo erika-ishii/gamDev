@@ -58,7 +58,10 @@ namespace mygame {
           \param  render Pointer to RenderSystem for text rendering (optional).
         *************************************************************************/
         void Draw(Framework::RenderSystem* render);
-
+        float GetBgmVolume() const { return optionsSliderValues[1]; }
+        float GetSfxVolume() const { return optionsSliderValues[2]; }
+        const std::array<float, 4>& GetOptionsValues() const { return optionsSliderValues; }
+        void SetOptionsValues(const std::array<float, 4>& values);
         /*************************************************************************
           \brief  Consume the Start latch (true once after a Start click).
           \return true if Start was triggered this frame; false otherwise.

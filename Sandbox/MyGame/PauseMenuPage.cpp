@@ -74,6 +74,43 @@ namespace {
         TextureField yes;
         TextureField no;
     };
+    float BrightnessFromSlider(float value)
+    {
+        const float clamped = std::clamp(value, 0.0f, 1.0f);
+        return 0.6f + (clamped * 0.8f);
+    }
+
+    const std::array<const char*, 2> kBgmSoundIds = {
+        "MenuMusic",
+        "BGM"
+    };
+
+    bool IsBgmSoundId(const std::string& name)
+    {
+        return std::any_of(kBgmSoundIds.begin(), kBgmSoundIds.end(),
+            [&name](const char* id) { return name == id; });
+    }
+
+    void ApplyBgmVolume(float volume)
+    {
+        SoundManager& sm = SoundManager::getInstance();
+        for (const char* id : kBgmSoundIds) {
+            if (sm.isSoundLoaded(id)) {
+                sm.setSoundVolume(id, volume);
+            }
+        }
+    }
+
+    void ApplySfxVolume(float volume)
+    {
+        SoundManager& sm = SoundManager::getInstance();
+        const auto sounds = sm.getLoadedSounds();
+        for (const auto& name : sounds) {
+            if (!IsBgmSoundId(name)) {
+                sm.setSoundVolume(name, volume);
+            }
+        }
+    }
 
     /*************************************************************************************
       \brief  Helper to construct a TextureField from key/path.
@@ -420,7 +457,9 @@ void PauseMenuPage::Init(int screenW, int screenH)
     iconTimerInitialized = false;
     showHowToPopup = false;
     layoutDirty = true;
-
+    Framework::RenderSystem::SetGlobalBrightness(BrightnessFromSlider(optionsSliderValues[3]));
+    ApplyBgmVolume(optionsSliderValues[1]);
+    ApplySfxVolume(optionsSliderValues[2]);
     SyncLayout(screenW, screenH);
     ResetLatches();
 }
@@ -466,8 +505,30 @@ void PauseMenuPage::Update(Framework::InputSystem* input)
             if (!mouseDown) {
                 optionsSliderDragging = false;
                 optionsSliderDragIndex = -1;
+                if (optionsResetPressed) {
+                    const bool insideReset = (mx >= optionsResetBtn.x && mx <= optionsResetBtn.x + optionsResetBtn.w
+                        && my >= optionsResetBtn.y && my <= optionsResetBtn.y + optionsResetBtn.h);
+                    if (insideReset) {
+                        optionsSliderValues = { {0.8f, 0.65f, 0.7f, 0.5f} };
+                        audioMuted = false;
+                        SoundManager::getInstance().setMasterVolume(optionsSliderValues[0]);
+                        Framework::RenderSystem::SetGlobalBrightness(BrightnessFromSlider(optionsSliderValues[3]));
+                        ApplyBgmVolume(optionsSliderValues[1]);
+                        ApplySfxVolume(optionsSliderValues[2]);
+                        layoutDirty = true;
+                        BuildGui();
+                    }
+                    optionsResetPressed = false;
+                }
             }
             else {
+                if (!optionsResetPressed) {
+                    const bool insideReset = (mx >= optionsResetBtn.x && mx <= optionsResetBtn.x + optionsResetBtn.w
+                        && my >= optionsResetBtn.y && my <= optionsResetBtn.y + optionsResetBtn.h);
+                    if (insideReset) {
+                        optionsResetPressed = true;
+                    }
+                }
                 if (!optionsSliderDragging) {
                     for (size_t i = 0; i < optionsSliderRects.size(); ++i) {
                         const auto& rect = optionsSliderRects[i];
@@ -490,6 +551,15 @@ void PauseMenuPage::Update(Framework::InputSystem* input)
                         audioMuted = (newValue <= 0.001f);
                         SoundManager::getInstance().setMasterVolume(newValue);
                     }
+                    else if (optionsSliderDragIndex == 1) {
+                        ApplyBgmVolume(newValue);
+                    }
+                    else if (optionsSliderDragIndex == 2) {
+                        ApplySfxVolume(newValue);
+                    }
+                    else if (optionsSliderDragIndex == 3) {
+                        Framework::RenderSystem::SetGlobalBrightness(BrightnessFromSlider(newValue));
+                    }
                     layoutDirty = true;
                 }
             }
@@ -498,6 +568,7 @@ void PauseMenuPage::Update(Framework::InputSystem* input)
     else {
         optionsSliderDragging = false;
         optionsSliderDragIndex = -1;
+        optionsResetPressed = false;
     }
     gui.Update(input);
 }
@@ -778,6 +849,12 @@ void PauseMenuPage::Draw(Framework::RenderSystem* render)
 
     gui.Draw(render);
 }
+void PauseMenuPage::SetOptionsValues(const std::array<float, 4>& values)
+{
+    optionsSliderValues = values;
+    audioMuted = (optionsSliderValues[0] <= 0.001f);
+    layoutDirty = true;
+}
 
 /*************************************************************************************
   \brief  Consume the "Resume" latch, if set.
@@ -862,6 +939,7 @@ void PauseMenuPage::ResetLatches()
     showExitPopup = false;
     iconAnimTime = 0.0f;
     iconTimerInitialized = false;
+    optionsResetPressed = false;
     layoutDirty = true;
 }
 
@@ -1031,15 +1109,19 @@ void PauseMenuPage::SyncLayout(int screenW, int screenH)
 
     optionsPopup = { optionsPopupX, optionsPopupY, optionsPopupW, optionsPopupH };
     const float optionsCloseSize = std::min(optionsPopupW, optionsPopupH) * 0.14f;
-    optionsCloseBtn = { optionsPopupX + optionsPopupW - optionsCloseSize * 0.85f,
-        optionsPopupY + optionsPopupH - optionsCloseSize * 0.75f,
+    const float optionsCloseNudgeLeft = optionsPopupW * 0.06f;
+    const float optionsCloseNudgeDown = optionsPopupH * 0.06f;
+    optionsCloseBtn = { optionsPopupX + optionsPopupW - optionsCloseSize * 2.0f - optionsCloseNudgeLeft,
+        optionsPopupY + optionsPopupH - optionsCloseSize * 0.75f - optionsCloseNudgeDown,
         optionsCloseSize,
         optionsCloseSize };
 
     const float optionsHeaderH = optionsPopupH * 0.18f;
     const float optionsHeaderW = optionsHeaderH * textureAspect(optionsHeaderTex, 2.7f);
-    optionsHeader = { optionsPopupX + (optionsPopupW - optionsHeaderW) * 0.5f,
-        optionsPopupY + optionsPopupH - optionsHeaderH - optionsPopupH * 0.08f,
+    const float optionsHeaderNudgeUp = optionsPopupH * 0.10f;
+    const float optionsHeaderNudgeLeft = optionsPopupW * 0.16f;
+    optionsHeader = { optionsPopupX + (optionsPopupW - optionsHeaderW) * 0.5f - optionsHeaderNudgeLeft,
+        optionsPopupY + optionsPopupH - optionsHeaderH - optionsPopupH * 0.08f + optionsHeaderNudgeUp,
         optionsHeaderW, optionsHeaderH };
 
     const float contentTop = optionsHeader.y - optionsPopupH * 0.05f;
@@ -1191,17 +1273,7 @@ void PauseMenuPage::BuildGui()
                 }, true);
         }
 
-        if (optionsResetTex) {
-            gui.AddButton(optionsResetBtn.x, optionsResetBtn.y, optionsResetBtn.w, optionsResetBtn.h, "",
-                optionsResetTex, optionsResetTex,
-                [this]() {
-                    optionsSliderValues = { {0.8f, 0.65f, 0.7f, 0.75f} };
-                    audioMuted = false;
-                    SoundManager::getInstance().setMasterVolume(optionsSliderValues[0]);
-                    layoutDirty = true;
-                    BuildGui();
-                });
-        }
+       
     }
     else if (showHowToPopup) {
         if (howToCloseTex) {

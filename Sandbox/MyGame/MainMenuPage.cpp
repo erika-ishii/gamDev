@@ -106,6 +106,37 @@ namespace {
         const float clamped = std::clamp(value, 0.0f, 1.0f);
         return 0.6f + (clamped * 0.8f);
     }
+    const std::array<const char*, 2> kBgmSoundIds = {
+        "MenuMusic",
+        "BGM"
+    };
+
+    bool IsBgmSoundId(const std::string& name)
+    {
+        return std::any_of(kBgmSoundIds.begin(), kBgmSoundIds.end(),
+            [&name](const char* id) { return name == id; });
+    }
+
+    void ApplyBgmVolume(float volume)
+    {
+        SoundManager& sm = SoundManager::getInstance();
+        for (const char* id : kBgmSoundIds) {
+            if (sm.isSoundLoaded(id)) {
+                sm.setSoundVolume(id, volume);
+            }
+        }
+    }
+
+    void ApplySfxVolume(float volume)
+    {
+        SoundManager& sm = SoundManager::getInstance();
+        const auto sounds = sm.getLoadedSounds();
+        for (const auto& name : sounds) {
+            if (!IsBgmSoundId(name)) {
+                sm.setSoundVolume(name, volume);
+            }
+        }
+    }
 
     /*************************************************************************************
       \brief  Populate a TextureField from a JSON object, if fields exist.
@@ -442,7 +473,8 @@ void MainMenuPage::Init(int screenW, int screenH)
     iconTimerInitialized = false;
 
     Framework::RenderSystem::SetGlobalBrightness(BrightnessFromSlider(optionsSliderValues[3]));
-
+    ApplyBgmVolume(optionsSliderValues[1]);
+    ApplySfxVolume(optionsSliderValues[2]);
     // Force layout update
     layoutInitialized = false;
     SyncLayout(sw, sh);
@@ -520,6 +552,8 @@ void MainMenuPage::Update(Framework::InputSystem* input)
                         audioMuted = false;
                         SoundManager::getInstance().setMasterVolume(optionsSliderValues[0]);
                         Framework::RenderSystem::SetGlobalBrightness(BrightnessFromSlider(optionsSliderValues[3]));
+                        ApplyBgmVolume(optionsSliderValues[1]);
+                        ApplySfxVolume(optionsSliderValues[2]);
                         BuildGui();
                     }
                     optionsResetPressed = false;
@@ -554,6 +588,12 @@ void MainMenuPage::Update(Framework::InputSystem* input)
                     if (optionsSliderDragIndex == 0) {
                         audioMuted = (newValue <= 0.001f);
                         SoundManager::getInstance().setMasterVolume(newValue);
+                    }
+                    else if (optionsSliderDragIndex == 1) {
+                        ApplyBgmVolume(newValue);
+                    }
+                    else if (optionsSliderDragIndex == 2) {
+                        ApplySfxVolume(newValue);
                     }
                     else if (optionsSliderDragIndex == 3) {
                         Framework::RenderSystem::SetGlobalBrightness(BrightnessFromSlider(newValue));
@@ -828,6 +868,12 @@ void MainMenuPage::Draw(Framework::RenderSystem* render)
     }
 
     gui.Draw(render);
+}
+void MainMenuPage::SetOptionsValues(const std::array<float, 4>& values)
+{
+    optionsSliderValues = values;
+    audioMuted = (optionsSliderValues[0] <= 0.001f);
+    layoutInitialized = false;
 }
 void MainMenuPage::PlayExitSound()
 {

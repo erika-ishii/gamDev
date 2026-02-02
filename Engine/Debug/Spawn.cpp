@@ -79,6 +79,7 @@
 #include "Component/GateTargetComponent.h"
 #include "Ai/DecisionTreeDefault.h"
 #include "Physics/Dynamics/RigidBodyComponent.h"
+#include "Serialization/JsonSerialization.h"
 
 #include <vector>
 #include <string>
@@ -86,6 +87,8 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdint>
+#include <fstream>
+#include <iomanip>
 #include <system_error>
 
 #include <string_view>
@@ -144,6 +147,11 @@ namespace mygame {
 
 
     using namespace Framework;
+
+    static void ApplySpawnSettingsToObject(GOC& obj,
+        SpawnSettings const& s,
+        int index,
+        bool applyTransformAndLayer);
 
     //=====================================================================================
     // Anonymous helpers (formatting, normalization, IO-safe utilities)
@@ -298,6 +306,229 @@ namespace mygame {
             }
             else
                 obj->Destroy();
+        }
+
+        size_t ApplySpawnSettingsToExistingInstances(const std::string& prefabName, SpawnSettings const& s)
+        {
+            size_t updated = 0;
+            auto all = CollectNonMasterObjects();
+            for (auto* obj : all) {
+                if (!obj) continue;
+                if (obj->GetObjectName() != prefabName)
+                    continue;
+
+                ApplySpawnSettingsToObject(*obj, s, /*index*/ 0, /*applyTransformAndLayer*/ false);
+                ++updated;
+            }
+            return updated;
+        }
+
+        void SetJsonFloat(Framework::json& obj, const char* key, float value, bool& changed)
+        {
+            auto it = obj.find(key);
+            if (it == obj.end() || !it->is_number() || static_cast<float>(it->get<double>()) != value) {
+                obj[key] = value;
+                changed = true;
+            }
+        }
+
+        void SetJsonInt(Framework::json& obj, const char* key, int value, bool& changed)
+        {
+            auto it = obj.find(key);
+            if (it == obj.end() || !it->is_number_integer() || it->get<int>() != value) {
+                obj[key] = value;
+                changed = true;
+            }
+        }
+
+        void SetJsonBool(Framework::json& obj, const char* key, bool value, bool& changed)
+        {
+            auto it = obj.find(key);
+            if (it == obj.end() || !it->is_boolean() || it->get<bool>() != value) {
+                obj[key] = value;
+                changed = true;
+            }
+        }
+
+        void SetJsonString(Framework::json& obj, const char* key, const std::string& value, bool& changed)
+        {
+            auto it = obj.find(key);
+            if (it == obj.end() || !it->is_string() || it->get<std::string>() != value) {
+                obj[key] = value;
+                changed = true;
+            }
+        }
+
+        bool ApplySpawnSettingsToLevelFile(const std::filesystem::path& levelPath,
+            const std::string& prefabName,
+            SpawnSettings const& s,
+            size_t& outObjectsUpdated,
+            std::string& outError)
+        {
+            outObjectsUpdated = 0;
+            outError.clear();
+
+            std::ifstream in(levelPath);
+            if (!in.is_open()) {
+                outError = "Failed to open " + levelPath.string();
+                return false;
+            }
+
+            Framework::json root = Framework::json::parse(in, nullptr, false);
+            if (root.is_discarded()) {
+                outError = "Failed to parse " + levelPath.string();
+                return false;
+            }
+
+            auto levelIt = root.find("Level");
+            if (levelIt == root.end() || !levelIt->is_object()) {
+                outError = "Missing Level object in " + levelPath.string();
+                return false;
+            }
+
+            auto& levelObj = *levelIt;
+            auto objectsIt = levelObj.find("GameObjects");
+            if (objectsIt == levelObj.end() || !objectsIt->is_array()) {
+                outError = "Missing GameObjects array in " + levelPath.string();
+                return false;
+            }
+
+            bool changed = false;
+            for (auto& obj : *objectsIt) {
+                if (!obj.is_object())
+                    continue;
+
+                auto nameIt = obj.find("name");
+                if (nameIt == obj.end() || !nameIt->is_string())
+                    continue;
+                if (nameIt->get<std::string>() != prefabName)
+                    continue;
+
+                auto compsIt = obj.find("Components");
+                if (compsIt == obj.end() || !compsIt->is_object())
+                    continue;
+
+                bool objectChanged = false;
+                auto& comps = *compsIt;
+                const bool hasSprite = comps.contains("SpriteComponent");
+
+                if (auto it = comps.find("RenderComponent"); it != comps.end() && it->is_object()) {
+                    auto& rc = *it;
+                    if (s.overridePrefabSize) {
+                        SetJsonFloat(rc, "w", s.w, objectChanged);
+                        SetJsonFloat(rc, "h", s.h, objectChanged);
+                    }
+                    SetJsonFloat(rc, "r", s.rgba[0], objectChanged);
+                    SetJsonFloat(rc, "g", s.rgba[1], objectChanged);
+                    SetJsonFloat(rc, "b", s.rgba[2], objectChanged);
+                    SetJsonFloat(rc, "a", s.rgba[3], objectChanged);
+
+                    if (s.overridePrefabVisible)
+                        SetJsonBool(rc, "visible", s.visible, objectChanged);
+
+                    if (s.overridePrefabBlendMode)
+                        SetJsonString(rc, "blend_mode", BlendModeToString(s.blendMode), objectChanged);
+
+                    if (!sRectangleTexKey.empty() && !hasSprite)
+                        SetJsonString(rc, "texture_key", sRectangleTexKey, objectChanged);
+                }
+
+                if (auto it = comps.find("CircleRenderComponent"); it != comps.end() && it->is_object()) {
+                    auto& cc = *it;
+                    if (s.overridePrefabCircle)
+                        SetJsonFloat(cc, "radius", s.radius, objectChanged);
+                    SetJsonFloat(cc, "r", s.rgba[0], objectChanged);
+                    SetJsonFloat(cc, "g", s.rgba[1], objectChanged);
+                    SetJsonFloat(cc, "b", s.rgba[2], objectChanged);
+                    SetJsonFloat(cc, "a", s.rgba[3], objectChanged);
+                }
+
+                if (auto it = comps.find("SpriteComponent"); it != comps.end() && it->is_object()) {
+                    auto& sp = *it;
+                    if (!sSpriteTexKey.empty())
+                        SetJsonString(sp, "texture_key", sSpriteTexKey, objectChanged);
+                }
+
+                if (auto it = comps.find("RigidBodyComponent"); it != comps.end() && it->is_object()) {
+                    auto& rb = *it;
+                    if (s.overridePrefabVelocity) {
+                        SetJsonFloat(rb, "velocity_x", s.rbVelX, objectChanged);
+                        SetJsonFloat(rb, "velocity_y", s.rbVelY, objectChanged);
+                    }
+                    if (s.overridePrefabCollider) {
+                        SetJsonFloat(rb, "width", s.rbWidth, objectChanged);
+                        SetJsonFloat(rb, "height", s.rbHeight, objectChanged);
+                    }
+                }
+
+                if (auto it = comps.find("EnemyAttackComponent"); it != comps.end() && it->is_object()) {
+                    auto& atk = *it;
+                    if (s.overrideEnemyAttack) {
+                        SetJsonInt(atk, "damage", s.attackDamage, objectChanged);
+                        SetJsonFloat(atk, "attack_speed", s.attack_speed, objectChanged);
+                    }
+                }
+
+                if (auto it = comps.find("EnemyHealthComponent"); it != comps.end() && it->is_object()) {
+                    auto& hp = *it;
+                    if (s.overrideEnemyHealth) {
+                        SetJsonInt(hp, "enemyMaxhealth", s.enemyMaxhealth, objectChanged);
+                        SetJsonInt(hp, "enemyHealth", s.enemyHealth, objectChanged);
+                    }
+                    else if (auto maxIt = hp.find("enemyMaxhealth");
+                        maxIt != hp.end() && maxIt->is_number_integer()) {
+                        SetJsonInt(hp, "enemyHealth", maxIt->get<int>(), objectChanged);
+                    }
+                }
+
+                if (auto it = comps.find("PlayerHealthComponent"); it != comps.end() && it->is_object()) {
+                    auto& hp = *it;
+                    if (s.overridePlayerHealth) {
+                        SetJsonInt(hp, "playerHealth", s.playerHealth, objectChanged);
+                        SetJsonInt(hp, "playerMaxhealth", s.playerMaxhealth, objectChanged);
+                    }
+                    else if (auto maxIt = hp.find("playerMaxhealth");
+                        maxIt != hp.end() && maxIt->is_number_integer()) {
+                        SetJsonInt(hp, "playerHealth", maxIt->get<int>(), objectChanged);
+                    }
+                }
+
+                if (auto it = comps.find("PlayerAttackComponent"); it != comps.end() && it->is_object()) {
+                    auto& atk = *it;
+                    if (s.overridePlayerAttack) {
+                        SetJsonInt(atk, "damage", s.attackDamagep, objectChanged);
+                        SetJsonFloat(atk, "attack_speed", s.attack_speedp, objectChanged);
+                    }
+                }
+
+                if (auto it = comps.find("AudioComponent"); it != comps.end() && it->is_object()) {
+                    auto& audio = *it;
+                    if (!s.entityType.empty())
+                        SetJsonString(audio, "entityType", s.entityType, objectChanged);
+                }
+
+                if (objectChanged) {
+                    changed = true;
+                    ++outObjectsUpdated;
+                }
+            }
+
+            if (!changed)
+                return true;
+
+            std::ofstream out(levelPath);
+            if (!out.is_open()) {
+                outError = "Failed to write " + levelPath.string();
+                return false;
+            }
+
+            out << std::setw(2) << root;
+            if (!out.good()) {
+                outError = "Failed to write " + levelPath.string();
+                return false;
+            }
+
+            return true;
         }
     } // namespace
 
@@ -1137,17 +1368,45 @@ namespace mygame {
         // NEW: Apply current SpawnSettings to all existing instances of this prefab
         ImGui::SameLine();
         if (ImGui::Button("Apply to Existing")) {
-            auto all = CollectNonMasterObjects();
-            for (auto* obj : all) {
-                if (!obj) continue;
+            ApplySpawnSettingsToExistingInstances(gSelectedPrefab, gS);
+        }
 
-                // We treat "instances of this prefab" as objects whose name matches the prefab key
-                if (obj->GetObjectName() != gSelectedPrefab)
+        ImGui::SameLine();
+        if (ImGui::Button("Apply to All Levels")) {
+            size_t sceneUpdates = ApplySpawnSettingsToExistingInstances(gSelectedPrefab, gS);
+            size_t fileUpdates = 0;
+            size_t objectUpdates = 0;
+            size_t fileFailures = 0;
+            std::string lastFailure;
+
+            RefreshLevelFileList();
+            for (auto const& filename : gLevelFiles) {
+                std::filesystem::path levelPath = LevelFilePath(filename);
+                size_t fileObjects = 0;
+                std::string error;
+                if (!ApplySpawnSettingsToLevelFile(levelPath, gSelectedPrefab, gS, fileObjects, error)) {
+                    ++fileFailures;
+                    lastFailure = error;
                     continue;
+                }
+                if (fileObjects > 0) {
+                    ++fileUpdates;
+                    objectUpdates += fileObjects;
+                }
+            }
 
-                // index is 0 because we don't want stepX/stepY to move existing instances.
-                // applyTransformAndLayer = false to keep their position/rotation/layer.
-                ApplySpawnSettingsToObject(*obj, gS, /*index*/ 0, /*applyTransformAndLayer*/ false);
+            gLevelStatusIsError = (fileFailures > 0);
+            if (gLevelStatusIsError) {
+                gLevelStatusMessage = "Applied spawn settings to " + std::to_string(objectUpdates) +
+                    " instances across " + std::to_string(fileUpdates) +
+                    " level files (" + std::to_string(sceneUpdates) +
+                    " in current scene). Failed to update " + std::to_string(fileFailures) +
+                    " files. Last error: " + lastFailure;
+            }
+            else {
+                gLevelStatusMessage = "Applied spawn settings to " + std::to_string(objectUpdates) +
+                    " instances across " + std::to_string(fileUpdates) +
+                    " level files (" + std::to_string(sceneUpdates) + " in current scene).";
             }
         }
 

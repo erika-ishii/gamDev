@@ -24,9 +24,11 @@
 #include "Memory/GameObjectPool.h"
 #include "Memory/ObjectAllocator.h"
 #include <algorithm>
+#include <array>
 #include <GLFW/glfw3.h>
 #include <chrono>
 #include <iostream>
+#include <string>
 #include <MainMenuPage.hpp>
 #include <PauseMenuPage.hpp>
 #include <DefeatScreenPage.hpp>
@@ -61,7 +63,37 @@ namespace mygame {
         constexpr float kBGMFadeDuration = 1.5f;
 
         using clock = std::chrono::high_resolution_clock;
+        const std::array<const char*, 2> kBgmSoundIds = {
+            "MenuMusic",
+            "BGM"
+        };
 
+        bool IsBgmSoundId(const std::string& name)
+        {
+            return std::any_of(kBgmSoundIds.begin(), kBgmSoundIds.end(),
+                [&name](const char* id) { return name == id; });
+        }
+
+        void ApplyBgmVolume(float volume)
+        {
+            SoundManager& sm = SoundManager::getInstance();
+            for (const char* id : kBgmSoundIds) {
+                if (sm.isSoundLoaded(id)) {
+                    sm.setSoundVolume(id, volume);
+                }
+            }
+        }
+
+        void ApplySfxVolume(float volume)
+        {
+            SoundManager& sm = SoundManager::getInstance();
+            const auto sounds = sm.getLoadedSounds();
+            for (const auto& name : sounds) {
+                if (!IsBgmSoundId(name)) {
+                    sm.setSoundVolume(name, volume);
+                }
+            }
+        }
         Framework::SystemManager gSystems;
         Framework::InputSystem* gInputSystem = nullptr;
         Framework::LogicSystem* gLogicSystem = nullptr;
@@ -129,6 +161,20 @@ namespace mygame {
             if (!systemsUpdating && gInputSystem) {
                 gInputSystem->Update(dt);
             }
+            float bgmVolume = pauseMenu.GetBgmVolume();
+            float sfxVolume = pauseMenu.GetSfxVolume();
+            const auto& pauseOptions = pauseMenu.GetOptionsValues();
+            const auto& mainOptions = mainMenu.GetOptionsValues();
+            if (currentState == GameState::MAIN_MENU || currentState == GameState::TRANSITIONING) {
+                bgmVolume = mainMenu.GetBgmVolume();
+                sfxVolume = mainMenu.GetSfxVolume();
+                pauseMenu.SetOptionsValues(mainOptions);
+            }
+            else {
+                mainMenu.SetOptionsValues(pauseOptions);
+            }
+            ApplyBgmVolume(bgmVolume);
+            ApplySfxVolume(sfxVolume);
             auto handlePerfToggle = []() {
                 static bool prevTogglePerf = false;
                 const bool togglePerf = gInputSystem && gInputSystem->IsKeyPressed(GLFW_KEY_F1);
