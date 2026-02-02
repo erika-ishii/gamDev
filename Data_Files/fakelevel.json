@@ -1896,7 +1896,7 @@
                 "config": {
                   "columns": 10,
                   "endFrame": 9,
-                  "fps": 12.0,
+                  "fps": 18.0,
                   "loop": true,
                   "rows": 1,
                   "startFrame": 0,
@@ -1911,7 +1911,7 @@
                 "config": {
                   "columns": 13,
                   "endFrame": 12,
-                  "fps": 12.0,
+                  "fps": 18.0,
                   "loop": true,
                   "rows": 1,
                   "startFrame": 0,
@@ -1926,7 +1926,7 @@
                 "config": {
                   "columns": 8,
                   "endFrame": 7,
-                  "fps": 12.0,
+                  "fps": 18.0,
                   "loop": true,
                   "rows": 1,
                   "startFrame": 0,
@@ -1941,7 +1941,7 @@
                 "config": {
                   "columns": 9,
                   "endFrame": 8,
-                  "fps": 12.0,
+                  "fps": 18.0,
                   "loop": true,
                   "rows": 1,
                   "startFrame": 0,
@@ -1956,7 +1956,7 @@
                 "config": {
                   "columns": 14,
                   "endFrame": 13,
-                  "fps": 12.0,
+                  "fps": 18.0,
                   "loop": false,
                   "rows": 1,
                   "startFrame": 0,

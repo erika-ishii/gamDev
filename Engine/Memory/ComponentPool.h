@@ -1,7 +1,7 @@
 /*********************************************************************************************
  \file      ComponentPool.h
  \par       SofaSpuds
- \author    <your name here> - Primary Author, 100%
+ \author    elvisshengjie.lim (elvisshengjie.lim@digipen.edu) - Primary Author, 100% - Primary Author, 100%
 
  \brief     Declares ComponentPool<T>, a templated pooled allocator for GameComponent types.
 

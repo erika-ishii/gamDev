@@ -57,6 +57,7 @@
 #if SOFASPUDS_ENABLE_EDITOR
 #include <imgui.h>
 #endif
+#include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
 
 struct GLFWwindow;
@@ -139,6 +140,8 @@ namespace Framework {
         bool ScreenToWorld(double cursorX, double cursorY,
             float& worldX, float& worldY,
             bool& insideViewport) const;
+        /// \brief  Access the last world-space view-projection matrix for camera-based UI.
+        const glm::mat4& GetWorldViewProjectionMatrix() const { return worldViewProjection; }
 
         // Set gameplay camera view height (bigger -> zoom out, smaller -> zoom in)
         void SetCameraViewHeight(float viewHeight);
@@ -294,6 +297,7 @@ namespace Framework {
         gfx::Camera2D camera;                 //!< In-game camera.
         float         cameraViewHeight = 1.0f; //!< Ortho view height (world units).
         bool          cameraEnabled = true;   //!< Toggle in-game camera control.
+        glm::mat4     worldViewProjection{ 1.0f }; //!< Cached world-space VP matrix.
 
         // --- Editor camera ---------------------------------------------------------------
         gfx::Camera2D editorCamera;                //!< Editor camera.

@@ -83,6 +83,7 @@ namespace mygame {
         *************************************************************************/
         bool ConsumeExit();
 
+        void PlayExitSound();
 
         // Adjust cached layout if the screen size changes (keeps buttons under the cursor).
         void SyncLayout(int screenW, int screenH);
@@ -162,6 +163,10 @@ namespace mygame {
         bool optionsSliderDragging = false;
         int optionsSliderDragIndex = -1;
         bool optionsResetPressed = false;
+
+        //--Sounds  ---------------------------------------------------------------------
+        const char* EXIT_BUTTON = "Quit";
+   
 
         // --- GUI system ------------------------------------------------------------------
         GUISystem gui;                 //Immediate-mode GUI owner for menu buttons.

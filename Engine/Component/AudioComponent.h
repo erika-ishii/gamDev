@@ -281,7 +281,12 @@ namespace Framework
 
             Play(clipToPlay);
         }
+        /*************************************************************************************
+          \brief Selects a random element from a list of strings.
 
+          \param list A vector of strings to choose from.
+          \return A randomly selected string from the list. Returns an empty string if the list is empty.
+        *************************************************************************************/
         std::string GetRandomFrom(const std::vector<std::string>& list)
         {
             if (list.empty()) return "";

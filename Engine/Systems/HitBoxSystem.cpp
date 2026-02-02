@@ -280,6 +280,7 @@ namespace Framework
         projectile.hitbox = std::move(newhitbox);
         projectile.ownerId = attacker->GetId();
         projectile.timer = duration;
+        projectile.hitGraceTimer = 1.0f;
         projectile.velX = dirX * speed;
         projectile.velY = dirY * speed;
         projectile.isProjectile = true;
@@ -335,6 +336,9 @@ namespace Framework
             bool hitEnemy = false;
             bool ineffectiveHit = false;
 
+            if (it->isProjectile && it->hitGraceTimer > 0.0f)
+                it->hitGraceTimer = std::max(0.0f, it->hitGraceTimer - dt);
+
             for (auto* obj : logic.LevelObjects())
             {
                 if (!obj || obj == attacker) continue;
@@ -342,6 +346,16 @@ namespace Framework
                 auto* tr = obj->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
                 auto* rb = obj->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);
                 if (!(tr && rb)) continue;
+
+                if (it->isProjectile && it->hitGraceTimer > 0.0f)
+                {
+                    const bool isPlayer = obj->GetComponentType<PlayerComponent>(
+                        ComponentTypeId::CT_PlayerComponent) != nullptr;
+                    const bool isEnemy = obj->GetComponentType<EnemyComponent>(
+                        ComponentTypeId::CT_EnemyComponent) != nullptr;
+                    if (!isPlayer && !isEnemy)
+                        continue;
+                }
 
                 AABB targetAABB(tr->x, tr->y, rb->width, rb->height);
                 if (!Collision::CheckCollisionRectToRect(hitboxAABB, targetAABB)) continue;

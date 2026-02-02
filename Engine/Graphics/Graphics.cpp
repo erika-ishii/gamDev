@@ -81,6 +81,10 @@ namespace gfx {
     static glm::mat4 sViewMatrix(1.0f);
     static glm::mat4 sProjectionMatrix(1.0f);
     static glm::mat4 sViewProjectionMatrix(1.0f);
+    
+    
+    const glm::mat4& gfx::Graphics::GetViewProjectionMatrix()
+    {return sViewProjectionMatrix;}
 
     /*****************************************************************************************
      \brief  Throws std::runtime_error if a GL error is present (post-call guard).

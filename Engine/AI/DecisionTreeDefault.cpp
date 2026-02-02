@@ -85,6 +85,7 @@ namespace Framework
          *****************************************************************************************/
         void PlayAnimationIfAvailable(GOC* goc, std::string_view name, bool forceRestart = false)
         {
+            (void)forceRestart;
             if (!goc)
                 return;
 
@@ -93,7 +94,7 @@ namespace Framework
                 return;
 
             const int idx = FindAnimationIndex(anim, name);
-            if (idx >= 0 && (idx != anim->ActiveAnimationIndex() || forceRestart))
+            if (idx >= 0 && idx != anim->ActiveAnimationIndex())
             {
                 anim->SetActiveAnimation(idx);
             }
@@ -114,28 +115,6 @@ namespace Framework
                 }
             }
             return 0.2f;
-        }
-
-        float GetAnimationDuration(SpriteAnimationComponent* anim, std::string_view name)
-        {
-            if (!anim)
-                return 0.0f;
-
-            const int idx = FindAnimationIndex(anim, name);
-            if (idx < 0 || idx >= static_cast<int>(anim->animations.size()))
-                return 0.0f;
-
-            const auto& sheet = anim->animations[static_cast<std::size_t>(idx)];
-            const int total = std::max(1, sheet.config.totalFrames);
-            const int start = std::clamp(sheet.config.startFrame, 0, total - 1);
-            const int end = (sheet.config.endFrame >= 0)
-                ? std::clamp(sheet.config.endFrame, start, total - 1)
-                : (total - 1);
-            const int frameCount = end - start + 1;
-            if (sheet.config.fps <= 0.0f)
-                return 0.0f;
-
-            return static_cast<float>(frameCount) / sheet.config.fps;
         }
     }
 
@@ -210,9 +189,7 @@ namespace Framework
         // Patrol leaf: simple left-right patrol with pause when turning around.
         // ---------------------------------------------------------------------
         auto patrolLeaf = std::make_unique<DecisionNode>(
-            nullptr,
-            nullptr,
-            nullptr,
+            nullptr, nullptr, nullptr,
             [enemyID](float dt)
             {
                 GOC* enemy = FACTORY->GetObjectWithId(enemyID);
@@ -223,50 +200,60 @@ namespace Framework
                 auto* tr = enemy->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
                 auto* ai = enemy->GetComponentType<EnemyDecisionTreeComponent>(ComponentTypeId::CT_EnemyDecisionTreeComponent);
 
-                if (rb && tr && ai)
+                if (!(rb && tr && ai))
+                    return;
+
+                // Initialize patrol origin once
+                if (!ai->patrolOriginSet)
                 {
-                    const float patrolSpeed = 0.2f;
-                    const float patrolRange = 0.5f;
-                    const float pauseDuration = 2.0f;
+                    ai->patrolOriginX = tr->x;
+                    ai->patrolOriginY = tr->y;
+                    ai->patrolOriginSet = true;
+                    if (ai->dir == 0.0f)
+                        ai->dir = 1.0f;
+                }
 
-                    // If currently pausing, count down and stop movement
-                    if (ai->pauseTimer > 0.0f)
-                    {
-                        ai->pauseTimer -= dt;
-                        rb->velX = 0.0f;
-                        return;
-                    }
+                const float patrolSpeed = 0.6f;
+                const float patrolRange = 10.0f;
+                const float pauseDuration = 2.0f;
 
-                    // Move horizontally according to patrol direction
-                    rb->velX = patrolSpeed * ai->dir;
+                float leftEdge = ai->patrolOriginX - patrolRange;
+                float rightEdge = ai->patrolOriginX + patrolRange;
+
+                // Pause handling
+                if (ai->pauseTimer > 0.0f)
+                {
+                    ai->pauseTimer -= dt;
+                    rb->velX = 0.0f;
                     rb->velY = 0.0f;
+                    return;
+                }
 
-                    float newX = tr->x + rb->velX * dt;
-                    float newY = tr->y;
+                // Set velocity
+                rb->velX = patrolSpeed * ai->dir;
+                rb->velY = 0.0f;
 
-                    // Predict the future AABB and test collisions with "rect" walls
-                    AABB futureBox(newX, newY, rb->width, rb->height);
-                    bool collisionDetected = false;
+                // Predict future position for collision detection
+                float futureX = tr->x + rb->velX * dt;
+                AABB futureBox(futureX, tr->y, rb->width, rb->height);
 
-                    auto& objects = FACTORY->Objects();
-                    for (auto& [otherId, otherObj] : objects)
+                bool collisionDetected = false;
+                auto& objects = FACTORY->Objects();
+
+                for (auto& [_, other] : objects)
+                {
+
+                    auto* rbO = other->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);
+                    auto* trO = other->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
+                    if (!rbO || !trO)
+                        continue;
+
+                    std::string otherName = other->GetObjectName();
+                    std::transform(otherName.begin(), otherName.end(), otherName.begin(),
+                        [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+
+                    if (otherName == "rect")
                     {
-                        auto* rbO = otherObj->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);
-                        auto* trO = otherObj->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
-                        if (!rbO || !trO)
-                            continue;
-
-                        std::string otherName = otherObj->GetObjectName();
-                        std::transform(
-                            otherName.begin(),
-                            otherName.end(),
-                            otherName.begin(),
-                            [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); }
-                        );
-
-                        if (otherName != "rect")
-                            continue;
-
                         AABB wallBox(trO->x, trO->y, rbO->width, rbO->height);
                         if (Collision::CheckCollisionRectToRect(futureBox, wallBox))
                         {
@@ -274,36 +261,18 @@ namespace Framework
                             break;
                         }
                     }
-
-                    // If we hit a wall, flip direction and pause briefly
-                    if (collisionDetected)
-                    {
-                        ai->dir *= -1.0f;
-                        ai->pauseTimer = pauseDuration;
-                    }
-                    else
-                    {
-                        // Apply the movement
-                        tr->x = newX;
-                        tr->y = newY;
-                    }
-
-                    // Clamp patrol range and flip direction at the edges
-                    if (tr->x < -patrolRange)
-                    {
-                        tr->x = -patrolRange;
-                        ai->dir = 1.0f;
-                        ai->pauseTimer = pauseDuration;
-                    }
-                    if (tr->x > patrolRange)
-                    {
-                        tr->x = patrolRange;
-                        ai->dir = -1.0f;
-                        ai->pauseTimer = pauseDuration;
-                    }
-                    // Optional: ensure a patrol/idle animation when not attacking
-                    PlayAnimationIfAvailable(enemy, "idle");
                 }
+
+                // Check boundaries OR collision
+                if (collisionDetected || futureX <= leftEdge || futureX >= rightEdge)
+                {
+                    ai->dir *= -1.0f;
+                    ai->pauseTimer = pauseDuration;
+                    rb->velX = 0.0f;
+                }
+
+                ai->prevX = tr->x;
+                PlayAnimationIfAvailable(enemy, "idle");
             }
         );
 
@@ -367,7 +336,7 @@ namespace Framework
 
                 // Determine behavior based on Type (melee vs ranged)
                 bool isRanged = (typeComp && typeComp->Etype == EnemyTypeComponent::EnemyType::ranged);
- 
+
 
                 // Keep ranged enemies a bit closer so they don't aggro from too far away
                 float stopDistance = isRanged ? 1.0f : 0.1f;
@@ -395,22 +364,26 @@ namespace Framework
                     // 2️ Player too close → retreat with chance
                     else if (distance < preferredMinDistance)
                     {
-                        if ((rand() % 100) < 20) 
-                        {rb->velX = -dirX * retreatSpeed; }
+                        if ((rand() % 100) < 20)
+                        {
+                            rb->velX = -dirX * retreatSpeed;
+                        }
                         else
-                        {rb->velX *= 0.5f;}
+                        {
+                            rb->velX *= 0.5f;
+                        }
                     }
                     // 3️ Player too far → approach
                     else if (distance > preferredMaxDistance)
                     {
                         rb->velX = dirX * speed;
-                        
+
                     }
                     // 4️ Ideal distance → idle/slow down
                     else
                     {
                         rb->velX *= 0.85f;
-                      
+
                     }
                 }
 
@@ -438,60 +411,7 @@ namespace Framework
                 // Determine facing direction based on player position
                 ai->facing = (dx < 0.0f) ? Facing::LEFT : Facing::RIGHT;
 
-                auto* anim = enemy->GetComponentType<SpriteAnimationComponent>(
-                    ComponentTypeId::CT_SpriteAnimationComponent);
-
-                if (isRanged && ai->rangedAttackActive)
-                {
-                    ai->rangedAttackTimer += dt;
-                    float duration = ai->rangedAttackDuration;
-                    if (duration <= 0.0f)
-                    {
-                        duration = GetAnimationDuration(anim, "rangeattack");
-                        if (duration <= 0.0f)
-                            duration = 0.2f;
-                    }
-
-                    if (!ai->rangedProjectileFired && ai->rangedAttackTimer >= duration)
-                    {
-                        float norm = (distance > 0.001f) ? distance : 1.0f;
-                        float dirX = dx / norm;
-                        float dirY = dy / norm;
-
-                        float spawnX = tr->x;
-                        float spawnY = tr->y;
-
-                        logic->hitBoxSystem->SpawnProjectile(
-                            enemy,
-                            spawnX, spawnY,
-                            dirX, dirY,
-                            0.2f,       // Projectile speed 
-                            0.3f, 0.15f, // Size
-                            static_cast<float>(attack->damage),
-                            3.0f,        // Duration
-                            HitBoxComponent::Team::Enemy
-                        );
-                        if (audio)
-                        {
-                            audio->TriggerSound("EnemyAttack");
-                        }
-                        attack->attack_timer = 0.0f;
-                        ai->rangedProjectileFired = true;
-                        ai->retreatTimer = retreatDurationAfterShot;
-                    }
-
-                    if (ai->rangedAttackTimer >= duration)
-                    {
-                        PlayAnimationIfAvailable(enemy, "idle");
-                        ai->rangedAttackActive = false;
-                        ai->rangedAttackTimer = 0.0f;
-                        ai->rangedAttackDuration = 0.0f;
-                        ai->rangedProjectileFired = false;
-                    }
-                }
-
-                if (!ai->rangedAttackActive &&
-                    attack->attack_timer >= attack->attack_speed &&
+                if (attack->attack_timer >= attack->attack_speed &&
                     ai->retreatTimer <= 0.0f)
                 {
                     // Check range before attacking. Ranged enemies should only fire when much closer.
@@ -509,12 +429,39 @@ namespace Framework
 
                             if (isRanged)
                             {
-                                // --- Ranged Attack: Play animation, fire after it completes ---
-                                ai->rangedAttackActive = true;
-                                ai->rangedAttackTimer = 0.0f;
-                                ai->rangedProjectileFired = false;
-                                ai->rangedAttackDuration = GetAnimationDuration(anim, "rangeattack");
+                                // --- Ranged Attack: Spawn Projectile ---
+                                float norm = (distance > 0.001f) ? distance : 1.0f;
+                                float dirX = dx / norm;
+                                float dirY = dy / norm;
+
+                                // Spawn offset to avoid immediate collisions with nearby hitboxes.
+                                float spawnX = tr->x;
+                                float spawnY = tr->y;
+                                if (rb)
+                                {
+                                    const float halfW = rb->width * 0.5f;
+                                    const float halfH = rb->height * 0.5f;
+                                    const float spawnOffset = std::max(halfW, halfH) + 0.1f;
+                                    spawnX += dirX * spawnOffset;
+                                    spawnY += dirY * spawnOffset;
+                                }
+
+                                logic->hitBoxSystem->SpawnProjectile(
+                                    enemy,
+                                    spawnX, spawnY,
+                                    dirX, dirY,
+                                    0.2f,       // Projectile speed 
+                                    0.3f, 0.15f, // Size
+                                    static_cast<float>(attack->damage),
+                                    3.0f,        // Duration
+                                    HitBoxComponent::Team::Enemy
+                                );
+                                if (audio)
+                                {
+                                    audio->TriggerSound("EnemyAttack");
+                                }
                                 PlayAnimationIfAvailable(enemy, "rangeattack", true);
+                                ai->retreatTimer = retreatDurationAfterShot;
                             }
                             else
                             {
@@ -565,7 +512,7 @@ namespace Framework
                         PlayAnimationIfAvailable(enemy, "idle");
                     }
                 }
-                else if (isRanged && !ai->rangedAttackActive && attack->attack_timer > 0.5f)
+                else if (isRanged && attack->attack_timer > 0.5f)
                 {
                     // Simple fallback for ranged to go back to idle after shooting
                     PlayAnimationIfAvailable(enemy, "idle");

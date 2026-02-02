@@ -42,6 +42,7 @@ namespace Framework
 			std::unique_ptr<HitBoxComponent> hitbox;
 			GOCId ownerId = 0;        // store id, not raw pointer
 			float timer = 0.0f;
+			float hitGraceTimer = 0.0f;
 
 			float velX = 0.0f;
 			float velY = 0.0f;

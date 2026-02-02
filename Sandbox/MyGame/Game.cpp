@@ -45,12 +45,11 @@ namespace mygame {
         bool mainMenuBGMPlaying = false;
         const char* MAIN_MENU_BGM = "MenuMusic";
         const char* START_BUTTTON = "MenuGameStart";
+        const char* EXIT_BUTTTON = "Quit";
         // BGM Sounds
         bool gameplayBGMPlaying = false;
         const char* GAMEPLAY_BGM = "BGM";
-        //Exit Sound
-        bool quitButtonPlayed = false;
-        const char* QUIT_BUTTON = "Quit";
+
         //Defeat Sounds
         const char* DEFEAT = "Defeat";
         const char* BOILING = "Boiling";
@@ -329,7 +328,6 @@ namespace mygame {
 
 
                 case GameState::EXIT:
-       
                 if (gInputSystem) {
                     if (auto* w = gInputSystem->Window()) w->close();
                 }

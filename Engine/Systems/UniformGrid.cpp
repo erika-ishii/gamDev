@@ -1,3 +1,22 @@
+﻿/*********************************************************************************************
+ \file      UniformGrid.cpp
+ \par       SofaSpuds
+ \author    Ho Jun (h.jun@digipen.edu) - Primary Author, 100%
+ \brief		Implements a uniform spatial grid used for broad-phase collision queries.
+ \details	Defines the runtime behavior of the UniformGrid helper, including cell
+			insertion, spatial queries, and grid clearing between simulation steps.
+			Objects are mapped to all grid cells overlapped by their AABBs, allowing
+			efficient retrieval of nearby candidates for narrow-phase collision tests.
+
+			The grid operates in world space using a fixed cell size and is intended
+			to be rebuilt each physics update. All queries return object identifiers
+			only; ownership and lifetime of objects remain the responsibility of the
+			calling system (typically PhysicSystem).
+ \copyright
+			All content ©2025 DigiPen Institute of Technology Singapore.
+			All rights reserved.
+*********************************************************************************************/
+
 #include "Systems/UniformGrid.h"
 #include <cmath>
 

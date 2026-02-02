@@ -1,7 +1,7 @@
 /*********************************************************************************************
  \file      ObjectAllocatorStorage.h
  \par       SofaSpuds
- \author    <your name here> - Primary Author, 100%
+ \author    elvisshengjie.lim (elvisshengjie.lim@digipen.edu) - Primary Author, 100% 
 
  \brief     Declares ObjectAllocatorStorage, a lightweight wrapper that owns an
             ObjectAllocator instance and exposes a simple allocate/free interface.

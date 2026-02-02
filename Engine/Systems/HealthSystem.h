@@ -22,6 +22,7 @@
 *********************************************************************************************/
 
 #pragma once
+
 #include "Common/System.h"
 #include "Factory/Factory.h"
 #include "../Systems/AiSystem.h"
@@ -49,6 +50,8 @@
 #include "../Component/EnemyHealthComponent.h"
 #include "../Component/EnemyTypeComponent.h"
 #include "../Component/SpriteAnimationComponent.h"
+#include "../Graphics/Graphics.hpp"
+
 
 #include "Component/AudioComponent.h"
 #include <unordered_map>

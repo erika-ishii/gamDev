@@ -5,12 +5,26 @@
 #include <filesystem>
 #include <vector>
 #include <imgui.h>
+#include <algorithm>
+#include <cctype>
 #include "Common/CRTDebug.h"   // <- bring in DBG_NEW
 #ifdef _DEBUG
 #define new DBG_NEW       // <- redefine new AFTER all includes
 #endif
 namespace mygame
 {
+	/*********************************************************************************
+	  \brief Draws the Asset Manager editor panel using ImGui.
+	  \param jsonPanel Optional pointer to a JsonEditorPanel for prefab refresh.
+	  \details
+		  - Shows a refreshable list of all assets from AssetManager.
+		  - Provides a search bar to filter asset names.
+		  - Displays selected asset path and type.
+		  - Allows loading or deleting selected assets.
+		  - Supports creation of JSON prefabs for objects or enemies via templates.
+		  - Prevents deletion of non-existing assets.
+		  - Displays error messages in red if prefab creation fails.
+	*********************************************************************************/
 	void DrawAssetManagerPanel(JsonEditorPanel* jsonPanel)
 	{
 		ImGui::Begin("Debug Asset Manager");
@@ -34,8 +48,11 @@ namespace mygame
 			{
 				std::string nameLower = assets[i].name;
 				std::string searchLower = searchBuffer;
-				std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
-				std::transform(searchLower.begin(), searchLower.end(), searchLower.begin(), ::tolower);
+				// Use lambda that preserves the 0..255 byte value and returns char to avoid narrowing warnings
+				std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(),
+					[](unsigned char c) -> char { return static_cast<char>(std::tolower(c)); });
+				std::transform(searchLower.begin(), searchLower.end(), searchLower.begin(),
+					[](unsigned char c) -> char { return static_cast<char>(std::tolower(c)); });
 				if (nameLower.find(searchLower) == std::string::npos)
 					continue;
 			}
@@ -53,11 +70,15 @@ namespace mygame
 			ImGui::Text("Path: %s", asset.path.string().c_str());
 			ImGui::Text("Type: %d", (int)asset.type);
 			if (ImGui::Button("Load Asset"))
-			{Resource_Manager::LoadAsset(asset.path);}
+			{
+				Resource_Manager::LoadAsset(asset.path);
+			}
 			// Delete button - for all
 			ImGui::SameLine();
 			if (ImGui::Button("Delete Asset"))
-			{ImGui::OpenPopup("ConfirmDelete");}
+			{
+				ImGui::OpenPopup("ConfirmDelete");
+			}
 			if (ImGui::BeginPopupModal("ConfirmDelete", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 			{
 				ImGui::Text("Delete '%s'?", asset.name.c_str());
@@ -69,7 +90,7 @@ namespace mygame
 					AssetManager::DeleteAsset(asset.path);
 					if (jsonPanel)
 						jsonPanel->RefreshFiles();
-					assets=AssetManager::GetAllAssets();
+					assets = AssetManager::GetAllAssets();
 					selected = -1;
 					ImGui::CloseCurrentPopup();
 				}
@@ -93,9 +114,13 @@ namespace mygame
 		{
 			bool success = false;
 			if (createObject)
-			{success = AssetManager::CreateObjectAsset(prefabName, "json");}
+			{
+				success = AssetManager::CreateObjectAsset(prefabName, "json");
+			}
 			else if (createEnemy)
-			{success = AssetManager::CreateEnemyAsset(prefabName, "json");}
+			{
+				success = AssetManager::CreateEnemyAsset(prefabName, "json");
+			}
 
 			if (success)
 			{

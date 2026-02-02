@@ -483,6 +483,7 @@ void MainMenuPage::Update(Framework::InputSystem* input)
             if (exitTransitionTimer <= 0.0f) {
                 showExitTransition = false;
                 showExitPopup = true;
+                
                 exitTransitionTimerInitialized = false;
                 BuildGui();
             }
@@ -828,7 +829,12 @@ void MainMenuPage::Draw(Framework::RenderSystem* render)
 
     gui.Draw(render);
 }
-
+void MainMenuPage::PlayExitSound()
+{
+    auto& sm = SoundManager::getInstance();
+    if (sm.isSoundLoaded(EXIT_BUTTON) && !sm.playSound(EXIT_BUTTON))
+        std::cerr << "[MainMenu] Failed to play exit sound: " << EXIT_BUTTON << "\n";
+}
 // Latch Consumers
 /*************************************************************************************
   \brief  Consume the Start latch, if set.
@@ -1184,6 +1190,7 @@ void MainMenuPage::BuildGui(float x, float bottomY, float w, float h, float spac
             BuildGui();
             };
         else if (btnDef.action == "exit")    callback = [this]() {
+            PlayExitSound();
             showExitTransition = true;
             exitTransitionTimer = kExitTransitionDuration;
             showExitPopup = false;

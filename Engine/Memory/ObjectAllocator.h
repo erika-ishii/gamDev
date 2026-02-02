@@ -1,7 +1,7 @@
 /*********************************************************************************************
  \file      ObjectAllocator.h
  \par       SofaSpuds
- \author    <your name here> - Primary Author, 100%
+ \author   elvisshengjie.lim (elvisshengjie.lim@digipen.edu) - Primary Author, 100% 
 
  \brief     Declares a fixed-size, page-based object allocator used to allocate and free
             objects efficiently without relying on STL containers.

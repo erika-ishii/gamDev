@@ -6,6 +6,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 4.699999809265137,
             "layer": 0,
@@ -35,6 +36,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 4.699999809265137,
             "layer": 0,
@@ -64,6 +66,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.09000000357627869,
             "layer": 0,
@@ -93,6 +96,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.09000000357627869,
             "layer": 0,
@@ -101,7 +105,7 @@
             "w": 6.710000038146973
           },
           "RigidBodyComponent": {
-            "height": 0.09000000357627869,
+            "height": 0.07000000029802322,
             "velocity_x": 0.0,
             "velocity_y": 0.0,
             "width": 6.710000038146973
@@ -109,9 +113,9 @@
           "TransformComponent": {
             "rot": 0.0,
             "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -0.7800065279006958,
-            "y": 0.8999999761581421
+            "scale_y": 1.0279309749603271,
+            "x": -0.7494688034057617,
+            "y": 0.7645788788795471
           }
         },
         "layer": "Gameplay:0",
@@ -122,6 +126,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.5,
             "layer": 0,
@@ -151,6 +156,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.5,
             "layer": 0,
@@ -180,25 +186,26 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.4000000059604645,
             "layer": 0,
             "r": 1.0,
             "visible": false,
-            "w": 4.369999885559082
+            "w": 2.5
           },
           "RigidBodyComponent": {
-            "height": 0.4000000059604645,
+            "height": 0.5,
             "velocity_x": 0.0,
             "velocity_y": 0.0,
-            "width": 4.369999885559082
+            "width": 2.5
           },
           "TransformComponent": {
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": 1.8899999856948853,
-            "y": -0.42800000309944153
+            "x": 0.9599999785423279,
+            "y": -0.47999998927116394
           }
         },
         "layer": "Gameplay:0",
@@ -209,25 +216,26 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.4000000059604645,
             "layer": 0,
             "r": 1.0,
             "visible": false,
-            "w": 4.369999885559082
+            "w": 2.509999990463257
           },
           "RigidBodyComponent": {
-            "height": 0.4000000059604645,
+            "height": 0.5,
             "velocity_x": 0.0,
             "velocity_y": 0.0,
-            "width": 4.369999885559082
+            "width": 2.5
           },
           "TransformComponent": {
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": -3.3000009059906006,
-            "y": -0.4300000071525574
+            "x": -2.369999885559082,
+            "y": -0.47999998927116394
           }
         },
         "layer": "Gameplay:0",
@@ -238,6 +246,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.5,
             "layer": 0,
@@ -246,7 +255,7 @@
             "w": 4.369999885559082
           },
           "RigidBodyComponent": {
-            "height": 0.5,
+            "height": 0.6549999713897705,
             "velocity_x": 0.0,
             "velocity_y": 0.0,
             "width": 4.369999885559082
@@ -255,8 +264,8 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": 1.890020489692688,
-            "y": 0.8199999928474426
+            "x": 1.899999976158142,
+            "y": 0.800000011920929
           }
         },
         "layer": "Gameplay:0",
@@ -267,6 +276,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 1.0,
             "layer": 0,
@@ -275,7 +285,7 @@
             "w": 4.369999885559082
           },
           "RigidBodyComponent": {
-            "height": 0.5,
+            "height": 0.6499999761581421,
             "velocity_x": 0.0,
             "velocity_y": 0.0,
             "width": 4.369999885559082
@@ -285,7 +295,7 @@
             "scale_x": 1.0,
             "scale_y": 1.0,
             "x": -3.2899999618530273,
-            "y": 0.8199999928474426
+            "y": 0.800000011920929
           }
         },
         "layer": "Gameplay:0",
@@ -296,6 +306,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 1.5,
             "layer": -5,
@@ -322,6 +333,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 1.5,
             "layer": -5,
@@ -336,7 +348,7 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": 0.38844847679138184,
+            "x": 0.3884485960006714,
             "y": -1.237348198890686
           }
         },
@@ -348,6 +360,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 1.5,
             "layer": -5,
@@ -374,6 +387,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 1.5,
             "layer": -5,
@@ -389,8 +403,8 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": -2.6120004653930664,
-            "y": 0.40400004386901855
+            "x": -2.6080336570739746,
+            "y": 0.4113007187843323
           }
         },
         "layer": "Background:0",
@@ -401,6 +415,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 1.5,
             "layer": -5,
@@ -415,8 +430,8 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": 0.3850001096725464,
-            "y": 0.4041403532028198
+            "x": 0.3519294261932373,
+            "y": 0.20063436031341553
           }
         },
         "layer": "Background:0",
@@ -427,6 +442,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 1.5,
             "layer": -5,
@@ -453,6 +469,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 1.5,
             "layer": -5,
@@ -479,6 +496,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 1.5,
             "layer": -5,
@@ -505,6 +523,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 1.5,
             "layer": -5,
@@ -531,6 +550,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 1.5,
             "layer": -5,
@@ -557,6 +577,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 1.2000000476837158,
             "layer": -1,
@@ -567,10 +588,10 @@
             "w": 1.5
           },
           "RigidBodyComponent": {
-            "height": 1.0,
+            "height": 0.4000000059604645,
             "velocity_x": 0.0,
             "velocity_y": 0.0,
-            "width": 1.399999976158142
+            "width": 1.0
           },
           "SpriteAnimationComponent": {
             "activeAnimation": 0,
@@ -585,7 +606,7 @@
                   "startFrame": 0,
                   "totalFrames": 6
                 },
-                "currentFrame": 2,
+                "currentFrame": 4,
                 "name": "idle",
                 "spriteSheetPath": "../../assets/Textures/Environment/lvl 1_Hawker/Stores_Left_Sprite.png",
                 "textureKey": "store_left_sheet"
@@ -615,6 +636,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.5,
             "layer": 15,
@@ -629,7 +651,7 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": -0.9690967798233032,
+            "x": -1.0007632970809937,
             "y": -1.664929986000061
           }
         },
@@ -641,6 +663,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.5,
             "layer": 15,
@@ -655,7 +678,7 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": -0.6049721240997314,
+            "x": -0.5949721336364746,
             "y": -1.6877328157424927
           }
         },
@@ -667,6 +690,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.4000000059604645,
             "layer": 15,
@@ -693,6 +717,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.4000000059604645,
             "layer": 15,
@@ -719,6 +744,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.5,
             "layer": 15,
@@ -745,6 +771,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.699999988079071,
             "layer": -3,
@@ -771,6 +798,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.4000000059604645,
             "layer": 15,
@@ -797,6 +825,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.4000000059604645,
             "layer": 15,
@@ -823,6 +852,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.4000000059604645,
             "layer": 15,
@@ -837,7 +867,7 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": -4.047740459442139,
+            "x": -4.054407596588135,
             "y": -0.09893948584794998
           }
         },
@@ -849,6 +879,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.4000000059604645,
             "layer": 15,
@@ -875,6 +906,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.5,
             "layer": -3,
@@ -889,8 +921,8 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": 2.533161163330078,
-            "y": -0.044270798563957214
+            "x": 2.527519941329956,
+            "y": -0.10350251197814941
           }
         },
         "layer": "Background:0",
@@ -901,6 +933,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.699999988079071,
             "layer": -3,
@@ -927,6 +960,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.5,
             "layer": 0,
@@ -957,6 +991,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.5,
             "layer": 0,
@@ -987,6 +1022,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 1.5,
             "layer": -5,
@@ -1002,7 +1038,7 @@
             "scale_x": 1.0,
             "scale_y": 1.0,
             "x": -5.599999904632568,
-            "y": 0.40700000524520874
+            "y": 0.40699997544288635
           }
         },
         "layer": "Background:0",
@@ -1013,6 +1049,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 1.5,
             "layer": -5,
@@ -1039,6 +1076,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 1.5,
             "layer": -5,
@@ -1065,6 +1103,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 1.5,
             "layer": -5,
@@ -1091,6 +1130,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 1.5,
             "layer": -5,
@@ -1117,6 +1157,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 1.5,
             "layer": -5,
@@ -1143,6 +1184,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 1.5,
             "layer": -3,
@@ -1169,6 +1211,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -1195,6 +1238,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.699999988079071,
             "layer": -3,
@@ -1221,6 +1265,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -1236,7 +1281,7 @@
             "scale_x": 1.0,
             "scale_y": 1.0,
             "x": -1.8628461360931396,
-            "y": 0.21400000154972076
+            "y": 0.21399998664855957
           }
         },
         "layer": "Background:0",
@@ -1247,6 +1292,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.699999988079071,
             "layer": -3,
@@ -1273,6 +1319,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.699999988079071,
             "layer": -3,
@@ -1299,6 +1346,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.699999988079071,
             "layer": -3,
@@ -1325,6 +1373,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.699999988079071,
             "layer": -3,
@@ -1351,6 +1400,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.699999988079071,
             "layer": -3,
@@ -1377,6 +1427,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.699999988079071,
             "layer": -3,
@@ -1403,6 +1454,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.699999988079071,
             "layer": -3,
@@ -1429,6 +1481,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.699999988079071,
             "layer": -3,
@@ -1455,6 +1508,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.699999988079071,
             "layer": -3,
@@ -1481,6 +1535,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.699999988079071,
             "layer": -3,
@@ -1507,6 +1562,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.699999988079071,
             "layer": -3,
@@ -1533,6 +1589,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.699999988079071,
             "layer": -3,
@@ -1559,6 +1616,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.699999988079071,
             "layer": -3,
@@ -1585,6 +1643,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.5,
             "layer": 0,
@@ -1614,6 +1673,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.5,
             "layer": 0,
@@ -1643,6 +1703,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.5,
             "layer": 0,
@@ -1672,6 +1733,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.5,
             "layer": 0,
@@ -1701,6 +1763,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.5,
             "layer": 0,
@@ -1730,6 +1793,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.5,
             "layer": 0,
@@ -1759,6 +1823,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.5,
             "layer": 0,
@@ -1788,6 +1853,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.5,
             "layer": 0,
@@ -1817,6 +1883,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -1843,6 +1910,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -1869,6 +1937,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -1895,6 +1964,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -1921,6 +1991,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -1947,6 +2018,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -1973,6 +2045,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -1999,6 +2072,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2025,6 +2099,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2051,6 +2126,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2077,6 +2153,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2103,6 +2180,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2129,6 +2207,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2155,6 +2234,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6800000071525574,
             "layer": -3,
@@ -2169,7 +2249,7 @@
             "rot": 0.0,
             "scale_x": 0.9965156316757202,
             "scale_y": 1.0166406631469727,
-            "x": -4.242000102996826,
+            "x": -4.212778091430664,
             "y": -0.5370000004768372
           }
         },
@@ -2181,6 +2261,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2207,6 +2288,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2233,6 +2315,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2259,6 +2342,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2285,6 +2369,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2311,6 +2396,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2337,6 +2423,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2363,6 +2450,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2389,32 +2477,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 02.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 0.9978437423706055,
-            "scale_y": 1.0107812881469727,
-            "x": 2.4200000762939453,
-            "y": -0.5370000004768372
-          }
-        },
-        "layer": "Background:0",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2441,6 +2504,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2467,6 +2531,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2493,6 +2558,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2519,6 +2585,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2532,9 +2599,9 @@
           "TransformComponent": {
             "rot": 0.0,
             "scale_x": 0.9989655613899231,
-            "scale_y": 1.0075905323028564,
-            "x": -3.4070000648498535,
-            "y": -0.5370000004768372
+            "scale_y": 0.9989655613899231,
+            "x": -3.4084391593933105,
+            "y": -0.5388975143432617
           }
         },
         "layer": "Background:0",
@@ -2545,6 +2612,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2559,8 +2627,8 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": -4.658999919891357,
-            "y": -0.5370000004768372
+            "x": -4.630486965179443,
+            "y": -0.538425624370575
           }
         },
         "layer": "Background:0",
@@ -2571,6 +2639,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2597,6 +2666,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2623,6 +2693,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2649,6 +2720,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2675,6 +2747,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2701,6 +2774,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6800000071525574,
             "layer": -3,
@@ -2727,6 +2801,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2753,6 +2828,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2779,6 +2855,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2805,6 +2882,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2819,8 +2897,8 @@
             "rot": 0.0,
             "scale_x": 0.9992811679840088,
             "scale_y": 0.9992811679840088,
-            "x": -2.990000009536743,
-            "y": -0.5370000004768372
+            "x": -2.9900002479553223,
+            "y": -0.5347549915313721
           }
         },
         "layer": "Background:0",
@@ -2831,6 +2909,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2857,32 +2936,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
-            "g": 1.0,
-            "h": 0.6850000023841858,
-            "layer": -3,
-            "r": 1.0,
-            "visible": true,
-            "w": 0.6850000023841858
-          },
-          "SpriteComponent": {
-            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Store 03.png"
-          },
-          "TransformComponent": {
-            "rot": 0.0,
-            "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -3.822999954223633,
-            "y": -0.5370000004768372
-          }
-        },
-        "layer": "Background:0",
-        "name": "Art_Asset_Forward"
-      },
-      {
-        "Components": {
-          "RenderComponent": {
-            "a": 1.0,
-            "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2909,6 +2963,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2935,6 +2990,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2961,6 +3017,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -2987,6 +3044,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -3013,6 +3071,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -3039,6 +3098,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -3054,7 +3114,7 @@
             "scale_x": 1.0,
             "scale_y": 1.004312515258789,
             "x": 2.002000093460083,
-            "y": -0.5350000262260437
+            "y": -0.558967113494873
           }
         },
         "layer": "Background:0",
@@ -3065,6 +3125,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -3091,6 +3152,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -3117,6 +3179,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.6850000023841858,
             "layer": -3,
@@ -3131,8 +3194,8 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": -1.7359999418258667,
-            "y": -0.5370000004768372
+            "x": -1.7371019124984741,
+            "y": -0.5351024866104126
           }
         },
         "layer": "Background:0",
@@ -3143,6 +3206,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.10000000149011612,
             "layer": 0,
@@ -3151,7 +3215,7 @@
             "w": 1.0
           },
           "RigidBodyComponent": {
-            "height": 0.10000000149011612,
+            "height": 0.25,
             "velocity_x": 0.0,
             "velocity_y": 0.0,
             "width": 1.0
@@ -3159,9 +3223,9 @@
           "TransformComponent": {
             "rot": 0.0,
             "scale_x": 1.0,
-            "scale_y": 1.0,
-            "x": -0.6979166269302368,
-            "y": 0.7656248211860657
+            "scale_y": 0.9944138526916504,
+            "x": -0.6441155672073364,
+            "y": 0.8053983449935913
           },
           "ZoomTriggerComponent": {}
         },
@@ -3176,6 +3240,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 1.100000023841858,
             "layer": 0,
@@ -3186,10 +3251,10 @@
             "w": 1.2999999523162842
           },
           "RigidBodyComponent": {
-            "height": 0.10000000149011612,
+            "height": 0.5,
             "velocity_x": 0.0,
             "velocity_y": 0.0,
-            "width": 0.5
+            "width": 1.0
           },
           "SpriteComponent": {
             "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Gate.png"
@@ -3198,8 +3263,8 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": -0.698845386505127,
-            "y": 0.8658650517463684
+            "x": -0.6943392157554626,
+            "y": 0.8816366791725159
           }
         },
         "layer": "Background:0",
@@ -3273,6 +3338,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.30000001192092896,
             "layer": 0,
@@ -3282,7 +3348,7 @@
           },
           "RigidBodyComponent": {
             "height": 0.10000000149011612,
-            "velocity_x": 0.0,
+            "velocity_x": -0.6000000238418579,
             "velocity_y": 0.0,
             "width": 0.10000000149011612
           },
@@ -3362,8 +3428,8 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": 0.503333330154419,
-            "y": -0.023400306701660156
+            "x": 1.8056002855300903,
+            "y": -0.026206105947494507
           }
         },
         "layer": "Gameplay:0",
@@ -3437,6 +3503,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.30000001192092896,
             "layer": 0,
@@ -3446,7 +3513,7 @@
           },
           "RigidBodyComponent": {
             "height": 0.10000000149011612,
-            "velocity_x": 0.20000000298023224,
+            "velocity_x": -0.6000000238418579,
             "velocity_y": 0.0,
             "width": 0.10000000149011612
           },
@@ -3526,8 +3593,8 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": 0.4666658937931061,
-            "y": -1.1290658712387085
+            "x": -2.689838409423828,
+            "y": 0.05491650104522705
           }
         },
         "layer": "Gameplay:0",
@@ -3597,6 +3664,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.30000001192092896,
             "layer": 0,
@@ -3606,7 +3674,7 @@
           },
           "RigidBodyComponent": {
             "height": 0.10000000149011612,
-            "velocity_x": 0.0,
+            "velocity_x": -0.6000000238418579,
             "velocity_y": 0.0,
             "width": 0.10000000149011612
           },
@@ -3623,7 +3691,7 @@
                   "startFrame": 0,
                   "totalFrames": 9
                 },
-                "currentFrame": 8,
+                "currentFrame": 5,
                 "name": "idle",
                 "spriteSheetPath": "../../assets/Textures/Character/Water Enemy_Sprite/Idle_Sprite.png",
                 "textureKey": "water_idle"
@@ -3632,7 +3700,7 @@
                 "config": {
                   "columns": 11,
                   "endFrame": 10,
-                  "fps": 12.0,
+                  "fps": 18.0,
                   "loop": false,
                   "rows": 1,
                   "startFrame": 0,
@@ -3686,8 +3754,8 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": 0.503333330154419,
-            "y": -1.1407661437988281
+            "x": -2.7146730422973633,
+            "y": -1.1523995399475098
           }
         },
         "layer": "Gameplay:0",
@@ -3757,6 +3825,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.30000001192092896,
             "layer": 0,
@@ -3766,7 +3835,7 @@
           },
           "RigidBodyComponent": {
             "height": 0.10000000149011612,
-            "velocity_x": 0.0,
+            "velocity_x": 0.6000000238418579,
             "velocity_y": 0.0,
             "width": 0.10000000149011612
           },
@@ -3783,7 +3852,7 @@
                   "startFrame": 0,
                   "totalFrames": 9
                 },
-                "currentFrame": 8,
+                "currentFrame": 5,
                 "name": "idle",
                 "spriteSheetPath": "../../assets/Textures/Character/Water Enemy_Sprite/Idle_Sprite.png",
                 "textureKey": "water_idle"
@@ -3792,7 +3861,7 @@
                 "config": {
                   "columns": 11,
                   "endFrame": 10,
-                  "fps": 12.0,
+                  "fps": 18.0,
                   "loop": false,
                   "rows": 1,
                   "startFrame": 0,
@@ -3846,8 +3915,8 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": 0.503333330154419,
-            "y": 0.0
+            "x": 0.8151705265045166,
+            "y": 0.023220926523208618
           }
         },
         "layer": "Gameplay:0",
@@ -3967,6 +4036,7 @@
           "RenderComponent": {
             "a": 1.0,
             "b": 1.0,
+            "blend_mode": "alpha",
             "g": 1.0,
             "h": 0.25,
             "layer": 1,
@@ -3977,7 +4047,7 @@
           "RigidBodyComponent": {
             "height": 0.20999999344348907,
             "velocity_x": 0.0,
-            "velocity_y": 0.0,
+            "velocity_y": 1.401298464324817e-45,
             "width": 0.10000000149011612
           },
           "SpriteAnimationComponent": {
@@ -4008,7 +4078,7 @@
                   "startFrame": 0,
                   "totalFrames": 10
                 },
-                "currentFrame": 0,
+                "currentFrame": 1,
                 "name": "run",
                 "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/Running_Sprite.png",
                 "textureKey": "run_sheet"
@@ -4057,12 +4127,12 @@
                 "name": "attack3",
                 "spriteSheetPath": "../../assets/Textures/Character/Ming_Sprite/3rd_Attack Sprite.png",
                 "textureKey": "attack3_sheet"
-                },
+              },
               {
                 "config": {
                   "columns": 14,
                   "endFrame": 13,
-                  "fps": 12.0,
+                  "fps": 18.0,
                   "loop": false,
                   "rows": 1,
                   "startFrame": 0,
@@ -4116,12 +4186,345 @@
             "rot": 0.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
-            "x": -0.6606656908988953,
-            "y": -1.454952359199524
+            "x": -0.6578298807144165,
+            "y": -1.437958836555481
           }
         },
         "layer": "Gameplay:0",
         "name": "Player"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "blend_mode": "alpha",
+            "g": 1.0,
+            "h": 0.5,
+            "layer": -3,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.5
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Bucket.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -4.036578178405762,
+            "y": 0.12574321031570435
+          }
+        },
+        "layer": "Background:0",
+        "name": "artassetsForward"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "blend_mode": "alpha",
+            "g": 1.0,
+            "h": 0.5,
+            "layer": -5,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.5
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Cleaning_Cart.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -0.18881438672542572,
+            "y": -0.9794185757637024
+          }
+        },
+        "layer": "Background:0",
+        "name": "artassets"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "blend_mode": "alpha",
+            "g": 1.0,
+            "h": 0.4000000059604645,
+            "layer": -5,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.4000000059604645
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Cleaning_Sign_02.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -0.1936578005552292,
+            "y": -1.2304253578186035
+          }
+        },
+        "layer": "Background:0",
+        "name": "artassets"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "blend_mode": "alpha",
+            "g": 1.0,
+            "h": 0.4000000059604645,
+            "layer": -5,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.4000000059604645
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Cleaning_Sign_02.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -0.9633112549781799,
+            "y": -0.5043726563453674
+          }
+        },
+        "layer": "Background:0",
+        "name": "artassets"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "blend_mode": "alpha",
+            "g": 1.0,
+            "h": 0.4000000059604645,
+            "layer": -5,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.4000000059604645
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Bucket.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -0.7754709124565125,
+            "y": -0.4921700954437256
+          }
+        },
+        "layer": "Background:0",
+        "name": "artassets"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "blend_mode": "alpha",
+            "g": 1.0,
+            "h": 0.4000000059604645,
+            "layer": -5,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.4000000059604645
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Cleaning_Sign_02.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -0.589099109172821,
+            "y": -0.5125077366828918
+          }
+        },
+        "layer": "Background:0",
+        "name": "artassets"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "blend_mode": "alpha",
+            "g": 1.0,
+            "h": 0.4000000059604645,
+            "layer": -5,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.4000000059604645
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Bucket.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -0.3897905945777893,
+            "y": -0.4962376356124878
+          }
+        },
+        "layer": "Background:0",
+        "name": "artassets"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "blend_mode": "alpha",
+            "g": 1.0,
+            "h": 0.30000001192092896,
+            "layer": 0,
+            "r": 1.0,
+            "visible": false,
+            "w": 0.8999999761581421
+          },
+          "RigidBodyComponent": {
+            "height": 0.20000000298023224,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 0.8999999761581421
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -0.7029898166656494,
+            "y": -0.4881025552749634
+          }
+        },
+        "layer": "Gameplay:0",
+        "name": "Rect"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "blend_mode": "alpha",
+            "g": 1.0,
+            "h": 0.699999988079071,
+            "layer": 0,
+            "r": 1.0,
+            "visible": false,
+            "w": 0.10000000149011612
+          },
+          "RigidBodyComponent": {
+            "height": 0.699999988079071,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 0.10000000149011612
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -0.2108197659254074,
+            "y": -1.029083013534546
+          }
+        },
+        "layer": "Gameplay:0",
+        "name": "Rect"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "blend_mode": "alpha",
+            "g": 1.0,
+            "h": 0.5,
+            "layer": -5,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.5
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Cleaning_Cart.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": 2.3492658138275146,
+            "y": -0.3356728255748749
+          }
+        },
+        "layer": "Background:0",
+        "name": "artassets"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "blend_mode": "alpha",
+            "g": 1.0,
+            "h": 0.5,
+            "layer": 0,
+            "r": 1.0,
+            "visible": false,
+            "w": 0.5
+          },
+          "RigidBodyComponent": {
+            "height": 0.10000000149011612,
+            "velocity_x": 0.0,
+            "velocity_y": 0.0,
+            "width": 0.5
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": 2.422905921936035,
+            "y": -0.28101402521133423
+          }
+        },
+        "layer": "Gameplay:0",
+        "name": "Rect"
+      },
+      {
+        "Components": {
+          "RenderComponent": {
+            "a": 1.0,
+            "b": 1.0,
+            "blend_mode": "alpha",
+            "g": 1.0,
+            "h": 0.4000000059604645,
+            "layer": -5,
+            "r": 1.0,
+            "visible": true,
+            "w": 0.4000000059604645
+          },
+          "SpriteComponent": {
+            "texture_key": "Assets/Textures/Environment/lvl 1_Hawker/Cleaning_Sign_02.png"
+          },
+          "TransformComponent": {
+            "rot": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "x": -0.2057948261499405,
+            "y": -0.8079298138618469
+          }
+        },
+        "layer": "Background:0",
+        "name": "artassets"
       }
     ],
     "name": "level_RealTutorial"

@@ -402,6 +402,12 @@ namespace Framework {
         }
         else if (rb && rb->knockbackTime > 0.0f)
         {
+            if (animState != AnimState::Knockback)
+            {
+                pendingThrow.active = false;
+                throwRequestQueued = false;
+                attackTimer = 0.f;
+            }
             SetAnimState(AnimState::Knockback);
         }
         // If we are in an attack animation, let it run to completion.
@@ -850,24 +856,22 @@ namespace Framework {
                 }
                 else
                 {
-                    // Stop movement during attacks
-                    if (IsAttackState(animState))
+                    float forwardX = (rc) ? ((rc->w >= 0.0f) ? 1.0f : -1.0f) : 1.0f;
+                    float speedModifier = 1.0f;
+                    if ((input.IsKeyHeld(GLFW_KEY_D) && forwardX < 0) ||
+                        (input.IsKeyHeld(GLFW_KEY_A) && forwardX > 0))
                     {
-                        rb->velX = 0.0f;
-                        rb->velY = 0.0f;
+                        speedModifier = 0.75f; 
                     }
-                    else
-                    {
-                        if (input.IsKeyHeld(GLFW_KEY_D)) rb->velX = std::max(rb->velX, 1.f);
-                        if (input.IsKeyHeld(GLFW_KEY_A)) rb->velX = std::min(rb->velX, -1.f);
-                        if (!input.IsKeyHeld(GLFW_KEY_A) && !input.IsKeyHeld(GLFW_KEY_D))
-                            rb->velX *= rb->dampening;
+                    if (input.IsKeyHeld(GLFW_KEY_D)) rb->velX = std::max(rb->velX, 1.f * speedModifier);
+                    if (input.IsKeyHeld(GLFW_KEY_A)) rb->velX = std::min(rb->velX, -1.f * speedModifier);
 
-                        if (input.IsKeyHeld(GLFW_KEY_W)) rb->velY = std::max(rb->velY, 1.f);
-                        if (input.IsKeyHeld(GLFW_KEY_S)) rb->velY = std::min(rb->velY, -1.f);
-                        if (!input.IsKeyHeld(GLFW_KEY_W) && !input.IsKeyHeld(GLFW_KEY_S))
-                            rb->velY *= rb->dampening;
-                    }
+                    if (!input.IsKeyHeld(GLFW_KEY_A) && !input.IsKeyHeld(GLFW_KEY_D))
+                        rb->velX *= rb->dampening;
+                    if (input.IsKeyHeld(GLFW_KEY_W)) rb->velY = std::max(rb->velY, 1.f);
+                    if (input.IsKeyHeld(GLFW_KEY_S)) rb->velY = std::min(rb->velY, -1.f);
+                    if (!input.IsKeyHeld(GLFW_KEY_W) && !input.IsKeyHeld(GLFW_KEY_S))
+                        rb->velY *= rb->dampening;
                 }
    
             }
@@ -891,6 +895,14 @@ namespace Framework {
             if (throwCooldownTimer > 0.0f)
             {
                 throwCooldownTimer = std::max(0.0f, throwCooldownTimer - dt);
+            }
+            if (input.IsMousePressed(GLFW_MOUSE_BUTTON_RIGHT))
+            {
+                throwRequestQueued = true;
+            }
+            if (input.IsMouseReleased(GLFW_MOUSE_BUTTON_RIGHT))
+            {
+                throwRequestQueued = false;
             }
 
             // Handle attack input: spawn through PlayerAttackComponent only (single source of truth).
@@ -923,7 +935,7 @@ namespace Framework {
                 }
 
             }
-            else if (playerHealth && !playerHealth->isDead && input.IsMousePressed(GLFW_MOUSE_BUTTON_RIGHT) && attack && tr && rc)
+            else if (playerHealth && !playerHealth->isDead && throwRequestQueued && attack && tr && rc)
             {
                 const bool canThrow = throwCooldownTimer <= 0.0f && !pendingThrow.active && !IsAttackState(animState);
 
@@ -946,6 +958,7 @@ namespace Framework {
 
                     BeginThrowAttack();
                     throwCooldownTimer = std::max(throwCooldownTimer, AttackDurationForState(AnimState::Throw));
+                    throwRequestQueued = false;
                 }
             }
 

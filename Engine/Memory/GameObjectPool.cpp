@@ -1,7 +1,7 @@
 /*********************************************************************************************
  \file      GameObjectPool.cpp
  \par       SofaSpuds
- \author    <your name here> - Primary Author, 100%
+ \author    elvisshengjie.lim (elvisshengjie.lim@digipen.edu) - Primary Author, 100% 
 
  \brief     Implements GameObjectPool, a pooled allocation service for GameObjectComposition (GOC).
 

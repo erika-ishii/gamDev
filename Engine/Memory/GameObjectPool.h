@@ -1,7 +1,7 @@
 /*********************************************************************************************
  \file      GameObjectPool.h
  \par       SofaSpuds
- \author    <your name here> - Primary Author, 100%
+ \author    elvisshengjie.lim (elvisshengjie.lim@digipen.edu) - Primary Author, 100% 
 
  \brief     Declares GameObjectPool, a pooled allocation utility for GameObjectComposition (GOC)
             instances using the custom ObjectAllocator system.

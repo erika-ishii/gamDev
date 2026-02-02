@@ -1,7 +1,7 @@
 /*********************************************************************************************
  \file      LayerPanel.h
  \par       SofaSpuds
- \author   Elvis
+ \author  elvisshengjie.lim (elvisshengjie.lim@digipen.edu) - Primary Author, 100% 
 
  \brief     Declares the ImGui panel for managing layer visibility and spawn layer selection.
 

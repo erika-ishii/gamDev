@@ -4,7 +4,7 @@
  \author    Ho Jun (h.jun@digipen.edu) - Primary Author, 100%
  \brief     Lightweight 2D physics step: AABB moves/collisions + enemy hitbox damage.
  \details   Updates Transform by RigidBody velocity (dt) with axis-separated AABB tests
-            against same-layer “rect?walls, then checks active EnemyAttack hitboxes
+            against same-layer rigidbodies (excluding zoom triggers), then checks active EnemyAttack hitboxes
             against player AABBs to apply damage (via PlayerHealthComponent) and
             deactivate the hitbox after a successful hit. Includes simple layer filtering
             and case-insensitive wall name checks; printing to stdout for quick debugging.
@@ -49,7 +49,7 @@ namespace Framework {
               then process enemy hitboxes vs players and apply damage.
       \param  dt  Delta time (seconds).
       \note   Movement is axis-separated: X and Y are tested independently for wall hits.
-              Walls are identified by object name "rect" (case-insensitive) on the same layer.
+               Solid collisions apply to any same-layer RigidBodyComponent (zoom triggers excluded).
               Enemy hitboxes are one-shot: after a hit, the hurtbox is deactivated.
     *************************************************************************************/
     void PhysicSystem::Update(float dt)
@@ -66,11 +66,29 @@ namespace Framework {
 
         auto& objects = FACTORY->Objects();
 
-        // Build the uniform grid
+        // Build the uniform grid from the current frame snapshot so every body sees
+        // all potential neighbors regardless of iteration order.
         m_grid.Clear();
-
-        // --- Kinematic step with AABB collisions against walls on the same layer ----------
         auto& layers = FACTORY->Layers();
+        for (auto& [id, obj] : objects)
+        {
+            if (!obj)
+                continue;
+
+            const LayerKey objectLayer = layers.LayerKeyFor(obj->GetId());
+            if (!layers.IsLayerEnabled(objectLayer))
+                continue;
+
+            auto* rb = obj->GetComponentType<RigidBodyComponent>(ComponentTypeId::CT_RigidBodyComponent);
+            auto* tr = obj->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
+            if (!rb || !tr)
+                continue;
+
+            AABB box(tr->x, tr->y, rb->width, rb->height);
+            m_grid.Insert(id, box);
+        }
+        // --- Kinematic step with AABB collisions against solid bodies on the same layer ----------
+
         for (auto& [id, obj] : objects)
         {
             if (!obj)
@@ -91,8 +109,7 @@ namespace Framework {
             if (!rb || !tr)
                 continue;
 
-            AABB box(tr->x, tr->y, rb->width, rb->height);
-            m_grid.Insert(id, box);
+
             // ------------------------------
             // START OF KNOCKBACK APPLICATION 
             // ------------------------------
@@ -119,8 +136,7 @@ namespace Framework {
                 rb->width, std::fabs(newY - tr->y) + rb->height);
 
 
-
-            // Sweep all objects on the same layer, checking only “rect?walls
+            // Sweep all objects on the same layer, checking solid rigidbodies.
             
             // Replaced with a model.
             // Explanation: The old code USED TO check every other object in the world,
@@ -152,13 +168,14 @@ namespace Framework {
                 if (!rbO || !trO)
                     continue;
 
-        // -------------------------------------------------
-        // 1) Zoom trigger logic (does NOT block movement)
-        // -------------------------------------------------
-                if (isPlayer) // only player should trigger zoom
+                // -------------------------------------------------
+                // 1) Zoom trigger logic (does NOT block movement)
+                // -------------------------------------------------
+                auto* zoom = otherObj->GetComponentType<ZoomTriggerComponent>(
+                    ComponentTypeId::CT_ZoomTriggerComponent);
+                if (zoom)
                 {
-                    if (auto* zoom = otherObj->GetComponentType<ZoomTriggerComponent>(
-                        ComponentTypeId::CT_ZoomTriggerComponent))
+                    if (isPlayer) // only player should trigger zoom
                     {
                         // AABB for player at new position
                         AABB playerBoxTrigger(newX, newY, rb->width, rb->height);
@@ -185,29 +202,23 @@ namespace Framework {
                             }
                         }
                     }
+                    // Zoom triggers should not block movement.
+                    continue;
                 }
 
                 // -------------------------------------------------
-                // 2) Wall collision (existing code)
+                // 2) Solid collision (same-layer rigidbodies)
                 // -------------------------------------------------
 
-                // Case-insensitive name check for walls
-                std::string otherName = otherObj->GetObjectName();
-                std::transform(otherName.begin(), otherName.end(), otherName.begin(),
-                    [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
-                if (otherName != "rect" && otherName != "invisiblehitbox")
-                    continue;
-
-                AABB wallBox(trO->x, trO->y, rbO->width, rbO->height);
+                AABB otherBox(trO->x, trO->y, rbO->width, rbO->height);
                 // Resolve X then Y independently
-                if (Collision::CheckCollisionRectToRect(playerBoxX, wallBox))
+                if (Collision::CheckCollisionRectToRect(playerBoxX, otherBox))
                 {
                     newX = tr->x;
                     rb->velX = 0.0f;
                     rb->knockVelX = 0.0f;   // ← cancel knockback on X
                 }
-
-                if (Collision::CheckCollisionRectToRect(playerBoxY, wallBox))
+                if (Collision::CheckCollisionRectToRect(playerBoxY, otherBox))
                 {
                     newY = tr->y;
                     rb->velY = 0.0f;

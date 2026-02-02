@@ -1,7 +1,7 @@
 ﻿/*********************************************************************************************
  \file      LayerPanel.cpp
  \par       SofaSpuds
- \author    SofaSpuds Team
+ \author    elvisshengjie.lim (elvisshengjie.lim@digipen.edu) - Primary Author, 100% 
 
  \brief     Implements the ImGui panel for layer visibility and spawn layer selection.
 

@@ -28,6 +28,7 @@ namespace gfx {
             glm::vec4 tint{ 1.0f, 1.0f, 1.0f, 1.0f };
             glm::vec4 uv{ 0.0f, 0.0f, 1.0f, 1.0f };
         };
+        static const glm::mat4& GetViewProjectionMatrix();
         /**
          * \brief Load a 2D texture from disk (stb_image) and set basic filtering/wrap.
          * \param path Filesystem path.

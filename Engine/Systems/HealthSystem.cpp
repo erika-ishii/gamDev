@@ -27,6 +27,7 @@
 #include "RenderSystem.h"
 #include "Systems/ParticleSystem.h"
 #include <algorithm>
+#include <cmath>
 #include <cctype>
 #include <iostream>
 #include <string_view>
@@ -221,6 +222,8 @@ namespace Framework
 
         RefreshTrackedObjects();
     }
+    
+   
 
     void HealthSystem::Update(float dt)
     {
@@ -396,7 +399,20 @@ namespace Framework
                 }),
             gameObjectIds.end());
     }
+    auto WorldToScreenUI = [](float worldX, float worldY, int screenW, int screenH, const glm::mat4& vpMatrix)
+    {
+            glm::vec4 clipPos = vpMatrix * glm::vec4(worldX, worldY, 0.0f, 1.0f);
 
+            if (clipPos.w == 0.0f)
+                return std::make_pair(-100.0f, -100.0f); // off-screen fallback
+
+            glm::vec3 ndc = glm::vec3(clipPos) / clipPos.w; // normalized device coords [-1,1]
+
+            float x = (ndc.x * 0.5f + 0.5f) * screenW;
+            float y = (ndc.y * 0.5f + 0.5f) * screenH;
+
+            return std::make_pair(x, y);
+    };
     void HealthSystem::draw()
     {
         if (!window)
@@ -406,7 +422,8 @@ namespace Framework
         int viewportW = 0;
         int viewportH = 0;
         bool hasViewport = false;
-        if (auto* renderer = RenderSystem::Get())
+        auto* renderer = RenderSystem::Get();
+        if (renderer)
         {
             hasViewport = renderer->GetGameViewportRect(viewportX, viewportY, viewportW, viewportH);
         }
@@ -439,7 +456,70 @@ namespace Framework
 
             hud->Update(lastDt);
             hud->Draw(viewportW, viewportH);
+     
         }
+        
+        for (GOCId id : gameObjectIds)
+        {
+            GOC* goc = FACTORY->GetObjectWithId(id);
+            if (!goc)
+                continue;
+            auto* enemyHealth =
+                goc->GetComponentType<EnemyHealthComponent>(ComponentTypeId::CT_EnemyHealthComponent);
+            auto* transform =
+                goc->GetComponentType<TransformComponent>(ComponentTypeId::CT_TransformComponent);
+            auto* render =
+                goc->GetComponentType<RenderComponent>(ComponentTypeId::CT_RenderComponent);
+
+            if (!enemyHealth || !transform)
+                continue;
+            // Offset above enemy head (pixels)
+            const float scaleY = std::max(1.0f, std::fabs(transform->scaleY));
+            float baseHeight = scaleY;
+            if (render)
+            {
+                baseHeight = std::max(1.0f, std::fabs(render->h * transform->scaleY));
+            }
+  
+            const float halfHeight = baseHeight * 0.5f;
+
+            // reduce distance (try 0.30f ~ 0.45f)
+            float worldOffsetY = halfHeight * 0.35f;
+            float worldY = transform->y + worldOffsetY;
+            float worldX = transform->x;
+            const glm::mat4& viewProjection =
+                renderer ? renderer->GetWorldViewProjectionMatrix() : gfx::Graphics::GetViewProjectionMatrix();
+            auto screenPos = WorldToScreenUI(worldX, worldY, viewportW, viewportH,
+                viewProjection);
+            float screenX = screenPos.first;
+            float screenY = screenPos.second;
+
+            // Health bar dimensions
+            float barWidth = viewportW * 0.05f;  // 5% of screen width
+            float barHeight = viewportH * 0.015f; // 1.5% of screen height
+
+            float healthRatio = 0.0f;
+            if (enemyHealth->enemyMaxhealth > 0)
+            {
+                healthRatio = float(enemyHealth->enemyHealth) / float(enemyHealth->enemyMaxhealth);
+            }
+            if (healthRatio < 0.0f) healthRatio = 0.0f;
+            if (healthRatio > 1.0f) healthRatio = 1.0f;
+
+            // Background (grey)
+            gfx::Graphics::renderRectangleUI(screenX - barWidth / 2, screenY - barHeight / 2,
+                barWidth, barHeight,
+                0.2f, 0.2f, 0.2f, 1.0f,
+                viewportW, viewportH);
+
+            // Foreground (green)
+            gfx::Graphics::renderRectangleUI(screenX - barWidth / 2, screenY - barHeight / 2,
+                barWidth * healthRatio, barHeight,
+                0.0f, 1.0f, 0.0f, 1.0f,
+                viewportW, viewportH);
+
+        }
+       
         glViewport(0, 0, window->Width(), window->Height());
     }
 

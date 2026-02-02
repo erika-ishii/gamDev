@@ -1,3 +1,24 @@
+﻿/*********************************************************************************************
+ \file      UniformGrid.h
+ \par       SofaSpuds
+ \author    Ho Jun (h.jun@digipen.edu) - Primary Author, 100%
+ \brief		Provides a uniform spatial partitioning structure for broad-phase collision
+			detection in 2D space.
+ \details	Divides the world into fixed-size square cells and maps game object IDs to
+			the cells overlapped by their axis-aligned bounding boxes (AABBs). Used as
+			a broad-phase accelerator to reduce the number of narrow-phase collision
+			checks by querying only nearby objects instead of the full scene.
+
+			The grid is typically rebuilt each physics update (Clear → Insert) and
+			queried using an AABB that represents either an object's current bounds
+			or its swept volume for continuous collision detection. Designed to be
+			owned and managed by the PhysicSystem as an internal helper, without
+			direct knowledge of game objects or components.
+ \copyright
+			All content ©2025 DigiPen Institute of Technology Singapore.
+			All rights reserved.
+*********************************************************************************************/
+
 #pragma once
 #include <unordered_map>
 #include <vector>

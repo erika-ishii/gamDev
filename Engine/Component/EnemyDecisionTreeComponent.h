@@ -64,7 +64,7 @@ namespace Framework {
     {
     public:
         std::unique_ptr<DecisionTree> tree;  ///< The decision tree controlling enemy behavior.
-        float dir = 1.0f;                    ///< Movement direction (1.0 for right, -1.0 for left).
+        float dir = 0.0f;                    ///< Movement direction (1.0 for right, -1.0 for left).
         float pauseTimer = 0.0f;             ///< Timer used for brief pauses between AI actions.
         float chaseSpeed = 0.0f;             ///< Current speed while chasing the player.
         float chaseTimer = 0.0f;             ///< Accumulated time spent in chase mode.
@@ -75,6 +75,14 @@ namespace Framework {
         float rangedAttackTimer = 0.0f;      ///< Timer tracking ranged attack animation elapsed time.
         float rangedAttackDuration = 0.0f;   ///< Cached duration for the ranged attack animation.
         bool hasSeenPlayer = false;          ///< Tracks whether the enemy has detected the player.
+        float prevX = 0.0f;
+        float prevY = 0.0f;
+        float stuckXTimer = 0.0f;  // how long X has been stuck
+        float stuckYTimer = 0.0f;  // how long Y has been stuck
+        const float stuckThreshold = 0.2f; // seconds before trying alternative axis
+        float patrolOriginX = 0.0f; //patrol origin x
+        float patrolOriginY = 0.0f;// patrol origin y
+        bool patrolOriginSet = false; // set patrol origin
         Facing facing = Facing::RIGHT;
 
         EnemyDecisionTreeComponent() = default;
@@ -87,7 +95,20 @@ namespace Framework {
               - Logs a debug message upon successful initialization.
         *************************************************************************************/
         void initialize() override
-        {std::cout << "[EnemyDecisionTreeComponent] Tree initialized.\n";   }
+        {
+            patrolOriginSet = false;
+            patrolOriginX = 0.0f;
+            patrolOriginY = 0.0f;
+
+            chaseTimer = 0.0f;
+            retreatTimer = 0.0f;
+            pauseTimer = 0.0f;
+            hasSeenPlayer = false;
+            dir = 1.0f;
+            prevX = prevY = 0.0f;
+            stuckXTimer = stuckYTimer = 0.0f;
+            std::cout << "[EnemyDecisionTreeComponent] Tree initialized.\n";   
+        }
 
         /*************************************************************************************
           \brief Handles incoming messages sent to this component.
