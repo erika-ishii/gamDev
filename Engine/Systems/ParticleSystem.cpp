@@ -15,8 +15,12 @@
 
 #include "Component/CircleRenderComponent.h"
 #include "Component/TransformComponent.h"
+#include "Component/RenderComponent.h"
+#include "Component/SpriteComponent.h"
 #include "Common/ComponentTypeID.h"
 #include "Factory/Factory.h"
+#include "Resource_Asset_Manager/Resource_Manager.h"
+#include "Core/PathUtils.h"
 
 #include <algorithm>
 #include <cmath>
@@ -89,8 +93,16 @@ namespace Framework {
                 ComponentTypeId::CT_TransformComponent);
             auto* circle = obj->GetComponentType<CircleRenderComponent>(
                 ComponentTypeId::CT_CircleRenderComponent);
+            auto* rc = obj->GetComponentType<RenderComponent>(
+                ComponentTypeId::CT_RenderComponent);
+            auto* sprite = obj->GetComponentType<SpriteComponent>(
+                ComponentTypeId::CT_SpriteComponent);
 
-            if (!tr || !circle)
+            const bool wantsSprite = (particle.visual == ParticleVisual::Sprite);
+            const bool hasSprite = (rc && sprite);
+            const bool hasCircle = (circle != nullptr);
+
+            if (!tr || (wantsSprite ? !hasSprite : !hasCircle))
             {
                 FACTORY->Destroy(obj);
                 eraseParticle(index);
@@ -101,9 +113,18 @@ namespace Framework {
             tr->y += particle.velocity.y * dt;
 
             const float t = 1.0f - (particle.life / std::max(particle.totalLife, 0.001f));
-            circle->radius = particle.startRadius + (particle.endRadius - particle.startRadius) * t;
-            circle->a = particle.startAlpha + (particle.endAlpha - particle.startAlpha) * t;
-
+            if (wantsSprite)
+            {
+                const float size = particle.startSize + (particle.endSize - particle.startSize) * t;
+                rc->w = size;
+                rc->h = size;
+                rc->a = particle.startAlpha + (particle.endAlpha - particle.startAlpha) * t;
+            }
+            else
+            {
+                circle->radius = particle.startRadius + (particle.endRadius - particle.startRadius) * t;
+                circle->a = particle.startAlpha + (particle.endAlpha - particle.startAlpha) * t;
+            }
             particle.velocity *= (1.0f - std::min(dt * 1.5f, 0.9f));
 
             ++index;
@@ -149,6 +170,7 @@ namespace Framework {
 
             Particle particle{};
             particle.id = particleObj->GetId();
+            particle.visual = ParticleVisual::Circle;
             particle.velocity = { std::cos(angle) * speed, std::sin(angle) * speed + 0.05f };
             particle.totalLife = lifeDist(rng);
             particle.life = particle.totalLife;
@@ -160,5 +182,72 @@ namespace Framework {
             particles.push_back(particle);
         }
     }
+
+    void ParticleSystem::SpawnRunParticles(const glm::vec2& worldPos, float facingDir, std::size_t count)
+    {
+        if (!FACTORY || count == 0)
+            return;
+        constexpr const char* kRunParticleKey = "particle_ui";
+        constexpr const char* kRunParticlePath = "Textures/UI/Particle.png";
+
+        if (!Resource_Manager::getTexture(kRunParticleKey))
+        {
+            const auto resolved = ResolveAssetPath(kRunParticlePath);
+            const std::string pathStr = resolved.empty() ? std::string(kRunParticlePath) : resolved.string();
+            Resource_Manager::load(kRunParticleKey, pathStr);
+        }
+
+        const float dir = (facingDir >= 0.0f) ? 1.0f : -1.0f;
+        std::uniform_real_distribution<float> speedDist(0.05f, 0.18f);
+        std::uniform_real_distribution<float> lifeDist(0.2f, 0.35f);
+        std::uniform_real_distribution<float> sizeDist(0.04f, 0.07f);
+        std::uniform_real_distribution<float> jitterDist(-0.015f, 0.015f);
+        std::uniform_real_distribution<float> riseDist(0.01f, 0.06f);
+
+        for (std::size_t i = 0; i < count; ++i)
+        {
+            GOC* particleObj = FACTORY->CreateEmptyComposition();
+            if (!particleObj)
+                continue;
+
+            particleObj->SetObjectName("RunParticle");
+
+            auto* tr = particleObj->EmplaceComponent<TransformComponent>(
+                ComponentTypeId::CT_TransformComponent);
+            tr->x = worldPos.x + (-dir * 0.08f) + jitterDist(rng);
+            tr->y = worldPos.y - 0.03f + jitterDist(rng);
+
+            auto* rc = particleObj->EmplaceComponent<RenderComponent>(
+                ComponentTypeId::CT_RenderComponent);
+            const float baseSize = sizeDist(rng);
+            rc->w = baseSize;
+            rc->h = baseSize;
+            rc->r = 1.0f;
+            rc->g = 1.0f;
+            rc->b = 1.0f;
+            rc->a = 0.7f;
+            
+
+            auto* sp = particleObj->EmplaceComponent<SpriteComponent>(
+                ComponentTypeId::CT_SpriteComponent);
+            sp->texture_key = kRunParticleKey;
+            sp->texture_id = Resource_Manager::getTexture(kRunParticleKey);
+            const float speed = speedDist(rng);
+
+            Particle particle{};
+            particle.id = particleObj->GetId();
+            particle.visual = ParticleVisual::Sprite;
+            particle.velocity = { -dir * speed + jitterDist(rng), riseDist(rng) };
+            particle.totalLife = lifeDist(rng);
+            particle.life = particle.totalLife;
+            particle.startSize = baseSize;
+            particle.endSize = baseSize * 1.5f;
+            particle.startAlpha = rc->a;
+            particle.endAlpha = 0.0f;
+
+            particles.push_back(particle);
+        }
+    }
+
 
 } // namespace Framework

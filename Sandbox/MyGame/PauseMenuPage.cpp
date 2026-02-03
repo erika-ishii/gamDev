@@ -749,7 +749,7 @@ void PauseMenuPage::Draw(Framework::RenderSystem* render)
 
         for (size_t i = 0; i < howToRows.size(); ++i) {
             // Icons bigger for first two, labels slightly smaller for first two (same as MainMenu)
-            const float iconScale = (i < 2) ? 1.15f : 1.0f;
+            const float iconScale = (i == 0) ? 1.5f : (i < 2 ? 1.15f : (i == 2 ? 1.1f : 1.0f));
             const float labelScale = (i < 2) ? 0.55f : 1.0f;
 
             const float iconHeight = iconHeightBase * iconScale;
@@ -778,14 +778,17 @@ void PauseMenuPage::Draw(Framework::RenderSystem* render)
                 const float iconW = iconHeight * iconAspectVal;
 
                 // Nudge WASD/ESC left (same as MainMenu)
-                const float iconNudgeLeft = (i < 2) ? howToPopup.w * 0.12f : 0.0f;
+                float iconNudgeLeft = 0.0f;
+                if (i == 0) iconNudgeLeft = howToPopup.w * 0.18f;
+                else if (i == 1) iconNudgeLeft = howToPopup.w * 0.12f;
+                else if (i == 2) iconNudgeLeft = howToPopup.w * 0.06f;
                 const float iconX = iconAnchorX - iconW - iconNudgeLeft;
 
                 // Per-row icon vertical tweaks (copied from MainMenu)
                 float iconOffsetY = 0.0f;
-                if (i == 0)      iconOffsetY = howToPopup.h * 0.08f;
+                if (i == 0)      iconOffsetY = howToPopup.h * 0.05f;
                 else if (i == 1) iconOffsetY = howToPopup.h * 0.08f;
-                else if (i == 2) iconOffsetY = howToPopup.h * 0.08f;
+                else if (i == 2) iconOffsetY = howToPopup.h * 0.10f;
                 else if (i == 3) iconOffsetY = howToPopup.h * 0.04f;
 
                 float finalIconY = iconY + iconOffsetY;
@@ -1076,8 +1079,8 @@ void PauseMenuPage::SyncLayout(int screenW, int screenH)
     const float popupX = (static_cast<float>(sw) - popupWf) * 0.58f;
     const float popupY = (static_cast<float>(sh) - popupHf) * 0.5f;
     const float popupCloseSize = std::min(popupWf, popupHf) * 0.14f;
-    howToCloseBtn = { popupX + popupWf - popupCloseSize * 0.85f,
-        popupY + popupHf - popupCloseSize * 0.75f,
+    howToCloseBtn = { popupX + popupWf - popupCloseSize * 2.5f,
+        popupY + popupHf - popupCloseSize * 1.3f,
         popupCloseSize,
         popupCloseSize };
     howToPopup = { popupX, popupY, popupWf, popupHf };

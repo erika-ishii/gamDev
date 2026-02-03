@@ -785,7 +785,7 @@ void MainMenuPage::Draw(Framework::RenderSystem* render)
 
         for (size_t i = 0; i < howToRows.size(); ++i) {
             // Icons bigger for first two, labels smaller for first two to match visual style
-            const float iconScale = (i < 2) ? 1.15f : 1.0f;
+            const float iconScale = (i == 0) ? 1.55f : (i == 1 ? 1.65f : (i == 2 ? 1.55f : (i == 3 ? 1.55f : 1.0f)));
             const float labelScale = (i < 2) ? 0.55f : 1.0f;
 
             const float iconHeight = iconHeightBase * iconScale;
@@ -799,7 +799,7 @@ void MainMenuPage::Draw(Framework::RenderSystem* render)
             float labelOffsetY = 0.0f;
 
             if (i == 0)       labelOffsetY = -howToPopup.h * -0.05f;   // move DOWN slightly
-            else if (i == 1)  labelOffsetY = -howToPopup.h * -0.075f;
+            else if (i == 1)  labelOffsetY = -howToPopup.h * -0.085f;
             else if (i == 2)  labelOffsetY = -howToPopup.h * -0.08f;
             else if (i == 3)  labelOffsetY = -howToPopup.h * -0.04f;
 
@@ -816,16 +816,21 @@ void MainMenuPage::Draw(Framework::RenderSystem* render)
                     (static_cast<float>(rows) / static_cast<float>(cols));
                 const float iconW = iconHeight * iconAspectVal;
 
-                const float iconNudgeLeft = (i < 2) ? howToPopup.w * 0.12f : 0.0f;
+                float iconNudgeLeft = 0.0f;
+                
+                if (i == 0) iconNudgeLeft = howToPopup.w * 0.18f;
+                else if (i == 1) iconNudgeLeft = howToPopup.w * 0.15f;
+                else if (i == 2) iconNudgeLeft = howToPopup.w * 0.12f;
+                else if (i == 3) iconNudgeLeft = howToPopup.w * 0.11f;
                 const float iconX = iconAnchorX - iconW - iconNudgeLeft;
 
                 // --- Per-row vertical icon offset ---
                 float iconOffsetY = 0.0f;
 
-                if (i == 0)      iconOffsetY = howToPopup.h * 0.08f;
-                else if (i == 1) iconOffsetY = howToPopup.h * 0.08f;
+                if (i == 0)      iconOffsetY = howToPopup.h * 0.05f;
+                else if (i == 1) iconOffsetY = howToPopup.h * 0.09f;
                 else if (i == 2) iconOffsetY = howToPopup.h * 0.08f;
-                else if (i == 3) iconOffsetY = howToPopup.h * 0.04f;
+                else if (i == 3) iconOffsetY = howToPopup.h * 0.05f;
 
                 float finalIconY = iconY + iconOffsetY;
 
@@ -967,7 +972,7 @@ void MainMenuPage::SyncLayout(int screenW, int screenH)
     howToPopup = { popupX, popupY, popupW, popupH };
 
     const float closeSize = std::min(popupW, popupH) * 0.14f;
-    closeBtn = { popupX + popupW - closeSize * 0.85f, popupY + popupH - closeSize * 0.75f, closeSize, closeSize };
+    closeBtn = { popupX + popupW - closeSize * 2.5f, popupY + popupH - closeSize * 1.3f, closeSize, closeSize };
     auto textureAspect = [](unsigned tex, float fallback)
         {
             int texW = 0, texH = 0;
@@ -1034,17 +1039,26 @@ void MainMenuPage::SyncLayout(int screenW, int screenH)
         const float labelH = labelHeightBase;
         const float labelAspect = textureAspect(labelTextures[i], 2.6f);
         const float labelW = labelH * labelAspect;
-        const float labelY = rowBaseY + rowHeight * 0.52f;
-        const float sliderY = rowBaseY + rowHeight * 0.18f;
-
+        float labelY = rowBaseY + rowHeight * 0.52f;
+        if (i == 0) labelY += rowHeight * 0.16f;
+        if (i == 1) labelY += rowHeight * 0.16f;
+        if (i == 2) labelY += rowHeight * 0.16f;
+        if (i == 3) labelY += rowHeight * 0.16f;
+        float sliderY = rowBaseY + rowHeight * 0.18f;
+        if (i == 0) sliderY += rowHeight * 0.15f;
+        if (i == 1) sliderY += rowHeight * 0.15f;
+        if (i == 2) sliderY += rowHeight * 0.11f;
+        if (i == 3) sliderY += rowHeight * 0.08f;
         optionsLabelRects[i] = { labelX, labelY, labelW, labelH };
-        optionsSliderRects[i] = { sliderX, sliderY, sliderW, sliderHeight };
+        float sliderXOffset = 0.0f;
+        if (i == 3) sliderXOffset = optionsPopupW * 0.02f;
+        optionsSliderRects[i] = { sliderX + sliderXOffset, sliderY, sliderW, sliderHeight };
 
         const float knobSize = sliderHeight * 2.1f;
         const float value = std::clamp(optionsSliderValues[i], 0.0f, 1.0f);
         const float fillW = sliderW * value;
-        const float knobX = sliderX + fillW - knobSize * 0.5f;
-        optionsSliderFillRects[i] = { sliderX, sliderY, fillW, sliderHeight };
+        const float knobX = sliderX + sliderXOffset + fillW - knobSize * 0.5f;
+        optionsSliderFillRects[i] = { sliderX + sliderXOffset, sliderY, fillW, sliderHeight };
         optionsSliderKnobRects[i] = { knobX, sliderY - (knobSize - sliderHeight) * 0.5f, knobSize, knobSize };
     }
 
@@ -1112,8 +1126,8 @@ void MainMenuPage::SyncLayout(int screenW, int screenH)
 
 
     const float exitCloseSize = std::min(exitPopupW, exitPopupH) * 0.13f;
-    exitCloseBtn = { exitPopupX + exitPopupW - exitCloseSize * 0.82f,
-        exitPopupY + exitPopupH - exitCloseSize * 0.78f,
+    exitCloseBtn = { exitPopupX + exitPopupW - exitCloseSize * 3.3f,
+        exitPopupY + exitPopupH - exitCloseSize * 1.4f,
         exitCloseSize, exitCloseSize };
 
     const float exitBtnHeight = exitPopupH * 0.18f;

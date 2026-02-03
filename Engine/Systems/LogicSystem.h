@@ -186,6 +186,7 @@ namespace Framework {
         float                                frameClock{ 0.f };
         float                                attackTimer{ 0.f };
         int                                  comboStep{ 0 };
+        float                                knockbackAnimTimer{ 0.0f };
 
         AnimationInfo                        animInfo{};
         CollisionInfo                        collisionInfo{};
@@ -200,7 +201,8 @@ namespace Framework {
         PendingThrow                         pendingThrow{};
         float                                throwCooldownTimer{ 0.0f };
         bool                                 throwRequestQueued{ false };
-        
+
+        float                                runParticleTimer{ 0.0f };
     };
 
 } // namespace Framework

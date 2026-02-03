@@ -41,15 +41,23 @@ namespace Framework {
         static ParticleSystem* Instance();
 
         void SpawnEnemyDeathParticles(const glm::vec2& worldPos, std::size_t count = 12);
-
+        void SpawnRunParticles(const glm::vec2& worldPos, float facingDir, std::size_t count = 3);
     private:
+        enum class ParticleVisual
+        {
+            Circle,
+            Sprite
+        };
         struct Particle {
             GOCId id{};
+            ParticleVisual visual{ ParticleVisual::Circle };
             glm::vec2 velocity{};
             float life = 0.0f;
             float totalLife = 0.0f;
             float startRadius = 0.0f;
             float endRadius = 0.0f;
+            float startSize = 0.0f;
+            float endSize = 0.0f;
             float startAlpha = 1.0f;
             float endAlpha = 0.0f;
         };

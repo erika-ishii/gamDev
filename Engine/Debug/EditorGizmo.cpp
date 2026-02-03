@@ -291,37 +291,77 @@ namespace Framework {
             const glm::mat4& projection,
             const ViewportRect& viewportRect)
         {
+
+            ImGuiIO& io = ImGui::GetIO();
+            const bool mouseClicked = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+            const bool mouseDown = ImGui::IsMouseDown(ImGuiMouseButton_Left);
+            const bool mouseReleased = ImGui::IsMouseReleased(ImGuiMouseButton_Left);
+
+            auto finalizePendingUndo = [&]()
+                {
+                    if (!gHasPendingUndo)
+                        return;
+
+                    if (FACTORY && gUndoObjectId != 0)
+                    {
+                        if (auto* target = FACTORY->GetObjectWithId(gUndoObjectId))
+                        {
+                            mygame::editor::RecordTransformChange(*target, gUndoStart);
+                        }
+                    }
+
+                    gHasPendingUndo = false;
+                    gUndoObjectId = 0;
+                };
+
             if (!FACTORY)
+            {
+                if (mouseReleased || !mouseDown)
+                    finalizePendingUndo();
                 return;
+            }
             if (viewportRect.width <= 1.0f || viewportRect.height <= 1.0f)
+            {
+                if (mouseReleased || !mouseDown)
+                    finalizePendingUndo();
                 return;
+            }
 
             const auto selectedId = mygame::GetSelectedObjectId();
             if (selectedId == 0)
+            {
+                if (mouseReleased || !mouseDown)
+                    finalizePendingUndo();
                 return;
+            }
 
             Framework::GOC* obj = FACTORY->GetObjectWithId(selectedId);
             if (!obj)
+            {
+                if (mouseReleased || !mouseDown)
+                    finalizePendingUndo();
                 return;
+            }
 
             auto* tr = obj->GetComponentType<Framework::TransformComponent>(
                 Framework::ComponentTypeId::CT_TransformComponent);
             if (!tr)
+            {
+                if (mouseReleased || !mouseDown)
+                    finalizePendingUndo();
                 return;
+            }
 
             const glm::vec2 position(tr->x, tr->y);
             const float     rotation = tr->rot;
             const glm::vec2 scale(tr->scaleX, tr->scaleY);
 
             ImDrawList* drawList = ImGui::GetForegroundDrawList();
-            ImGuiIO& io = ImGui::GetIO();
+
             const ImVec2 mouse = io.MousePos;
             const bool mouseInViewport = MouseInRect(viewportRect, mouse);
             // const bool wantCapture = io.WantCaptureMouse; // (reserved; currently not used)
 
-            const bool mouseClicked = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
-            const bool mouseDown = ImGui::IsMouseDown(ImGuiMouseButton_Left);
-            const bool mouseReleased = ImGui::IsMouseReleased(ImGuiMouseButton_Left);
 
             const ImVec2 originScreen = WorldToScreen(position, view, projection, viewportRect);
 
@@ -508,24 +548,9 @@ namespace Framework {
             }
 
             // On mouse release: if we started an undo, finalize it.
-            if (mouseReleased && gHasPendingUndo)
+            if ((mouseReleased || !mouseDown) && gHasPendingUndo)
             {
-                if (FACTORY && gUndoObjectId != 0)
-                {
-                    if (auto* target = FACTORY->GetObjectWithId(gUndoObjectId))
-                    {
-                        mygame::editor::RecordTransformChange(*target, gUndoStart);
-                    }
-                }
-                gHasPendingUndo = false;
-                gUndoObjectId = 0;
-            }
-            else if (!mouseDown && gHasPendingUndo)
-            {
-                // Mouse was released outside of ImGui's knowledge; drop the pending undo
-                // so we don't accidentally record a stale transform later.
-                gHasPendingUndo = false;
-                gUndoObjectId = 0;
+                finalizePendingUndo();
             }
 
             // ------------------------------

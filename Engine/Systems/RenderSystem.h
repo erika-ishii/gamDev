@@ -42,6 +42,7 @@
 #include "Debug/AssetBrowserPanel.h"
 #include "Debug/AnimationEditorPanel.h"
 #include "Debug/JsonEditorPanel.h"
+#include "Debug/UndoStack.h"
 #endif
 
 #include "Factory/Factory.h"
@@ -227,6 +228,7 @@ namespace Framework {
         unsigned idleTex = 0;                 //!< Idle animation sheet.
         unsigned runTex = 0;                  //!< Run animation sheet.
         std::array<unsigned, 3> attackTex{};  //!< Combo attack sheets (1st / 2nd / 3rd).
+        unsigned knockbackTex = 0;            //!< Knockback animation sheet.
         unsigned knifeTex = 0;                //!< Animated knife projectile sheet.
         unsigned fireProjectileTex = 0;       //!< Fire enemy projectile sheet.
 
@@ -266,6 +268,13 @@ namespace Framework {
         bool  draggingSelection = false;
         float dragOffsetX = 0.0f;
         float dragOffsetY = 0.0f;
+#if SOFASPUDS_ENABLE_EDITOR
+        mygame::editor::TransformSnapshot dragUndoStart{};
+        Framework::GOCId dragUndoObjectId = 0;
+        bool  dragUndoPending = false;
+        bool  dragUndoMoved = false;
+#endif
+
 
         // --- Eraser tool (editor) --------------------------------------------------------
         bool  eraserMode = false;

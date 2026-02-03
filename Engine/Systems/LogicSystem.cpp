@@ -35,7 +35,7 @@
 #include "Systems/VfxHelpers.h"
 #include "Memory/GameObjectPool.h"
 #include "Resource_Asset_Manager/Resource_Manager.h"
-
+#include "Systems/ParticleSystem.h"
 #include <cctype>
 #include <string>
 #include <string_view>
@@ -394,10 +394,14 @@ namespace Framework {
         if (rb && rb->knockbackTime > 0.0f)
             rb->knockbackTime = std::max(0.0f, rb->knockbackTime - dt);
 
+        if (knockbackAnimTimer > 0.0f)
+            knockbackAnimTimer = std::max(0.0f, knockbackAnimTimer - dt);
+
         const bool playerDead = health && health->playerHealth <= 0;
 
         if (playerDead)
         {
+            knockbackAnimTimer = 0.0f;
             SetAnimState(AnimState::Death);
         }
         else if (rb && rb->knockbackTime > 0.0f)
@@ -408,6 +412,16 @@ namespace Framework {
                 throwRequestQueued = false;
                 attackTimer = 0.f;
             }
+            if (knockbackAnimTimer <= 0.0f)
+            {
+                const AnimConfig cfg = ConfigFromSpriteSheet(animComp, AnimState::Knockback);
+                const float fps = cfg.fps > 0.0f ? cfg.fps : 1.0f;
+                knockbackAnimTimer = static_cast<float>(cfg.frames) / fps;
+            }
+            SetAnimState(AnimState::Knockback);
+        }
+        else if (knockbackAnimTimer > 0.0f)
+        {
             SetAnimState(AnimState::Knockback);
         }
         // If we are in an attack animation, let it run to completion.
@@ -885,7 +899,18 @@ namespace Framework {
                 input.IsKeyHeld(GLFW_KEY_RIGHT) ||
                 input.IsKeyHeld(GLFW_KEY_UP) ||
                 input.IsKeyHeld(GLFW_KEY_DOWN);
-
+            runParticleTimer = std::max(0.0f, runParticleTimer - dt);
+            const bool isMoving =
+                (rb && (std::fabs(rb->velX) > 0.01f || std::fabs(rb->velY) > 0.01f));
+            if (wantRun && isMoving && playerHealth && !playerHealth->isDead && tr && rc && runParticleTimer <= 0.0f)
+            {
+                if (auto* particleSystem = ParticleSystem::Instance())
+                {
+                    const float facingDir = (rc->w >= 0.0f) ? 1.0f : -1.0f;
+                    particleSystem->SpawnRunParticles({ tr->x, tr->y }, facingDir);
+                }
+                runParticleTimer = 0.08f;
+            }
             // Update PlayerAttackComponent (handles hitbox lifetime)
             if (attack && tr && !playerHealth->isDead)
             {
